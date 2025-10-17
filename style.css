@@ -1,0 +1,143 @@
+/* === General Reset === */
+* {
+  box-sizing: border-box;
+  font-family: 'Poppins', sans-serif;
+  margin: 0;
+  padding: 0;
+}
+
+/* === Page Background === */
+body {
+  background: linear-gradient(135deg, #cde8e5, #e2f6f2);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
+
+/* === Container === */
+.container {
+  background: #fff;
+  padding: 40px 30px;
+  border-radius: 20px;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+  width: 350px;
+  text-align: center;
+  animation: fadeIn 0.8s ease;
+}
+
+/* === Title === */
+.container h2 {
+  margin-bottom: 20px;
+  color: #2a5d67;
+}
+
+/* === Inputs === */
+input, select {
+  width: 100%;
+  padding: 10px;
+  margin: 8px 0;
+  border: 1px solid #bcd0d1;
+  border-radius: 8px;
+  font-size: 14px;
+  outline: none;
+  transition: 0.3s;
+}
+
+input:focus, select:focus {
+  border-color: #2a5d67;
+  box-shadow: 0 0 4px rgba(42,93,103,0.4);
+}
+
+/* === Button === */
+button {
+  width: 100%;
+  background: #2a5d67;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  padding: 10px;
+  font-size: 16px;
+  margin-top: 10px;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+button:hover {
+  background: #387b86;
+}
+
+/* === Success & Error messages === */
+.success {
+  background: #d7f8e0;
+  color: #256e35;
+  padding: 10px;
+  margin-bottom: 10px;
+  border-radius: 8px;
+}
+
+.error {
+  background: #fcdede;
+  color: #a33a3a;
+  padding: 10px;
+  margin-bottom: 10px;
+  border-radius: 8px;
+}
+
+/* === Animation === */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* === Links inside messages === */
+.success a, .error a {
+  color: #2a5d67;
+  text-decoration: underline;
+}
+
+.container {
+  width: 60%;
+  margin: 40px auto;
+  background: #fff;
+  padding: 20px;
+  border-radius: 15px;
+  box-shadow: 0 0 15px rgba(0,0,0,0.1);
+}
+
+.profile-card {
+  text-align: center;
+}
+
+.profile-pic {
+  border-radius: 50%;
+  border: 2px solid #ddd;
+  margin-bottom: 15px;
+}
+
+.button {
+  display: inline-block;
+  background-color: #4CAF50;
+  color: white;
+  padding: 10px 20px;
+  border-radius: 10px;
+  text-decoration: none;
+  transition: 0.3s;
+}
+
+.button:hover {
+  background-color: #45a049;
+}
+
+select, input, button {
+  margin: 5px 0;
+  padding: 8px;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+  width: 100%;
+}
+
+h2 {
+  text-align: center;
+  color: #333;
+}
