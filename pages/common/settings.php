@@ -1,3 +1,24 @@
+<?php
+/*
+ // USER INFO (COMMENTED OUT)
+ // Example: session + profile lookup. All lines are commented out.
+ // if (session_status() === PHP_SESSION_NONE) session_start();
+ // require_once __DIR__ . '/../../config.php';
+ // $current_user_id = $_SESSION['user_id'] ?? null;
+ // $CURRENT_USER = null;
+ // if ($current_user_id) {
+ //     $sql = "SELECT User_ID, First_Name, Last_Name, `E-mail`, `Role` FROM user_profile WHERE User_ID = ? LIMIT 1";
+ //     if ($stmt = $conn->prepare($sql)) {
+ //         $stmt->bind_param('i', $current_user_id);
+ //         $stmt->execute();
+ //         $stmt->bind_result($u_id,$u_first,$u_last,$u_email,$u_role);
+ //         if ($stmt->fetch()) {
+ //             $CURRENT_USER = ['id'=> (int)$u_id, 'first'=>$u_first, 'last'=>$u_last, 'email'=>$u_email, 'role'=>$u_role];
+ //         }
+ //         $stmt->close();
+ //     }
+ // }
+*/
 <!DOCTYPE html>
 <html>
 <head>

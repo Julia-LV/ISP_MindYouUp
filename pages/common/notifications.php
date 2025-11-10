@@ -3,6 +3,26 @@
 session_start();
 require_once __DIR__ . '/../../config.php'; // adjust path if needed
 
+/*
+ // USER INFO (COMMENTED OUT)
+ // Example: fetch current user's profile from DB using session user_id.
+ // All lines are commented to avoid executing anything; remove leading // to enable.
+ // $current_user_id = $_SESSION['user_id'] ?? null;
+ // $CURRENT_USER = null;
+ // if ($current_user_id) {
+ //     $sql = "SELECT User_ID, First_Name, Last_Name, `E-mail`, `Role` FROM user_profile WHERE User_ID = ? LIMIT 1";
+ //     if ($s = $conn->prepare($sql)) {
+ //         $s->bind_param('i', $current_user_id);
+ //         $s->execute();
+ //         $s->bind_result($uid,$fname,$lname,$uemail,$urole);
+ //         if ($s->fetch()) {
+ //             $CURRENT_USER = ['id'=>$uid,'first'=>$fname,'last'=>$lname,'email'=>$uemail,'role'=>$urole];
+ //         }
+ //         $s->close();
+ //     }
+ // }
+ */
+
 // If you store logged-in user id in session use it to show only their reminders
 $userId = $_SESSION['user_id'] ?? null;
 

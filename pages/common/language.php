@@ -3,6 +3,28 @@
 // Presents English and Portuguese options. Sets a cookie and session, then redirects back.
 require_once __DIR__ . '/../../includes/header.php';
 
+/*
+ // USER INFO (COMMENTED OUT)
+ // Example: read the logged-in user id from session and fetch profile data.
+ // All lines are commented out by design.
+ // if (session_status() === PHP_SESSION_NONE) session_start();
+ // require_once __DIR__ . '/../../config.php';
+ // $current_user_id = $_SESSION['user_id'] ?? null;
+ // $CURRENT_USER = null;
+ // if ($current_user_id) {
+ //     $sql = "SELECT User_ID, First_Name, Last_Name, `E-mail`, `Role` FROM user_profile WHERE User_ID = ? LIMIT 1";
+ //     if ($stmt = $conn->prepare($sql)) {
+ //         $stmt->bind_param('i', $current_user_id);
+ //         $stmt->execute();
+ //         $stmt->bind_result($u_id,$u_first,$u_last,$u_email,$u_role);
+ //         if ($stmt->fetch()) {
+ //             $CURRENT_USER = ['id'=>(int)$u_id,'first'=>$u_first,'last'=>$u_last,'email'=>$u_email,'role'=>$u_role];
+ //         }
+ //         $stmt->close();
+ //     }
+ // }
+ */
+
 // Process POST from the form
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['lang'])) {
     $choice = $_POST['lang'] === 'pt' ? 'pt' : 'en';

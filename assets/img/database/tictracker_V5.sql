@@ -121,6 +121,7 @@ create table professional_profile
    PASSWORD             varchar(250),
    ROLE                 enum('Professional','Patient'),
    USER_ID              int not null,
+   AGE                  int DEFAULT NULL,
    PROFESSIONAL_CONTACS char(10),
    primary key (USE_USER_ID, PROFESSIONAL_ID)
 )
@@ -186,10 +187,28 @@ create table user_profile
    LAST_NAME            varchar(50) not null,
    E_MAIL               varchar(50) not null,
    PASSWORD             varchar(250) not null,
+      AGE                  int DEFAULT NULL,
    ROLE                 enum('Professional','Patient') not null,
    primary key (USER_ID)
 )
 ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+
+
+/*==============================================================*/
+/* Table: password_resets                                      */
+/*==============================================================*/
+
+
+CREATE TABLE password_resets (
+  id int(11) NOT NULL AUTO_INCREMENT,
+  email varchar(255) NOT NULL,
+  token varchar(255) NOT NULL,
+  expires bigint(20) NOT NULL,
+  PRIMARY KEY (id),
+  INDEX (token),
+  INDEX (email)
+);
 
 /*==============================================================*/
 /* Foreign Keys                                                 */

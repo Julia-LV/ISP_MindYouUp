@@ -4,6 +4,30 @@ if (session_status() === PHP_SESSION_NONE) session_start();
 // Optional: include header for language helper if exists
 $header = __DIR__ . '/../../includes/header.php';
 if (file_exists($header)) require_once $header;
+
+/*
+ // USER INFO (COMMENTED OUT)
+ // The block below shows how to load the current logged-in user's info
+ // from the session and database. All lines are commented so nothing runs.
+ // Uncomment and adapt when you want to enable user-aware behavior.
+ //
+ // if (session_status() === PHP_SESSION_NONE) session_start();
+ // require_once __DIR__ . '/../../config.php'; // ensure $conn
+ // $current_user_id = $_SESSION['user_id'] ?? null;
+ // $CURRENT_USER = null;
+ // if ($current_user_id) {
+ //     $sql = "SELECT User_ID, First_Name, Last_Name, `E-mail`, `Role` FROM user_profile WHERE User_ID = ? LIMIT 1";
+ //     if ($s = $conn->prepare($sql)) {
+ //         $s->bind_param('i', $current_user_id);
+ //         $s->execute();
+ //         $s->bind_result($u_id, $u_first, $u_last, $u_email, $u_role);
+ //         if ($s->fetch()) {
+ //             $CURRENT_USER = ['id'=> (int)$u_id, 'first'=>$u_first, 'last'=>$u_last, 'email'=>$u_email, 'role'=>$u_role];
+ //         }
+ //         $s->close();
+ //     }
+ // }
+ */
 ?>
 <!doctype html>
 <html lang="en">
