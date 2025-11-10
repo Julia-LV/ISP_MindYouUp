@@ -1,3 +1,4 @@
+<<<<<<< Updated upstream
 
 <?php
 session_start();
@@ -22,6 +23,12 @@ require_once __DIR__ . '/../../config.php'; // adjust path if needed
  //     }
  // }
  */
+=======
+<?php
+
+session_start();
+require_once 'C:/Users/rodri/OneDrive/Documents/GitHub/ISP_MindYouUp/config.php'; // adjust path if needed
+>>>>>>> Stashed changes
 
 // If you store logged-in user id in session use it to show only their reminders
 $userId = $_SESSION['user_id'] ?? null;
@@ -51,6 +58,7 @@ if ($conn) {
     <meta charset="UTF-8">
     <title>Notifications</title>
     <style>
+<<<<<<< Updated upstream
         /* Brand colors */
         :root {
             --bg-creme: #FFF7E1; /* RGB: 255,247,225 */
@@ -87,6 +95,16 @@ if ($conn) {
         @media (max-width: 600px) {
             .container { margin: 20px; padding: 16px; }
         }
+=======
+        body { font-family: Arial, sans-serif; background: #f4f4f4; margin: 0; padding: 0; }
+        .container { max-width: 700px; margin: 40px auto; background: #fff; padding: 20px; border-radius: 8px; }
+        h1 { text-align: center; }
+        .notification { border-bottom: 1px solid #eee; padding: 16px 0; }
+        .notification:last-child { border-bottom: none; }
+        .meta { color: #888; font-size: 0.9em; margin-bottom: 6px; }
+        .message { margin-top: 8px; white-space: pre-wrap; }
+        .back { display:block; margin:12px 0; color:#333; text-decoration:none; }
+>>>>>>> Stashed changes
     </style>
 </head>
 <body>
@@ -111,4 +129,8 @@ if ($conn) {
         <?php endif; ?>
     </div>
 </body>
+<<<<<<< Updated upstream
 </html>
+=======
+</html>
+>>>>>>> Stashed changes

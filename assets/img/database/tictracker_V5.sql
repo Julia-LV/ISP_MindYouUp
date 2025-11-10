@@ -101,8 +101,8 @@ create table professional_notes
    USE_USER_ID          bigint,
    PROFESSIONAL_ID      int,
    USER_ID              int not null,
-   NOTE_TITLE           int not null,
-   NOTE_TEXT            int not null,
+   NOTE_TITLE           varchar(250) not null,
+   NOTE_TEXT            text not null,
    primary key (NOTE_ID)
 )
 ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -114,15 +114,14 @@ create table professional_profile
 (
    USE_USER_ID          bigint not null,
    PROFESSIONAL_ID      int not null,
-   USER_IMAGE           varchar(250) comment 'meter link de iimagem\r\n',
+   USER_IMAGE           varchar(250) comment 'meter link de imagem',
    FIRST_NAME           varchar(50),
    LAST_NAME            varchar(50),
    E_MAIL               varchar(50),
    PASSWORD             varchar(250),
    ROLE                 enum('Professional','Patient'),
    USER_ID              int not null,
-   AGE                  int DEFAULT NULL,
-   PROFESSIONAL_CONTACS char(10),
+   PROFESSIONAL_CONTACTS int,
    primary key (USE_USER_ID, PROFESSIONAL_ID)
 )
 ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
