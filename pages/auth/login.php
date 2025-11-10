@@ -59,12 +59,18 @@ include '../../components/header_component.php';
 $form_title = 'Log In';
 $form_subtitle = 'Welcome back! Please enter your details';
 include '../../components/auth_card_start.php'; 
+
+// --- Display Messages ---
 if (!empty($message)) {
     echo '<div class="mb-4 p-3 rounded-md bg-red-100 text-red-700" role="alert"><p>'.htmlspecialchars($message).'</p></div>';
 } 
 elseif (isset($_GET['registration']) && $_GET['registration'] == 'success') {
     echo '<div class="mb-4 p-3 rounded-md bg-green-100 text-green-700" role="alert"><p>Registration successful! Please log in.</p></div>';
 }
+elseif (isset($_GET['reset']) && $_GET['reset'] == 'success') {
+    echo '<div class="mb-4 p-3 rounded-md bg-green-100 text-green-700" role="alert"><p>Password has been reset successfully! You can now log in.</p></div>';
+}
+
 // --- Form Fields (THE FIX) ---
 // We now set $name for every input.
 $id = 'email'; $name = 'email'; $label = 'Email'; $type = 'email'; $value = $sticky_email; $autocomplete = 'email';
@@ -75,7 +81,7 @@ include '../../components/input.php';
 ?>
 <div class="flex items-center justify-end">
     <div class="text-sm">
-        <a href="#" class="font-medium text-green-700 hover:text-[#004539]">
+        <a href="forgot_password.php" class="font-medium text-green-700 hover:text-[#004539]">
             Forgot your password?
         </a>
     </div>
