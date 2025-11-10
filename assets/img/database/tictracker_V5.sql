@@ -160,11 +160,11 @@ create table tic_log
 ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 /*==============================================================*/
-/* Table: track_medicine                                        */
+/* Table: track_medication                                        */
 /*==============================================================*/
-create table track_medicine
+create table track_medication
 (
-   TRACK_MEDICINE_ID    bigint unsigned not null,
+   TRACK_MEDICATION_ID    bigint unsigned not null,
    USE_USER_ID          bigint,
    PATIENT_ID           int,
    USER_ID              int not null,

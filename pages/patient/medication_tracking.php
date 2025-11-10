@@ -155,7 +155,7 @@ function humanize_days($daysCsv) {
 <body>
     <div class="container">
         <a href="settings.php">&larr; Back to Settings</a>
-        <h1>Medication reminders</h1>
+    <h1>Medication tracker</h1>
 
         <?php if ($message): ?><div class="message"><?= htmlspecialchars($message) ?></div><?php endif; ?>
 

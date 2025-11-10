@@ -1,5 +1,3 @@
-<<<<<<< Updated upstream
-
 <?php
 session_start();
 require_once __DIR__ . '/../../config.php'; // adjust path if needed
@@ -23,26 +21,29 @@ require_once __DIR__ . '/../../config.php'; // adjust path if needed
  //     }
  // }
  */
-=======
-<?php
 
-session_start();
-require_once 'C:/Users/rodri/OneDrive/Documents/GitHub/ISP_MindYouUp/config.php'; // adjust path if needed
->>>>>>> Stashed changes
-
-// If you store logged-in user id in session use it to show only their reminders
+// If you store logged-in user id in session use it to show only their medication entries
 $userId = $_SESSION['user_id'] ?? null;
 
 $notifications = [];
 
+// Prefer the medication tracking table defined in the project's SQL schema.
+$foundTable = null;
 if ($conn) {
+    $show = @mysqli_query($conn, "SHOW TABLES LIKE 'track_medication'");
+    if ($show && mysqli_num_rows($show) > 0) {
+        $foundTable = 'track_medication';
+    }
+}
+
+if ($conn && $foundTable) {
     if ($userId) {
-        $stmt = mysqli_prepare($conn, "SELECT Reminder_ID, Reminder_Text, Reminder_Time FROM reminder WHERE User_ID = ? ORDER BY Reminder_Time DESC");
+        $stmt = mysqli_prepare($conn, "SELECT TRACK_MEDICATION_ID, USER_ID, MEDICATION_NAME, MEDICATION_TIME, MEDICATION_STATUS FROM track_medication WHERE USER_ID = ? ORDER BY MEDICATION_TIME DESC");
         mysqli_stmt_bind_param($stmt, 'i', $userId);
         mysqli_stmt_execute($stmt);
         $res = mysqli_stmt_get_result($stmt);
     } else {
-        $res = mysqli_query($conn, "SELECT Reminder_ID, User_ID, Reminder_Text, Reminder_Time FROM reminder ORDER BY Reminder_Time DESC");
+        $res = mysqli_query($conn, "SELECT TRACK_MEDICATION_ID, USER_ID, MEDICATION_NAME, MEDICATION_TIME, MEDICATION_STATUS FROM track_medication ORDER BY MEDICATION_TIME DESC");
     }
 
     if ($res) {
@@ -50,6 +51,8 @@ if ($conn) {
             $notifications[] = $row;
         }
     }
+} else {
+    // No medication-tracking table found; leave $notifications empty so the UI shows a friendly message.
 }
 ?>
 <!DOCTYPE html>
@@ -58,7 +61,6 @@ if ($conn) {
     <meta charset="UTF-8">
     <title>Notifications</title>
     <style>
-<<<<<<< Updated upstream
         /* Brand colors */
         :root {
             --bg-creme: #FFF7E1; /* RGB: 255,247,225 */
@@ -95,7 +97,6 @@ if ($conn) {
         @media (max-width: 600px) {
             .container { margin: 20px; padding: 16px; }
         }
-=======
         body { font-family: Arial, sans-serif; background: #f4f4f4; margin: 0; padding: 0; }
         .container { max-width: 700px; margin: 40px auto; background: #fff; padding: 20px; border-radius: 8px; }
         h1 { text-align: center; }
@@ -104,7 +105,6 @@ if ($conn) {
         .meta { color: #888; font-size: 0.9em; margin-bottom: 6px; }
         .message { margin-top: 8px; white-space: pre-wrap; }
         .back { display:block; margin:12px 0; color:#333; text-decoration:none; }
->>>>>>> Stashed changes
     </style>
 </head>
 <body>
@@ -121,16 +121,23 @@ if ($conn) {
                         <?php if (isset($note['User_ID'])): ?>
                             User: <?= htmlspecialchars($note['User_ID']) ?> &nbsp;|&nbsp;
                         <?php endif; ?>
-                        <?= htmlspecialchars(date('Y-m-d H:i', strtotime($note['Reminder_Time'] ?? $note['date'] ?? 'now'))) ?>
+                        <?php
+                            $medTime = $note['MEDICATION_TIME'] ?? ($note['Medication_Time'] ?? ($note['date'] ?? null));
+                            $medName = $note['MEDICATION_NAME'] ?? ($note['Medication_Name'] ?? null);
+                            $medStatus = $note['MEDICATION_STATUS'] ?? ($note['Medication_Status'] ?? null);
+                            if ($medTime) {
+                                echo htmlspecialchars(date('Y-m-d H:i', strtotime($medTime)));
+                            } else {
+                                echo htmlspecialchars(date('Y-m-d H:i', time()));
+                            }
+                            if ($medName) { echo ' &nbsp;|&nbsp; ' . htmlspecialchars($medName); }
+                            if ($medStatus !== null && $medStatus !== '') { echo ' &nbsp;|&nbsp; Status: ' . htmlspecialchars($medStatus); }
+                        ?>
                     </div>
-                    <div class="message"><?= nl2br(htmlspecialchars($note['Reminder_Text'] ?? $note['message'] ?? '')) ?></div>
+                    <div class="message"><?= nl2br(htmlspecialchars($note['MEDICATION_NAME'] ?? $note['Medication_Name'] ?? '')) ?></div>
                 </div>
             <?php endforeach; ?>
         <?php endif; ?>
     </div>
 </body>
-<<<<<<< Updated upstream
 </html>
-=======
-</html>
->>>>>>> Stashed changes

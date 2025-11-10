@@ -1,4 +1,3 @@
-<<<<<<< Updated upstream
 <?php
 /*
  // USER INFO (COMMENTED OUT)
@@ -20,13 +19,11 @@
  //     }
  // }
 */
-=======
->>>>>>> Stashed changes
+?>
 <!DOCTYPE html>
 <html>
 <head>
     <title>Settings</title>
-<<<<<<< Updated upstream
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <style>
@@ -51,16 +48,12 @@
             margin: 0;
         }
 
-=======
-    <style>
->>>>>>> Stashed changes
         body {
             display: flex;
             flex-direction: column;
             align-items: center;
             padding: 2rem;
             min-height: 100vh;
-<<<<<<< Updated upstream
             background-color: var(--bg-creme);
             color: var(--text-dark);
             font-family: Arial, Helvetica, sans-serif;
@@ -72,17 +65,11 @@
             letter-spacing: 0.2px;
         }
 
-=======
-            background: #f9f9f9;
-            margin: 0;
-        }
->>>>>>> Stashed changes
         .settings-container {
             display: flex;
             flex-direction: column;
             gap: 1rem;
             width: 100%;
-<<<<<<< Updated upstream
             max-width: 420px;
             margin-top: 1rem;
         }
@@ -141,22 +128,12 @@
 
         @media (max-width: 480px) {
             .settings-container { max-width: 100%; }
-=======
-            max-width: 300px;
-            margin-top: 2rem;
-        }
-        .settings-container button {
-            padding: 1rem;
-            font-size: 1rem;
-            width: 100%;
->>>>>>> Stashed changes
         }
     </style>
 </head>
 <body>
     <h1>Settings</h1>
     <div class="settings-container">
-<<<<<<< Updated upstream
         <a class="btn" href="notifications.php">Notifications</a>
         <a class="btn" href="privacy.php">Privacy</a>
         <a class="btn green" href="language.php">Language</a>
@@ -164,13 +141,3 @@
     </div>
 </body>
 </html>
-
-=======
-        <a href="notifications.php"><button>Notifications</button></a>
-        <a href="privacy.php"><button>Privacy</button></a>
-        <a href="language.php"><button>Language</button></a>
-        <a href="about.php"><button>About the app</button></a>
-    </div>
-</body>
-</html>
->>>>>>> Stashed changes
