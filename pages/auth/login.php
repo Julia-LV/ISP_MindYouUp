@@ -13,9 +13,9 @@ $sticky_email = "";
 
 if (isset($_SESSION["loggedin"]) && $_SESSION["loggedin"] === true) {
     if (isset($_SESSION["role"]) && $_SESSION["role"] == "Patient") {
-        header("Location: ../patient/home_patient.php");
+        header("Location: ../common/index.php");    // for now just to test code and others I am redirecting this to index.php the original destination was Location: ../patient/home_patient.php
     } else {
-        header("Location: ../professional/home_professional.php");
+        header("Location: ../common/index.php"); // for now just to test code and others I am redirecting this to index.php the original destination was Location: ../professional/home_professional.php
     }
     exit;
 }
@@ -27,7 +27,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     if (empty($email) || empty($password)) {
         $message = "Please enter both email and password.";
     } else {
-        $sql = "SELECT User_ID, First_Name, `Role`, `Password` FROM user_profile WHERE `E-mail` = ?";
+    $sql = "SELECT USER_ID, FIRST_NAME, `ROLE`, `PASSWORD` FROM user_profile WHERE `E_MAIL` = ?";
         if ($stmt = $conn->prepare($sql)) {
             $stmt->bind_param("s", $email); $stmt->execute(); $stmt->store_result();
             if ($stmt->num_rows == 1) {
@@ -45,9 +45,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                             header("Location: ../professional/home_professional.php");
                         }
                         exit;
-                    } else { $message = "Invalid email or password."; }
+                    } else { $message = "Invalid email or password1."; }
                 }
-            } else { $message = "Invalid email or password."; }
+            } else { $message = "Invalid email or password2."; }
             $stmt->close();
         }
     }
