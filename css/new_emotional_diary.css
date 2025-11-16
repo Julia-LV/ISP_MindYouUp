@@ -1,0 +1,69 @@
+/*
+ * new_diary.css
+ *
+ * This file holds ONLY the custom styles
+ * for the new emotional diary page.
+ */
+
+/* --- Custom Mood Radio Buttons --- */
+
+/* Hide the actual radio button */
+.diary-mood-radio { 
+    display: none; 
+}
+
+/* Style for the emoji label */
+.diary-mood-label {
+    font-size: 3rem; /* 48px */
+    cursor: pointer;
+    opacity: 0.4;
+    filter: grayscale(50%);
+    transition: all 0.2s ease-in-out;
+}
+
+/* Style when hovering over the emoji */
+.diary-mood-label:hover {
+    opacity: 0.7;
+    transform: scale(1.1);
+}
+
+/* Style for the emoji label when its radio button is checked */
+.diary-mood-radio:checked + .diary-mood-label {
+    opacity: 1;
+    filter: grayscale(0%);
+    transform: scale(1.15);
+}
+
+
+/* --- Custom Range Sliders --- */
+
+/* The main slider track */
+.diary-slider {
+    -webkit-appearance: none; /* Hides default Safari/Chrome styles */
+    appearance: none; 
+    width: 100%; 
+    height: 8px;
+    background: #E5E7EB; /* Tailwind's bg-gray-200 */
+    border-radius: 9999px;
+    outline: none;
+}
+
+/* The slider "thumb" (the circle) for Chrome/Safari */
+.diary-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    background: #065F46; /* Our dark green color (green-800) */
+    border-radius: 50%;
+    cursor: pointer;
+}
+
+/* The slider "thumb" for Firefox */
+.diary-slider::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+    background: #065F46; /* Our dark green color (green-800) */
+    border-radius: 50%;
+    cursor: pointer;
+}
