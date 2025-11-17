@@ -24,7 +24,7 @@ CREATE TABLE `user_profile` (
   UNIQUE KEY `Email` (`Email`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-INSERT INTO `user_profile` (`User_ID`,`User_Image`,`First_Name`,`Last_Name`,`E-mail`,`Password`,`Age`,`Role`) VALUES
+INSERT INTO `user_profile` (`User_ID`,`User_Image`,`First_Name`,`Last_Name`,`Email`,`Password`,`Age`,`Role`) VALUES
 (1,  '/images/users/1.jpg', 'Maria',  'Silva',   'maria.silva@example.com',   'pass_placeholder_1', 28, 'Patient'),
 (2,  '/images/users/2.jpg', 'João',   'Pereira', 'joao.pereira@example.com',  'pass_placeholder_2', 34, 'Patient'),
 (3,  '/images/users/3.jpg', 'Ana',    'Costa',   'ana.costa@example.com',     'pass_placeholder_3', 19, 'Patient'),
@@ -125,12 +125,12 @@ CREATE TABLE `tic_log` (
   `Duration` varchar(50) NOT NULL,
   `Intensity` int(11) NOT NULL,
   `Describe_Text` text NOT NULL,
-  `Self-reported` tinyint(1) NOT NULL,
+  `Self_Reported` tinyint(1) NOT NULL,
   PRIMARY KEY (`Tic_ID`),
   FOREIGN KEY (`Patient_ID`) REFERENCES `user_profile`(`User_ID`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-INSERT INTO `tic_log` (`Patient_ID`,`Type_Description`,`Muscle_Group`,`Duration`,`Intensity`,`Describe_Text`,`Self-reported`) VALUES
+INSERT INTO `tic_log` (`Patient_ID`,`Type_Description`,`Muscle_Group`,`Duration`,`Intensity`,`Describe_Text`,`Self_Reported`) VALUES
 (1, 'Motor Tic', 'Face', '5s', 3, 'Blinking rapidly during conversation.', 1),
 (2, 'Vocal Tic', 'Throat', '10s', 2, 'Sudden throat clearing in public.', 1),
 (3, 'Motor Tic', 'Shoulder','7s', 4, 'Shrugging shoulder repeatedly when stressed.', 0),
