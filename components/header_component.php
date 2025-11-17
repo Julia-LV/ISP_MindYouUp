@@ -32,9 +32,12 @@ $page_title = $page_title ?? 'Mind You Up';
     <?php if (basename($_SERVER['PHP_SELF']) == 'new_emotional_diary.php'): ?>
         <link rel="stylesheet" href="../../css/new_emotional_diary.css">
     <?php endif; ?>
+
+    <script src="../../js/main.js" defer></script>
+
 </head>
 <!-- 
   This body tag is now clean. 
   The 'h-full' and 'bg-gray-100' work with the layout.
 -->
-<body class="bg-[#FFF7E1] flex items-center justify-center min-h-screen p-4">
+<!--body class="bg-[#FFF7E1] flex items-center justify-center min-h-screen p-4"-->

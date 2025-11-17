@@ -1,10 +1,3 @@
-/*
- * new_diary.css
- *
- * This file holds ONLY the custom styles
- * for the new emotional diary page.
- */
-
 /* --- Custom Mood Radio Buttons --- */
 
 /* Hide the actual radio button */
@@ -12,58 +5,68 @@
     display: none; 
 }
 
-/* Style for the emoji label */
+/* The label is now just a container */
 .diary-mood-label {
-    font-size: 3rem; /* 48px */
     cursor: pointer;
-    opacity: 0.4;
-    filter: grayscale(50%);
+    display: inline-block; /* Helps with transforms */
     transition: all 0.2s ease-in-out;
 }
 
-/* Style when hovering over the emoji */
+/* NEW: We style the IMAGE inside the label 
+*/
+.diary-mood-label img {
+    opacity: 0.6;
+    /* filter: grayscale(50%); */
+    transition: all 0.2s ease-in-out;
+    /* * The size (w-12 h-12) will be set
+     * by Tailwind in the HTML.
+     */
+}
+
+/* Style when hovering over the label */
 .diary-mood-label:hover {
-    opacity: 0.7;
     transform: scale(1.1);
 }
 
-/* Style for the emoji label when its radio button is checked */
-.diary-mood-radio:checked + .diary-mood-label {
+/* NEW: Style the IMAGE when its radio is checked 
+*/
+.diary-mood-radio:checked + .diary-mood-label img {
     opacity: 1;
     filter: grayscale(0%);
+}
+
+/* We still scale the whole label when checked */
+.diary-mood-radio:checked + .diary-mood-label {
     transform: scale(1.15);
 }
 
 
-/* --- Custom Range Sliders --- */
+/* --- Custom Range Sliders (Unchanged) --- */
 
 /* The main slider track */
 .diary-slider {
-    -webkit-appearance: none; /* Hides default Safari/Chrome styles */
+    -webkit-appearance: none;
     appearance: none; 
     width: 100%; 
     height: 8px;
-    background: #E5E7EB; /* Tailwind's bg-gray-200 */
+    background: #E5E7EB; 
     border-radius: 9999px;
     outline: none;
 }
-
-/* The slider "thumb" (the circle) for Chrome/Safari */
+/* ... (rest of slider styles are the same) ... */
 .diary-slider::-webkit-slider-thumb {
     -webkit-appearance: none;
     appearance: none;
     width: 20px;
     height: 20px;
-    background: #065F46; /* Our dark green color (green-800) */
+    background: #065F46; 
     border-radius: 50%;
     cursor: pointer;
 }
-
-/* The slider "thumb" for Firefox */
 .diary-slider::-moz-range-thumb {
     width: 20px;
     height: 20px;
-    background: #065F46; /* Our dark green color (green-800) */
+    background: #065F46; 
     border-radius: 50%;
     cursor: pointer;
 }

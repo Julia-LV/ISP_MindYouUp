@@ -101,6 +101,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 // --- 2. Page Display ---
 $page_title = 'Forgot Password - Mind You Up';
 include '../../components/header_component.php'; 
+?>
+<!-- 
+  We add the <body> tag that this page needs.
+-->
+<body class="bg-[#FFFDF5] flex items-center justify-center min-h-screen p-4">
+<?php
 $form_title = 'Forgot Password';
 $form_subtitle = 'Enter your email to get a reset link';
 include '../../components/auth_card_start.php'; 

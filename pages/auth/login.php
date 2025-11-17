@@ -56,6 +56,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 // --- 2. Page Display ---
 $page_title = 'Log In - Mind You Up';
 include '../../components/header_component.php'; 
+?>
+<!-- 
+  We add the <body> tag that this page needs.
+-->
+<body class="bg-[#FFFDF5] flex items-center justify-center min-h-screen p-4">
+<?php
+
 $form_title = 'Log In';
 $form_subtitle = 'Welcome back! Please enter your details';
 include '../../components/auth_card_start.php'; 

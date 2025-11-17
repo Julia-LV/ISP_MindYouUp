@@ -7,33 +7,12 @@
  * It correctly creates the sidebar and the full-width main content area.
  */
 
+include 'header_component.php';
+
 // Get the current page's filename (e.g., new_emotional_diary.php)
 $current_page = basename($_SERVER['PHP_SELF']);
 
-// Set a default page title if one isn't provided
-$page_title = $page_title ?? 'Mind You Up';
 ?>
-<!DOCTYPE html>
-<html lang="en" class="h-full">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?php echo htmlspecialchars($page_title); ?></title>
-    
-    <!-- Load Tailwind CSS from CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- Link to your global stylesheet (for fonts) -->
-    <link rel="stylesheet" href="../../css/stylemain.css">
-
-    <!-- 
-      This is the NEW page-specific CSS link for the diary.
-      We check if the current page is the new diary page.
-    -->
-    <?php if ($current_page == 'new_emotional_diary.php'): ?>
-        <link rel="stylesheet" href="../../css/new_emotional_diary.css">
-    <?php endif; ?>
-</head>
 <!-- 
   This body tag is now clean. 
   'h-full' and 'bg-gray-100' are the base.
@@ -43,26 +22,21 @@ $page_title = $page_title ?? 'Mind You Up';
       This is the main flex container for the whole screen.
       It will be at least the full height of the screen.
     -->
-    <div class="flex min-h-screen">
+    <div class="flex h-full">
         
         <!-- 
           SIDEBAR (Desktop)
           - `h-screen` makes it fill the screen height.
           - `sticky top-0` keeps it locked in place on scroll.
-          - `w-64` gives it a fixed width, stopping the "zoom" bug.
+          
         -->
-        <aside class="w-64 flex-shrink-0 bg-white border-r hidden md:flex flex-col sticky top-0 h-screen">
-            <!-- Logo -->
-            <div class="h-16 flex items-center justify-center border-b">
-                <!-- 
-                  The `w-32` class here is what sizes the logo.
-                  It wasn't working before because the parent was broken.
-                -->
-                <img src="../../assets/img/MYU logos/MYU_Horizontal Logo.png" alt="Mind You Up Logo" class="w-32 h-auto">
-            </div>
+        <aside id="main-sidebar" 
+               class="hidden md:flex flex-col w-64 bg-white border-r fixed top-0 left-0 h-full z-20 transition-all duration-300">
+            
+            
 
             <!-- Navigation Links -->
-            <nav class="flex-1 p-4 space-y-2">
+            <nav class="flex-1 p-4 space-y-2 overflow-y-auto pt-20">
                 <?php
                 // We'll update this nav as we build new pages
                 $nav_links = [
@@ -94,23 +68,42 @@ $page_title = $page_title ?? 'Mind You Up';
         </aside>
 
         <!-- 
-          MAIN CONTENT AREA
-          - This is now a simple flex container that grows.
-          - It has the cream background.
-          - The page (body) will scroll.
+          MOBILE-ONLY OVERLAY
+          This dark background appears when the mobile menu is open.
         -->
-        <div class="flex-1 flex flex-col bg-[#FFFDF5]">
+        <div id="sidebar-overlay" class="hidden md:hidden fixed inset-0 bg-black/50 z-10"></div>
 
-            <!-- MOBILE HEADER -->
-            <header class="h-16 bg-white border-b flex items-center justify-between px-4 md:hidden sticky top-0 z-10">
-                <div class-="flex-1">
+        <!-- 
+          MAIN CONTENT AREA
+          - `md:ml-64` makes room for the sidebar on desktop.
+          - `flex-1` makes it grow to fill the rest of the space.
+        -->
+        <div class="flex-1 flex flex-col w-full md:pl-64">
+
+            <!-- 
+              TOPBAR (This is the new part!)
+              This is the header for the *main content*.
+            -->
+            <header class="h-16 bg-white border-b flex items-center justify-between px-4 sticky top-0 z-10">
+                
+                <!-- Hamburger Button (controls sidebar) -->
+                <div class="flex items-center space-x-2">
+                    <!-- Hamburger Button (controls sidebar) -->
+                    <button id="sidebar-toggle" class="p-2 text-gray-600 hover:text-gray-900">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+                    </button>
+                    
+                    <!-- Logo (Now in the topbar) -->
                     <img src="../../assets/img/MYU logos/MYU_Horizontal Logo.png" alt="Mind You Up Logo" class="w-28 h-auto">
                 </div>
-                <button class="p-2">
-                    <!-- Hamburger icon -->
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
-                </button>
+                
+                <!-- Right-side content (e.g., User Profile) -->
+                <div class="flex items-center space-x-4">
+                    <span class="text-sm text-gray-700">Welcome, <?php echo htmlspecialchars($_SESSION["first_name"]); ?>!</span>
+                    <!-- You can add a profile picture/icon here -->
+                </div>
             </header>
+        
 
             <!-- 
               This is the main content wrapper.
@@ -118,4 +111,4 @@ $page_title = $page_title ?? 'Mind You Up';
               - It has NO PADDING.
               - Your new_emotional_diary.php page adds its own padding.
             -->
-            <main class="w-full">
+<main class="flex-1 w-full p-6 md:p-2 overflow-y-auto bg-[#FFFDF5]">

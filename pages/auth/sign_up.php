@@ -84,6 +84,15 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 $page_title = 'Sign Up - Mind You Up';
 include '../../components/header_component.php'; 
 
+?>
+
+<!-- 
+  We add the <body> tag that this page needs.
+-->
+<body class="bg-[#FFFDF5] flex items-center justify-center min-h-screen p-4">
+
+<?php
+
 $form_title = 'Sign Up';
 $form_subtitle = 'Create your account to get started';
 include '../../components/auth_card_start.php'; 

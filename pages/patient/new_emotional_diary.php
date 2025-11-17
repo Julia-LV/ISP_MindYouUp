@@ -96,7 +96,7 @@ include '../../components/new_patient_layout_start.php';
 
     <!-- Header -->
     <div class="mb-6">
-        <h1 class="text-3xl font-bold text-[#F26647]">Emotional Diary</h1>
+        <h1 class="text-3xl font-bold text-[#F26647] text-center">Emotional Diary</h1>
     </div>
     
     <!-- Include the NEW tabs component -->
