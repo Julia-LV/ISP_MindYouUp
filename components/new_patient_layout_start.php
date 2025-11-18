@@ -22,56 +22,9 @@ $current_page = basename($_SERVER['PHP_SELF']);
       This is the main flex container for the whole screen.
       It will be at least the full height of the screen.
     -->
-    <div class="flex h-full">
-        
-        <!-- 
-          SIDEBAR (Desktop)
-          - `h-screen` makes it fill the screen height.
-          - `sticky top-0` keeps it locked in place on scroll.
-          
-        -->
-        <aside id="main-sidebar" 
-               class="hidden md:flex flex-col w-64 bg-white border-r fixed top-0 left-0 h-full z-20 transition-all duration-300">
-            
-            
-
-            <!-- Navigation Links -->
-            <nav class="flex-1 p-4 space-y-2 overflow-y-auto pt-20">
-                <?php
-                // We'll update this nav as we build new pages
-                $nav_links = [
-                    'home_patient.php' => 'Dashboard',
-                    'new_emotional_diary.php' => 'Emotional Diary',
-                    'new_tic_log.php' => 'Tic Log' // Future page
-                ];
-                
-                foreach ($nav_links as $url => $title) {
-                    $is_active = ($current_page == $url);
-                    $base_classes = "flex items-center space-x-3 px-4 py-2.5 rounded-lg transition-colors";
-                    $active_classes = "bg-green-100 text-green-800 font-semibold";
-                    $inactive_classes = "text-gray-600 hover:bg-gray-100 hover:text-gray-900";
-                    $link_class = $is_active ? ($base_classes . " " . $active_classes) : ($base_classes . " " . $inactive_classes);
-                    
-                    echo '<a href="' . $url . '" class="' . $link_class . '">';
-                    echo '<span>' . htmlspecialchars($title) . '</span>';
-                    echo '</a>';
-                }
-                ?>
-            </nav>
-
-            <!-- Bottom/Logout Area -->
-            <div class="p-4 border-t">
-                <a href="../auth/logout.php" class="flex items-center space-x-3 px-4 py-2.5 rounded-lg text-gray-600 hover:bg-red-50 hover:text-red-600">
-                    <span>Log Out</span>
-                </a>
-            </div>
-        </aside>
-
-        <!-- 
-          MOBILE-ONLY OVERLAY
-          This dark background appears when the mobile menu is open.
-        -->
-        <div id="sidebar-overlay" class="hidden md:hidden fixed inset-0 bg-black/50 z-10"></div>
+    <?php include '../../includes/navbar.php'; ?>
+    
+    
 
         <!-- 
           MAIN CONTENT AREA
@@ -84,7 +37,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
               TOPBAR (This is the new part!)
               This is the header for the *main content*.
             -->
-            <header class="h-16 bg-white border-b flex items-center justify-between px-4 sticky top-0 z-10">
+            <header class="h-16 bg-[#FFF7E1] border-b flex items-center justify-between px-4 sticky top-0 z-10">
                 
                 <!-- Hamburger Button (controls sidebar) -->
                 <div class="flex items-center space-x-2">

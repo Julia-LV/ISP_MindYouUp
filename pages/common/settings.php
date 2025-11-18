@@ -26,6 +26,8 @@
     <title>Settings</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
+    <!-- TailwindCSS CDN -->
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <style>
         /* Brand colors requested by user */
         :root {
@@ -132,6 +134,8 @@
     </style>
 </head>
 <body>
+    <?php include '../../includes/navbar.php'; ?>
+
     <h1>Settings</h1>
     <div class="settings-container">
         <a class="btn" href="notifications.php">Notifications</a>

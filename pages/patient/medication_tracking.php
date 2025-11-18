@@ -104,6 +104,8 @@ function humanize_days($daysCsv) {
 <html lang="en">
 <head>
     <meta charset="utf-8">
+    <!-- TailwindCSS CDN -->
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <title>Track Medications</title>
     <style>
         /* Brand colors */
@@ -153,8 +155,9 @@ function humanize_days($daysCsv) {
     </style>
 </head>
 <body>
+    
+
     <div class="container">
-        <a href="settings.php">&larr; Back to Settings</a>
     <h1>Medication tracker</h1>
 
         <?php if ($message): ?><div class="message"><?= htmlspecialchars($message) ?></div><?php endif; ?>

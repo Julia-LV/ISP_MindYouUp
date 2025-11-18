@@ -107,6 +107,8 @@ mysqli_stmt_close($stmt);
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
+    <!-- TailwindCSS CDN -->
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <title>Resource Hub</title>
     <style>
         :root{--bg-creme:#FFF7E1;--accent-orange:#F26647;--accent-green:#005949;--radius:10px}
@@ -130,9 +132,9 @@ mysqli_stmt_close($stmt);
     </style>
 </head>
 <body>
+
     <div class="wrap">
         <div class="header">
-            <a class="back" href="../common/patient_profile.php">&larr; Back to profile</a>
             <h1>Resource Hub</h1>
         </div>
         <?php if (!empty($showingAll)): ?>

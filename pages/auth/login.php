@@ -60,7 +60,7 @@ include '../../components/header_component.php';
 <!-- 
   We add the <body> tag that this page needs.
 -->
-<body class="bg-[#FFFDF5] flex items-center justify-center min-h-screen p-4">
+<body class="bg-[#FFF7E1] flex items-center justify-center min-h-screen p-4">
 <?php
 
 $form_title = 'Log In';
