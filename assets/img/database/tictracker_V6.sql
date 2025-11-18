@@ -9,6 +9,13 @@ SET NAMES utf8mb4;
 -- --------------------------------------------------------
 -- Table structure and inserts
 -- --------------------------------------------------------
+<<<<<<< Updated upstream
+=======
+CREATE DATABASE IF NOT EXISTS `tictracker_V6` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
+USE `tictracker_V6`;
+
+
+>>>>>>> Stashed changes
 
 -- 1. user_profile
 CREATE TABLE `user_profile` (
@@ -37,6 +44,28 @@ INSERT INTO `user_profile` (`User_ID`,`User_Image`,`First_Name`,`Last_Name`,`Ema
 (10, '/images/users/10.jpg','Miguel', 'Santos',  'miguel.santos@clinic.example',  'pass_placeholder_10',37, 'Professional');
 
 
+<<<<<<< Updated upstream
+=======
+-- 4. patient_professional_link
+CREATE TABLE `patient_professional_link` (
+  `Link_ID` int(11) NOT NULL AUTO_INCREMENT,
+  `Patient_ID` int(11) NOT NULL,
+  `Professional_ID` int(11) NOT NULL,
+  `Assigned_Date` date NOT NULL,
+  PRIMARY KEY (`Link_ID`),
+  FOREIGN KEY (`Patient_ID`) REFERENCES `user_profile`(`User_ID`) ON DELETE CASCADE ON UPDATE CASCADE,
+  FOREIGN KEY (`Professional_ID`) REFERENCES `user_profile`(`User_ID`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+INSERT INTO `patient_professional_link` (`Link_ID`,`Patient_ID`,`Professional_ID`,`Assigned_Date`) VALUES
+(1, 1, 6, '2025-02-10'),
+(2, 2, 7, '2024-11-05'),
+(3, 3, 8, '2025-06-01'),
+(4, 4, 9, '2023-09-20'),
+(5, 5, 10,'2025-08-15');
+
+
+>>>>>>> Stashed changes
 -- 2. patient_profile
 CREATE TABLE `patient_profile` (
   `User_ID` int(11) NOT NULL,
@@ -74,6 +103,7 @@ INSERT INTO `professional_profile` (`User_ID`,`Link_ID`) VALUES
 (10,5);
 
 
+<<<<<<< Updated upstream
 -- 4. patient_professional_link
 CREATE TABLE `patient_professional_link` (
   `Link_ID` int(11) NOT NULL AUTO_INCREMENT,
@@ -91,6 +121,8 @@ INSERT INTO `patient_professional_link` (`Link_ID`,`Patient_ID`,`Professional_ID
 (3, 3, 8, '2025-06-01'),
 (4, 4, 9, '2023-09-20'),
 (5, 5, 10,'2025-08-15');
+=======
+>>>>>>> Stashed changes
 
 
 -- 5. emotional_diary
@@ -243,7 +275,11 @@ CREATE TABLE `password_resets` (
   KEY `Token` (`Token`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+<<<<<<< Updated upstream
 INSERT INTO `password_resets` (`E-mail`,`Token`,`Expires`) VALUES
+=======
+INSERT INTO `password_resets` (`Email`,`Token`,`Expires`) VALUES
+>>>>>>> Stashed changes
 ('maria.silva@example.com','token_abc123', 1760000000),
 ('joao.pereira@example.com','token_def456', 1760003600);
 
@@ -262,6 +298,11 @@ COMMIT;
 -- Run as part of the dump import: these are safe to include here.
 -- ================================================
 
+<<<<<<< Updated upstream
+=======
+
+
+>>>>>>> Stashed changes
 DELIMITER $$
 
 DROP TRIGGER IF EXISTS trg_chat_log_before_ins$$
@@ -366,4 +407,7 @@ BEGIN
 END$$
 
 DELIMITER ;
+<<<<<<< Updated upstream
 
+=======
+>>>>>>> Stashed changes
