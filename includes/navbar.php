@@ -30,7 +30,7 @@
             flex flex-col justify-between">
 
     <div class="w-full">
-    <div class="flex items-center justify-center py-6 border-b border-red-300">
+    <div class=" h-16 flex items-center justify-center py-6 border-b border-grey-100">
         <img src="../../assets/img/MYU logos/MYU_Horizontal Logo.png" alt="Logo Desktop" class="hidden lg:block w-full h-10 object-contain">
         <img src="../../assets/img/MYU logos/MYU_Vertical Logo.png" alt="Logo Tablet" class="hidden md:block lg:hidden w-full h-10 object-contain">
     </div>

@@ -10,20 +10,20 @@
 session_start();
 $message = "";
 $message_type = "error";
-$token = $_GET['token'] ?? '';
+$token = $_GET['Token'] ?? '';
 $token_is_valid = false;
 $user_email = ""; // We'll get this from the token
 
 require_once '../../config.php';
 
 // We now check for the token in the POST data OR the GET data.
-$token = $_POST['token'] ?? $_GET['token'] ?? '';
+$token = $_POST['token'] ?? $_GET['Token'] ?? '';
 
 if (empty($token)) {
     $message = "Invalid or missing reset token.";
 } else {
     // Token exists, let's validate it
-    $sql_check = "SELECT email, expires FROM password_resets WHERE token = ? AND expires > ?";
+    $sql_check = "SELECT Email, Expires FROM password_resets WHERE Token = ? AND Expires > ?";
     $current_time = time();
     
     if ($stmt = $conn->prepare($sql_check)) {
@@ -56,13 +56,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && $token_is_valid) {
         // All good! Update the user's password in the MAIN user_profile table
         $hashed_password = password_hash($password, PASSWORD_DEFAULT);
         
-        $sql_update = "UPDATE user_profile SET `Password` = ? WHERE `E-mail` = ?";
+        $sql_update = "UPDATE user_profile SET `Password` = ? WHERE `Email` = ?";
         if ($stmt_update = $conn->prepare($sql_update)) {
             $stmt_update->bind_param("ss", $hashed_password, $user_email);
             $stmt_update->execute();
             
             // Password updated! Now delete the token so it can't be reused.
-            $sql_delete = "DELETE FROM password_resets WHERE token = ?";
+            $sql_delete = "DELETE FROM password_resets WHERE Token = ?";
             if ($stmt_delete = $conn->prepare($sql_delete)) {
                 $stmt_delete->bind_param("s", $token);
                 $stmt_delete->execute();
@@ -83,6 +83,7 @@ $conn->close();
 
 // --- 2. Page Display ---
 $page_title = 'Reset Password - Mind You Up';
+$no_layout = true; // disable topbar + wrapper for this page
 include '../../components/header_component.php'; 
 
 ?>

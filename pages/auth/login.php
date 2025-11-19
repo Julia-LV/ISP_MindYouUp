@@ -27,7 +27,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     if (empty($email) || empty($password)) {
         $message = "Please enter both email and password.";
     } else {
-        $sql = "SELECT User_ID, First_Name, `Role`, `Password` FROM user_profile WHERE `E-mail` = ?";
+        $sql = "SELECT User_ID, First_Name, `Role`, `Password` FROM user_profile WHERE `Email` = ?";
         if ($stmt = $conn->prepare($sql)) {
             $stmt->bind_param("s", $email); $stmt->execute(); $stmt->store_result();
             if ($stmt->num_rows == 1) {
@@ -55,6 +55,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 }
 // --- 2. Page Display ---
 $page_title = 'Log In - Mind You Up';
+$no_layout = true; // disable topbar + wrapper for this page
 include '../../components/header_component.php'; 
 ?>
 <!-- 

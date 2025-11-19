@@ -24,7 +24,7 @@
                 -->
                 <img src="../../assets/img/emojis/v_new.png" alt="Very Good" class="w-12 h-12">
             </label>
-            <span class="block text-xs text-gray-500 mt-1">I feel in control</span>
+            <span class="block text-xs text-gray-500 mt-1">1. I feel in control</span>
         </div>
         
         <!-- Good -->
@@ -34,7 +34,7 @@
                 <!-- UPDATE THIS PATH: -->
                 <img src="../../assets/img/emojis/iv_new.png" alt="Good" class="w-12 h-12">
             </label>
-            <span class="block text-xs text-gray-500 mt-1">I feel somewhat in control</span>
+            <span class="block text-xs text-gray-500 mt-1">2. I feel somewhat in control</span>
         </div>
         
         <!-- Okay -->
@@ -44,7 +44,7 @@
                 <!-- UPDATE THIS PATH: -->
                 <img src="../../assets/img/emojis/iii_new.png" alt="Okay" class="w-12 h-12">
             </label>
-            <span class="block text-xs text-gray-500 mt-1">I feel neutral</span>
+            <span class="block text-xs text-gray-500 mt-1">3. I feel neutral</span>
         </div>
         
         <!-- Bad -->
@@ -54,7 +54,7 @@
                 <!-- UPDATE THIS PATH: -->
                 <img src="../../assets/img/emojis/ii_new.png" alt="Bad" class="w-12 h-12">
             </label>
-            <span class="block text-xs text-gray-500 mt-1">I feel with little control</span>
+            <span class="block text-xs text-gray-500 mt-1">4. I feel with little control</span>
         </div>
         
         <!-- Very Bad -->
@@ -64,7 +64,7 @@
                 <!-- UPDATE THIS PATH: -->
                 <img src="../../assets/img/emojis/i_new.png" alt="Very Bad" class="w-12 h-12">
             </label>
-            <span class="block text-xs text-gray-500 mt-1">I feel out of control</span>
+            <span class="block text-xs text-gray-500 mt-1">5. I feel out of control</span>
         </div>
         
     </div>

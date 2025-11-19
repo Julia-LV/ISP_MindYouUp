@@ -22,7 +22,7 @@ $active_classes = 'font-semibold text-green-800 border-b-2 border-green-800';
 $inactive_classes = 'font-medium text-gray-500 hover:text-gray-700';
 
 ?>
-<div class="flex space-x-2 mb-6 border-b border-gray-300">
+<div class="flex space-x-2 -mt-3 mb-2 border-b border-gray-300">
     <?php foreach ($tabs as $title => $url): ?>
         
         <a href="<?php echo $url; ?>" 

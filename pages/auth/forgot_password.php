@@ -32,7 +32,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $message = "Invalid email format.";
     } else {
         // Check if this email exists in our user_profile table
-        $sql_check = "SELECT User_ID FROM user_profile WHERE `E-mail` = ?";
+        $sql_check = "SELECT User_ID FROM user_profile WHERE `Email` = ?";
         if ($stmt = $conn->prepare($sql_check)) {
             $stmt->bind_param("s", $email);
             $stmt->execute();
@@ -48,7 +48,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 $expires = time() + 3600; // time() is in seconds. 3600 = 1 hour.
 
                 // 3. Store this token in our new 'password_resets' table
-                $sql_insert = "INSERT INTO password_resets (email, token, expires) VALUES (?, ?, ?)";
+                $sql_insert = "INSERT INTO password_resets (Email, Token, Expires) VALUES (?, ?, ?)";
                 if ($stmt_insert = $conn->prepare($sql_insert)) {
                     $stmt_insert->bind_param("ssi", $email, $token, $expires);
                     $stmt_insert->execute();
@@ -100,14 +100,16 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
 // --- 2. Page Display ---
 $page_title = 'Forgot Password - Mind You Up';
+$no_layout = true; // disable topbar + wrapper for this page
 include '../../components/header_component.php'; 
 ?>
 <!-- 
   We add the <body> tag that this page needs.
 -->
-<body class="bg-[#FFFDF5] flex items-center justify-center min-h-screen p-4">
+<body class="bg-[#FFF7E1] flex items-center justify-center min-h-screen p-4">
 <?php
 $form_title = 'Forgot Password';
+
 $form_subtitle = 'Enter your email to get a reset link';
 include '../../components/auth_card_start.php'; 
 

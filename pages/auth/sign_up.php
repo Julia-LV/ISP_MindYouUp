@@ -41,7 +41,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $message = "You must agree to the terms and conditions.";
     } else {
         // Validation passed, check if email already exists
-        $sql_check = "SELECT User_ID FROM user_profile WHERE `E-mail` = ?";
+        $sql_check = "SELECT User_ID FROM user_profile WHERE `Email` = ?";
         if ($stmt = $conn->prepare($sql_check)) {
             $stmt->bind_param("s", $email);
             $stmt->execute();
@@ -52,7 +52,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             } else {
                 // Email is new, proceed to insert
                 // Note: The 'Age' column name in your DB must match!
-                $sql_insert = "INSERT INTO user_profile (First_Name, Last_Name, Age, `E-mail`, `Password`, `Role`) VALUES (?, ?, ?, ?, ?, ?)";
+                $sql_insert = "INSERT INTO user_profile (First_Name, Last_Name, Age, `Email`, `Password`, `Role`) VALUES (?, ?, ?, ?, ?, ?)";
                 
                 if ($stmt_insert = $conn->prepare($sql_insert)) {
                     $hashed_password = password_hash($password, PASSWORD_DEFAULT);
@@ -82,6 +82,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
 // --- 2. Page Display ---
 $page_title = 'Sign Up - Mind You Up';
+$no_layout = true; // disable topbar + wrapper for this page
 include '../../components/header_component.php'; 
 
 ?>
@@ -89,7 +90,7 @@ include '../../components/header_component.php';
 <!-- 
   We add the <body> tag that this page needs.
 -->
-<body class="bg-[#FFFDF5] flex items-center justify-center min-h-screen p-4">
+<body class="bg-[#FFF7E1] flex items-center justify-center min-h-screen p-4">
 
 <?php
 

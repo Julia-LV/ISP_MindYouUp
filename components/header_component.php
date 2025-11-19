@@ -10,6 +10,7 @@
 
 // Set a default page title if one isn't provided
 $page_title = $page_title ?? 'Mind You Up';
+$no_layout = $no_layout ?? false;
 ?>
 <!DOCTYPE html>
 <html lang="en" class="h-full">
@@ -38,6 +39,25 @@ $page_title = $page_title ?? 'Mind You Up';
     <script src="../../js/main.js" defer></script>
 
 </head>
+
+<?php if (!$no_layout): ?>
+<div class="flex-1 flex flex-col w-full md:pl-64">
+    <!-- TOPBAR for pages that use the layout -->
+    <header class="h-16 bg-[#FFF7E1] border-b sticky top-0 z-20 grid grid-cols-3 items-center px-4">
+        <div class="flex items-center space-x-4"></div>
+        <!-- optional left content here -->
+
+        <div class="text-center">
+            <h1 class="text-3xl font-bold text-[#F26647] m-0"><?php echo htmlspecialchars($page_title); ?></h1>
+        </div>
+
+        <div class="flex items-center justify-end space-x-4"></div>
+        <!-- optional right content here -->
+    </header>
+<?php endif; ?>                  
+                
+
+               
 <!-- 
   This body tag is now clean. 
   The 'h-full' and 'bg-gray-100' work with the layout.

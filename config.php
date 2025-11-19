@@ -2,7 +2,7 @@
 $servername = "localhost";
 $username = "root";
 $password = "";
-$dbname = "mindyouup_db";
+$dbname = "tictracker_v6";
 $port = 3307;
 
 $conn = mysqli_connect($servername, $username, $password, $dbname, $port);
