@@ -125,12 +125,12 @@ $current_page = basename($_SERVER['PHP_SELF']);
 
 
 <!-- Main Content Wrapper -->
-<main class="flex-1 w-full p-6 md:p-2 overflow-y-auto bg-[#FFFDF5]">
+<main class="flex-1 w-full p-6 md:p-2 overflow-y-auto bg-[#E9F0E9]">
 
     <div class="p-6 md:p-8 space-y-6 max-w-7xl mx-auto">
         <!-- Page title -->
-        <div class="text-center">
-            <h2 class="text-3xl font-bold text-[#F26647] mb-2">
+        <div class="text-left">
+            <h2 class="text-3xl font-bold text-[#005949] mb-2">
                 <?php echo htmlspecialchars($page_title); ?>
             </h2>
         </div>

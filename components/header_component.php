@@ -49,10 +49,10 @@ $body_class = $body_class ?? 'h-full bg-gray-100'
       - md:pl-20 (approx 80px): For Tablet/Laptop when sidebar is just icons.
       - xl:pl-64 (approx 256px): For Big Screens when sidebar is full width.
     -->
-    <div class="flex-1 flex flex-col min-h-screen w-full md:pl-20 xl:pl-64 transition-all duration-300">
+    <div id="main-wrapper" class="flex-1 flex flex-col min-h-screen w-full md:pl-20 transition-all duration-300">
         
         <!-- TOPBAR -->
-        <header class="h-16 bg-[#FFF7E1] border-b sticky top-0 z-50 grid grid-cols-3 items-center px-4 shadow-sm">
+        <header class="h-16 bg-[#FCFBF7] border-b sticky top-0 z-50 grid grid-cols-3 items-center px-4 shadow-sm">
             <div class="flex items-center space-x-4">
                  <!-- Optional: Add a Mobile Menu Button here if needed -->
             </div>
