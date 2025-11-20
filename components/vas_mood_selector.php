@@ -48,7 +48,7 @@
                     max="10" 
                     step="1" 
                     value="5"
-                    style="z-index: 0;"
+                    style="z-index: 20;"
                     class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer focus:outline-none relative bg-transparent"
                 >
                 <!-- Background Track for aesthetics -->
@@ -72,15 +72,17 @@
     /* Custom Thumb Styling */
     #vas-mood-slider::-webkit-slider-thumb {
         -webkit-appearance: none;
-        height: 24px;
-        width: 24px;
+        height: 28px;
+        width: 28px;
         border-radius: 50%;
         background: #ffffff;
         border: 4px solid currentColor; /* Inherits text color from JS */
         cursor: pointer;
-        margin-top: -8px; /* Center thumb on track */
-        box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+        margin-top: -10px; /* Center thumb on track */
+        box-shadow: 0 4px 6px rgba(0,0,0,0.2);
         transition: transform 0.1s, border-color 0.3s;
+        position: relative;
+        z-index: 30;
     }
     #vas-mood-slider::-webkit-slider-thumb:hover {
         transform: scale(1.1);

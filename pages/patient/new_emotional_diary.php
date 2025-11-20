@@ -71,7 +71,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $notes = trim($_POST['notes'] ?? '');
     
     // We get the 'Ocurrence' from your DB structure
-    $ocurrence = date('Y-m-d H:i:s'); 
+    $occurrence = date('Y-m-d H:i:s'); 
 
     // Validation
     if (empty($emotion)) {
@@ -83,12 +83,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         if ($sleep === '') { $sleep = null; }
 
         // Your DB has 7 fields in this order
-        $sql = "INSERT INTO emotional_diary (Patient_ID, Emotion, Ocurrence, Stress, Anxiety, Sleep, Notes) 
+        $sql = "INSERT INTO emotional_diary (Patient_ID, Emotion, Occurrence, Stress, Anxiety, Sleep, Notes) 
                 VALUES (?, ?, ?, ?, ?, ?, ?)";
         
         if ($stmt = $conn->prepare($sql)) {
-            // 'isiiiss' = integer, string, integer, integer, integer, string, string
-            $stmt->bind_param("isiiiss", $patient_id,  $emotion, $ocurrence, $stress, $anxiety, $sleep, $notes);
+            // 'isiiiss' = integer, string, integer, integer, integer, integer, string
+            $stmt->bind_param("issiiis", $patient_id,  $emotion, $occurrence, $stress, $anxiety, $sleep, $notes);
             
             if ($stmt->execute()) {
                 $message = "Your diary has been logged successfully!";
@@ -108,8 +108,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
 // --- 2. Page Display ---
 $page_title = 'Emotional Diary';
-// This includes our (hopefully fixed) sidebar and sets up the main content area
-//include '../../components/new_patient_layout_start.php'; 
+
 include '../../components/header_component.php';
 include '../../includes/navbar.php';
 
@@ -122,98 +121,76 @@ $current_page = basename($_SERVER['PHP_SELF']);
   We load our NEW page-specific styles from css/new_diary.css
   The path is ../../ (up twice) to the root, then down into css/
 -->
-<link rel="stylesheet" href="../../css/new_emotional_diary.css">
+<!--link rel="stylesheet" href="../../css/new_emotional_diary.css"-->
 
-<body class="h-full bg-gray-100">
-            <!-- 
-              This is the main content wrapper.
-              - It has `w-full` (full-width)
-              - It has NO PADDING.
-              - Your new_emotional_diary.php page adds its own padding.
-            -->
-    <main class="flex-1 w-full p-6 md:p-2 overflow-y-auto bg-[#FFFDF5]">
 
-<!-- 
-  This is the main container for THIS PAGE.
-  It has padding (`p-6` or `p-8`) to keep content off the edges.
-  It uses `space-y-6` to stack the cards vertically.
--->
-        <div class="p-6 md:p-8 space-y-6">
+<!-- Main Content Wrapper -->
+<main class="flex-1 w-full p-6 md:p-2 overflow-y-auto bg-[#FFFDF5]">
 
-    
-    
-            <!-- Include the NEW tabs component -->
-            <?php 
-            $active_tab = 'Entry';
+    <div class="p-6 md:p-8 space-y-6 max-w-7xl mx-auto">
+        <!-- Page title -->
+        <div class="text-center">
+            <h2 class="text-3xl font-bold text-[#F26647] mb-2">
+                <?php echo htmlspecialchars($page_title); ?>
+            </h2>
+        </div>
+
+        <!-- Tabs -->
+        <?php 
+        $active_tab = 'Entry';
+        if (file_exists('../../components/diary_tabs.php')) {
             include '../../components/diary_tabs.php'; 
+        }
+        ?>
+
+        <!-- Form -->
+        <form action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>" method="POST" class="space-y-6">
+
+            <!-- Message -->
+            <?php if (!empty($message)): ?>
+                <div class="p-4 rounded-md <?php echo $message_type == 'success' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'; ?>" role="alert">
+                    <p><?php echo htmlspecialchars($message); ?></p>
+                </div>
+            <?php endif; ?>
+
+            <!-- LAYER 1: Mood Selector -->
+            <?php 
+            if ($patient_age > 0 && $patient_age <= 16) {
+                if (file_exists('../../components/new_mood_selector.php')) {
+                    include '../../components/new_mood_selector.php'; 
+                }
+            } else {
+                if (file_exists('../../components/vas_mood_selector.php')) {
+                    include '../../components/vas_mood_selector.php';
+                }
+            }
             ?>
 
-            <!-- Start the Form -->
-            <form action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>" method="POST" class="space-y-6">
+            <!-- LAYER 2: Metrics -->
+            <?php if(file_exists('../../components/metrics_grid.php')) include '../../components/metrics_grid.php'; ?>
 
-                <!-- Message Handling (Full Width) -->
-                <?php if (!empty($message)): ?>
-                    <div class="p-4 rounded-md <?php echo $message_type == 'success' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'; ?>" role="alert">
-                        <p><?php echo htmlspecialchars($message); ?></p>
-                    </div>
-                <?php endif; ?>
-
-                <!-- 
-                  LAYER 1: Mood Selector (Conditional)
-                  - Age <= 16: Shows Faces
-                  - Age > 16: Shows VAS Slider
-                -->
-                <?php 
-                if ($patient_age > 0 && $patient_age <= 16) {
-                    if (file_exists('../../components/new_mood_selector.php')) {
-                        include '../../components/new_mood_selector.php'; 
-                    } else {
-                        echo "<div class='text-red-500'>Error: Mood Selector component missing</div>";
-                    }
-                } else {
-                    // Default or Age > 16
-                    if (file_exists('../../components/vas_mood_selector.php')) {
-                        include '../../components/vas_mood_selector.php';
-                    } else {
-                        echo "<div class='text-red-500'>Error: VAS component missing</div>";
-                    }
-                }
-                ?>
-
-
-                <!-- 
-                  SANDWICH LAYER 2: (Full Width)
-                  3-COLUMN LAYOUT FOR METRICS
-                -->
-                <?php include '../../components/metrics_grid.php'; ?>
-
-
-                <!-- 
-                  SANDWICH LAYER 3: (Full Width)
-                  Journal Entry Component
-                -->
-                <?php include '../../components/journal_card.php'; ?>
-        
-        
-                <!-- Form Submit Buttons -->
-                <div class="flex items-center justify-end space-x-4">
-                    <!-- Cancel Button -->
-                    <a href="home_patient.php" class="text-center py-2.5 px-6 rounded-md text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 border border-gray-300">
-                        Cancel
-                    </a>
-                    <!-- Save Log Button (Reusing Button Component) -->
-                    <div>
-                        <?php
-                        // We make this button smaller (not w-full)
-                        $button_text = 'Save Entry'; $button_type = 'submit'; $extra_classes = 'px-6'; 
-                        include '../../components/button.php';
-                        ?>
-                    </div>
+            <!-- LAYER 3: Journal -->
+            <?php if(file_exists('../../components/journal_card.php')) include '../../components/journal_card.php'; ?>
+    
+            <!-- Buttons -->
+            <div class="flex items-center justify-end space-x-4">
+                <a href="home_patient.php" class="text-center py-2.5 px-6 rounded-md text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 border border-gray-300">
+                    Cancel
+                </a>
+                <div>
+                    <?php
+                    $button_text = 'Save Entry'; $button_type = 'submit'; $extra_classes = 'px-6'; 
+                    if(file_exists('../../components/button.php')) include '../../components/button.php';
+                    ?>
                 </div>
+            </div>
 
-            </form>
-        </div> <!-- Closes the p-6 md:p-8 space-y-6 div -->
-    </main> <!-- Closes the main flex-1 w-full div -->
+        </form>
+    </div> 
+</main> 
+
+<!-- Closing DIV from header_component's wrapper -->
+</div> 
 </body>
 </html>
 

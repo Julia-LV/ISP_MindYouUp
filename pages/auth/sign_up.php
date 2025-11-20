@@ -83,16 +83,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 // --- 2. Page Display ---
 $page_title = 'Sign Up - Mind You Up';
 $no_layout = true; // disable topbar + wrapper for this page
+// Define Custom Body Classes for Centering & Background Color
+$body_class = "bg-[#FFF7E1] min-h-screen flex items-center justify-center p-4 ";
 include '../../components/header_component.php'; 
 
-?>
 
-<!-- 
-  We add the <body> tag that this page needs.
--->
-<body class="bg-[#FFF7E1] flex items-center justify-center min-h-screen p-4">
-
-<?php
 
 $form_title = 'Sign Up';
 $form_subtitle = 'Create your account to get started';

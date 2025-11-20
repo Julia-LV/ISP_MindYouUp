@@ -84,17 +84,11 @@ $conn->close();
 // --- 2. Page Display ---
 $page_title = 'Reset Password - Mind You Up';
 $no_layout = true; // disable topbar + wrapper for this page
+// Define Custom Body Classes for Centering & Background Color
+$body_class = "bg-[#FFF7E1] min-h-screen flex items-center justify-center p-4 ";
 include '../../components/header_component.php'; 
 
-?>
 
-<!-- 
-  
-  We add the <body> tag that this page needs.
--->
-<body class="bg-[#FFFDF5] flex items-center justify-center min-h-screen p-4">
-
-<?php
 
 $form_title = 'Reset Your Password';
 $form_subtitle = 'Enter your new password below';
