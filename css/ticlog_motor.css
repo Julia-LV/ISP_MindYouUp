@@ -1,0 +1,23 @@
+
+    
+    /* Tab active states */
+    .tab-btn.active {
+        border-bottom-width: 2px;
+        border-color: #005949;
+        color: #005949;
+        font-weight: 600;
+    }
+
+    .tab-btn.inactive {
+        color: #6b7280;
+        font-weight: 500;
+    }
+
+    /* Hide/Show logic */
+    .tab-pane {
+        display: none;
+    }
+
+    .tab-pane.active {
+        display: block;
+    }

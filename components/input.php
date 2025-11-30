@@ -1,6 +1,6 @@
 <?php
 /*
- * input.php - FINAL, FIXED VERSION
+ * input.php 
  *
  * This component is now safe.
  * It REQUIRES $name to be set by the parent file.

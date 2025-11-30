@@ -41,7 +41,7 @@
 
         <!-- TIC LOGIN -->
         <li>
-            <a href="tic-log.php"
+            <a href="ticlog_motor.php"
                class="sidebar-link flex items-center py-2 hover:bg-red-100 rounded-lg transition
                           justify-center px-0">
                 <svg class="w-6 h-6 text-gray-700" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="#005949">
@@ -56,7 +56,7 @@
 
         <!-- EMOTIONAL DIARY -->
         <li>
-            <a href="emotional-diary.php"
+            <a href="new_emotional_diary.php"
                class="sidebar-link flex items-center py-2 hover:bg-red-100 rounded-lg transition
                           justify-center px-0">
                 <svg class="w-6 h-6 text-gray-700" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">

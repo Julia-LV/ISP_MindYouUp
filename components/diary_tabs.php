@@ -2,33 +2,43 @@
 /*
  * components/diary_tabs.php
  *
- * This component builds the "Entry" and "Visuals" tabs.
- * It's smart and knows which page is active.
- *
- * We pass it a variable:
- * $active_tab = 'Entry'; (or 'Visuals')
+ * A Reusable Tab Bar.
+ * * Variables to pass:
+ * $tabs       : Array ['Label' => 'Action/Link']
+ * $active_tab : The Label of the currently active tab
+ * $is_js      : true/false (If true, treats the link as an ID or JS call)
  */
 
-$active_tab = $active_tab ?? 'Entry'; // Default to Entry
+$tabs = $tabs ?? []; // Default to empty if not passed
+$active_tab = $active_tab ?? '';
+$is_js = $is_js ?? false;
 
-// Define our two tabs
-$tabs = [
-    'Entry' => 'new_emotional_diary.php',
-    'Visuals' => '#' // This is the page we will build later
-];
-
-// Define the styles
-$active_classes = 'font-semibold text-green-800 border-b-2 border-green-800';
-$inactive_classes = 'font-medium text-gray-500 hover:text-gray-700';
-
+// Styles
+$active_classes = 'font-semibold text-[#005949] border-b-2 border-[#005949]';
+$inactive_classes = 'font-medium text-gray-500 hover:text-gray-700 border-b-2 border-transparent';
 ?>
-<div class="flex space-x-2 -mt-3 mb-2 border-b border-gray-300">
-    <?php foreach ($tabs as $title => $url): ?>
+
+<div class="flex space-x-2 -mt-3 mb-6 border-b border-gray-300">
+    <?php foreach ($tabs as $label => $action): ?>
         
-        <a href="<?php echo $url; ?>" 
-           class="flex-1 py-3 text-center <?php echo ($active_tab == $title) ? $active_classes : $inactive_classes; ?>">
-            <?php echo $title; ?>
-        </a>
+        <?php if($is_js): ?>
+            <button 
+                type="button"
+                onclick="<?php echo $action; ?>" 
+                class="flex-1 py-3 text-center focus:outline-none transition-colors <?php echo ($active_tab === $label) ? 'active ' . $active_classes : $inactive_classes; ?>"
+                id="tab-btn-<?php echo strtolower(explode(' ', $label)[0]); ?>" 
+            >
+                <?php echo htmlspecialchars($label); ?>
+            </button>
+
+        <?php else: ?>
+            <a 
+                href="<?php echo $action; ?>" 
+                class="flex-1 py-3 text-center transition-colors <?php echo ($active_tab === $label) ? $active_classes : $inactive_classes; ?>"
+            >
+                <?php echo htmlspecialchars($label); ?>
+            </a>
+        <?php endif; ?>
 
     <?php endforeach; ?>
 </div>

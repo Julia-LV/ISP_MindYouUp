@@ -53,7 +53,7 @@ if ($stmt_age = $conn->prepare($sql_age)) {
         $stmt_age->bind_result($db_age);
         if ($stmt_age->fetch()) {
             // Assign the fetched age directly
-            $patient_age = $db_age; 
+            $patient_age = $db_age;
         }
     }
     $stmt_age->close();
@@ -69,9 +69,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $anxiety = $_POST['anxiety'] ?? 0;
     $stress = $_POST['stress'] ?? 0;
     $notes = trim($_POST['notes'] ?? '');
-    
+
     // We get the 'Ocurrence' from your DB structure
-    $occurrence = date('Y-m-d H:i:s'); 
+    $occurrence = date('Y-m-d H:i:s');
 
     // Validation
     if (empty($emotion)) {
@@ -80,16 +80,18 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         // DEBUG: Check what patient_id is
         error_log("DEBUG: patient_id = " . $patient_id . ", emotion = " . $emotion);
         // Handle empty sleep value (make it NULL for the database)
-        if ($sleep === '') { $sleep = null; }
+        if ($sleep === '') {
+            $sleep = null;
+        }
 
         // Your DB has 7 fields in this order
         $sql = "INSERT INTO emotional_diary (Patient_ID, Emotion, Occurrence, Stress, Anxiety, Sleep, Notes) 
                 VALUES (?, ?, ?, ?, ?, ?, ?)";
-        
+
         if ($stmt = $conn->prepare($sql)) {
             // 'isiiiss' = integer, string, integer, integer, integer, integer, string
             $stmt->bind_param("issiiis", $patient_id,  $emotion, $occurrence, $stress, $anxiety, $sleep, $notes);
-            
+
             if ($stmt->execute()) {
                 $message = "Your diary has been logged successfully!";
                 $message_type = "success";
@@ -136,11 +138,14 @@ $current_page = basename($_SERVER['PHP_SELF']);
         </div>
 
         <!-- Tabs -->
-        <?php 
+        <?php
+        $tabs = [
+            'Entry'   => 'new_emotional_diary.php',
+            'Visuals' => 'visuals_page.php'
+        ];
         $active_tab = 'Entry';
-        if (file_exists('../../components/diary_tabs.php')) {
-            include '../../components/diary_tabs.php'; 
-        }
+        $is_js = false; // Tell component to use <a> tags
+        include '../../components/diary_tabs.php';
         ?>
 
         <!-- Form -->
@@ -154,10 +159,10 @@ $current_page = basename($_SERVER['PHP_SELF']);
             <?php endif; ?>
 
             <!-- LAYER 1: Mood Selector -->
-            <?php 
+            <?php
             if ($patient_age > 0 && $patient_age <= 16) {
                 if (file_exists('../../components/new_mood_selector.php')) {
-                    include '../../components/new_mood_selector.php'; 
+                    include '../../components/new_mood_selector.php';
                 }
             } else {
                 if (file_exists('../../components/vas_mood_selector.php')) {
@@ -167,31 +172,45 @@ $current_page = basename($_SERVER['PHP_SELF']);
             ?>
 
             <!-- LAYER 2: Metrics -->
-            <?php if(file_exists('../../components/metrics_grid.php')) include '../../components/metrics_grid.php'; ?>
+            <?php if (file_exists('../../components/metrics_grid.php')) include '../../components/metrics_grid.php'; ?>
 
             <!-- LAYER 3: Journal -->
-            <?php if(file_exists('../../components/journal_card.php')) include '../../components/journal_card.php'; ?>
-    
+            <?php if (file_exists('../../components/journal_card.php')) include '../../components/journal_card.php'; ?>
+
             <!-- Buttons -->
-            <div class="flex items-center justify-end space-x-4">
-                <a href="home_patient.php" class="text-center py-2.5 px-6 rounded-md text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 border border-gray-300">
-                    Cancel
-                </a>
-                <div>
+            <div class="flex items-center justify-end space-x-4 mt-8">
+
+                <div class="w-auto">
                     <?php
-                    $button_text = 'Save Entry'; $button_type = 'submit'; $extra_classes = 'px-6'; 
-                    if(file_exists('../../components/button.php')) include '../../components/button.php';
+                    $label = 'Cancel';
+                    $type = 'link';
+                    $href = 'home_patient.php';
+                    $variant = 'secondary';
+                    $width = 'w-auto';
+                    include '../../components/button.php';
                     ?>
                 </div>
-            </div>
+
+                <div class="w-auto">
+                    <?php
+                    $label = 'Save Entry';
+                    $type = 'submit';
+                    $variant = 'primary';
+                    $width = 'w-auto';
+                    // We reset variables we don't need to ensure cleanliness
+                    $href = null;
+                    include '../../components/button.php';
+                    ?>
+                </div>
 
         </form>
-    </div> 
-</main> 
+    </div>
+</main>
 
 <!-- Closing DIV from header_component's wrapper -->
-</div> 
+</div>
 </body>
+
 </html>
 
 <!-- 
@@ -214,7 +233,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
             anxietyValue.textContent = `Selected: ${event.target.value}`;
         });
     }
-    
+
     // When the stress slider is moved, update its text
     if (stressSlider) {
         stressSlider.addEventListener('input', (event) => {

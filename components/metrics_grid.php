@@ -19,19 +19,18 @@
     </div>
 
     <!-- Box 2: Anxiety Slider -->
-    <div class="bg-white p-6 rounded-lg shadow-sm">
-        <label for="anxiety" class="block text-sm font-semibold text-gray-700 mb-2">Anxiety Level</label>
-        <!-- We use our custom CSS class "diary-slider" -->
-        <input type="range" id="anxiety" name="anxiety" min="0" max="10" value="0" class="diary-slider">
-        <span class="text-xs text-gray-500" id="anxiety-value">Selected: 0</span> 
-    </div>
+    <?php 
+        $label = 'Anxiety Level'; 
+        $id = 'anxiety'; 
+        $name = 'anxiety'; 
+        include 'slider_card.php'; 
+    ?>
 
-    <!-- Box 3: Stress Slider -->
-    <div class="bg-white p-6 rounded-lg shadow-sm">
-        <label for="stress" class="block text-sm font-semibold text-gray-700 mb-2">Stress Level</label>
-        <!-- We use our custom CSS class "diary-slider" -->
-        <input type="range" id="stress" name="stress" min="0" max="10" value="0" class="diary-slider">
-        <span class="text-xs text-gray-500" id="stress-value">Selected: 0</span>
-    </div>
+    <?php 
+        $label = 'Stress Level'; 
+        $id = 'stress'; 
+        $name = 'stress'; 
+        include 'slider_card.php'; 
+    ?>
 
 </div> <!-- End 3-Column Grid -->
