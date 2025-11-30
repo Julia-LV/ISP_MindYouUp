@@ -149,14 +149,8 @@ $current_page = basename($_SERVER['PHP_SELF']);
         ?>
 
         <!-- Form -->
-        <form action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>" method="POST" class="space-y-6">
+        <form action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>" method="POST" class="space-y-6" id="emotional-form">
 
-            <!-- Message -->
-            <?php if (!empty($message)): ?>
-                <div class="p-4 rounded-md <?php echo $message_type == 'success' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'; ?>" role="alert">
-                    <p><?php echo htmlspecialchars($message); ?></p>
-                </div>
-            <?php endif; ?>
 
             <!-- LAYER 1: Mood Selector -->
             <?php
@@ -194,11 +188,12 @@ $current_page = basename($_SERVER['PHP_SELF']);
                 <div class="w-auto">
                     <?php
                     $label = 'Save Entry';
-                    $type = 'submit';
+                    $type = 'button';
                     $variant = 'primary';
                     $width = 'w-auto';
                     // We reset variables we don't need to ensure cleanliness
                     $href = null;
+                    $onclick = "askConfirm()";
                     include '../../components/button.php';
                     ?>
                 </div>
@@ -209,6 +204,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
 
 <!-- Closing DIV from header_component's wrapper -->
 </div>
+<?php include '../../components/modals.php'; ?>
 </body>
 
 </html>
@@ -220,6 +216,51 @@ $current_page = basename($_SERVER['PHP_SELF']);
   In the future, we can move this to 'js/new_diary.js'.
 -->
 <script>
+    // --- CONFIRMATION LOGIC ---
+    function askConfirm() {
+        let isMoodSelected = false;
+
+        // 1. SEARCH FOR RADIO BUTTONS (Age <= 16)
+        // We get a list of all radio buttons named "emotion"
+        const radios = document.querySelectorAll('input[name="emotion"][type="radio"]');
+
+        if (radios.length > 0) {
+            // WE ARE IN "RADIO MODE"
+            // Check if at least one is checked
+            const checkedRadio = document.querySelector('input[name="emotion"]:checked');
+            if (checkedRadio) {
+                isMoodSelected = true;
+            }
+        } 
+        else {
+            // 2. SEARCH FOR SLIDER / HIDDEN INPUT (Age > 16)
+            // We look for an input named "emotion" that IS NOT a radio
+            const inputField = document.querySelector('input[name="emotion"]');
+            
+            if (inputField && inputField.value.trim() !== "") {
+                isMoodSelected = true;
+            }
+        }
+
+        // --- VALIDATION RESULT ---
+        if (!isMoodSelected) {
+            alert("Please select a mood before saving.");
+            return; // Stop here, don't show the popup
+        }
+
+        // Call the Global Helper from modals.php
+        openConfirm(
+            "Log Mood",                   
+            "Are you sure you want to save this emotional entry?", 
+            "Yes, Save Mood"              
+        );
+    }
+
+    // Handle the "Yes, Proceed" click
+    document.getElementById('globalConfirmBtn').addEventListener('click', function() {
+        document.getElementById('emotional-form').submit();
+    });
+
     // Find the anxiety slider and its text
     const anxietySlider = document.getElementById('anxiety');
     const anxietyValue = document.getElementById('anxiety-value');
@@ -241,3 +282,11 @@ $current_page = basename($_SERVER['PHP_SELF']);
         });
     }
 </script>
+
+<?php if (!empty($message) && $message_type === 'success'): ?>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        openSuccess("Mood Logged!", "Your emotional diary entry has been saved successfully.");
+    });
+</script>
+<?php endif; ?>

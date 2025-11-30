@@ -373,81 +373,7 @@ include '../../includes/navbar.php';
     </div>
 </main>
 
-</div>
-<div id="confirmModal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"></div>
-
-        <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
-
-        <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg w-full">
-            <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                <div class="sm:flex sm:items-start">
-                    <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-emerald-100 sm:mx-0 sm:h-10 sm:w-10">
-                        <svg class="h-6 w-6 text-emerald-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                        </svg>
-                    </div>
-                    <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
-                        <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">
-                            Confirm Entry
-                        </h3>
-                        <div class="mt-2">
-                            <p class="text-sm text-gray-500" id="modal-message">
-                                Are you sure you want to save this log?
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse gap-3">
-                <button type="button" id="confirmBtn" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-[#005949] text-base font-medium text-white hover:bg-[#004539] focus:outline-none sm:ml-3 sm:w-auto sm:text-sm">
-                    Yes, Save
-                </button>
-                <button type="button" onclick="closeModal()" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
-                    Cancel
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<div id="successModal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"></div>
-        <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
-
-        <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-sm w-full">
-            <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                <div class="sm:flex sm:items-start">
-                    <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-green-100 sm:mx-0 sm:h-10 sm:w-10">
-                        <svg class="h-6 w-6 text-green-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                        </svg>
-                    </div>
-                    <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
-                        <h3 class="text-lg leading-6 font-medium text-gray-900" id="success-title">
-                            Entry Recorded!
-                        </h3>
-                        <div class="mt-2">
-                            <p class="text-sm text-gray-500" id="success-message">
-                                Your tic entry has been successfully saved to your log.
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse gap-2">
-                <a href="home_patient.php" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-[#005949] text-base font-medium text-white hover:bg-[#004539] focus:outline-none sm:ml-3 sm:w-auto sm:text-sm">
-                    Cancel
-                </a>
-                <button type="button" onclick="document.getElementById('successModal').classList.add('hidden')" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
-                    Log Another
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
+<?php include '../../components/modals.php'; ?>
 </body>
 
 </html>
@@ -585,50 +511,35 @@ include '../../includes/navbar.php';
         }
     });
 
-    // --- CONFIRMATION MODAL LOGIC ---
-    let formToSubmit = null; // Variable to remember which form triggered the popup
+    // --- 7. MODAL LOGIC (Using the Reusable Component) ---
+    let formToSubmit = null;
 
     function askConfirm(type) {
-        const modal = document.getElementById('confirmModal');
-        const title = document.getElementById('modal-title');
-        const msg = document.getElementById('modal-message');
-
-        // Remove hidden class to show modal
-        modal.classList.remove('hidden');
-
         if (type === 'no_tics') {
-            title.innerText = "Log Good Day?";
-            msg.innerText = "This will record that you had NO tics today. Are you sure?";
             formToSubmit = 'form-no-tics';
+            // Use our new helper function!
+            openConfirm("Log Good Day?", "This will record that you had NO tics today. Are you sure?", "Yes, Log it");
         } else {
-            // Main Form Validation Check before showing modal
+            // Validation Logic
             const cat = document.getElementById('final_tic_category').value || (document.getElementById('active_context').value === 'motor' ? document.getElementById('motor_cat').value : document.getElementById('vocal_cat').value);
             const spec = document.getElementById('final_specific_tic').value || (document.getElementById('active_context').value === 'motor' ? document.getElementById('motor_spec').value : document.getElementById('vocal_spec').value);
 
-            // Simple validation check before annoying user with popup
             if (!cat || !spec) {
                 alert("Please select a Tic Type and Specific Tic before saving.");
-                closeModal();
                 return;
             }
 
-            title.innerText = "Save Tic Entry";
-            msg.innerText = "Are you sure you want to save this tic entry to your log?";
             formToSubmit = 'form-main';
+            // Use our new helper function!
+            openConfirm("Save Tic Entry", "Are you sure you want to save this tic entry to your log?", "Yes, Save");
         }
     }
 
-    function closeModal() {
-        document.getElementById('confirmModal').classList.add('hidden');
-        formToSubmit = null;
-    }
-
-    // When user clicks "Yes, Save"
-    document.getElementById('confirmBtn').addEventListener('click', function() {
+    // Attach click event to the component's button
+    document.getElementById('globalConfirmBtn').addEventListener('click', function() {
         if (formToSubmit) {
-            // If it's the main form, we need to populate the hidden fields one last time
+            // Populate hidden fields if main form
             if (formToSubmit === 'form-main') {
-                // Trigger the logic that populates hidden inputs
                 const context = document.getElementById('active_context').value;
                 if (context === 'motor') {
                     document.getElementById('final_tic_category').value = document.getElementById('motor_cat').value;
@@ -638,8 +549,7 @@ include '../../includes/navbar.php';
                     document.getElementById('final_specific_tic').value = document.getElementById('vocal_spec').value;
                 }
             }
-
-            // Actually Submit the form
+            // Submit
             document.getElementById(formToSubmit).submit();
         }
     });
@@ -651,11 +561,8 @@ include '../../includes/navbar.php';
 <?php if (!empty($message) && $message_type === 'success'): ?>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // Show the success modal immediately when page loads
-        const successModal = document.getElementById('successModal');
-        if(successModal) {
-            successModal.classList.remove('hidden');
-        }
+        // Use the helper from modals.php
+        openSuccess("Entry Recorded!", "Your tic entry has been successfully saved to your log.");
     });
 </script>
 <?php endif; ?>
