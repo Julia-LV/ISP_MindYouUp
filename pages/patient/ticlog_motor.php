@@ -59,39 +59,78 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     }
     // 2. Standard Entry
     else {
-        // Construct Tic Description (Category + Specific)
-        $cat = $_POST['tic_category'] ?? '';
-        $spec = $_POST['specific_tic'] ?? '';
-        $type_description = ($cat && $spec) ? "$cat: $spec" : "";
+        // --- 1. CAPTURE DATA ---
 
-        // Get other values
+        // Column 1: Type (Motor vs Vocal)
+        // We get this from the hidden input 'active_context'
+        $main_type = ucfirst($_POST['active_context'] ?? 'Motor');
+
+        // Column 2: Category (Simple vs Complex)
+        // We get this from the dropdown (e.g., "Simple motor tics")
+        $category = $_POST['tic_category'] ?? '';
+
+        // Column 3: Type_Description (Specific Tic)
+        // We get this from the second dropdown (e.g., "Eye blinking")
+        $specific_tic = $_POST['specific_tic'] ?? '';
+
+        // Other Fields
         $muscle = !empty($_POST['muscle_select']) ? $_POST['muscle_select'] : null;
         $duration = $_POST['duration'] ?? '';
         $intensity = intval($_POST['intensity'] ?? 0);
-        $pain = intval($_POST['stress'] ?? 0); // Reusing 'stress' logic for pain
-        $notes = trim($_POST['notes'] ?? '');
-        $pre_tic = $_POST['pre_tic'] ?? null;
+        $pain = intval($_POST['stress'] ?? 0);
         $self_reported = ($_POST['self_reported'] === 'patient') ? 1 : 0;
+        $pre_tic = $_POST['pre_tic'] ?? null;
+        $notes = trim($_POST['notes'] ?? '');
 
-        // Validation
-        if (empty($spec) || empty($duration)) {
-            $message = "Please select the specific Tic and the Duration.";
+        // --- 2. VALIDATION ---
+        if (empty($category) || empty($specific_tic) || empty($duration)) {
+            $message = "Please select the Tic Category, Specific Tic, and Duration.";
         } else {
-            $sql = "INSERT INTO tic_log (Patient_ID, Type_Description, Muscle_Group, Duration, Intensity, Pain_Level, Premonitory_Urge, Describe_Text, Self_Reported, Created_At) 
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())";
+
+            // --- 3. UPDATED SQL INSERT ---
+            // Now mapping to: Type, Category, Type_Description
+            $sql = "INSERT INTO tic_log 
+                    (Patient_ID, Type, Category, Type_Description, Muscle_Group, Duration, Intensity, Pain_Level, Premonitory_Urge, Describe_Text, Self_Reported, Created_At) 
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())";
 
             if ($stmt = $conn->prepare($sql)) {
-                $stmt->bind_param("isssiissi", $patient_id, $type_description, $muscle, $duration, $intensity, $pain, $pre_tic, $notes, $self_reported);
+                // --- 4. BIND PARAMETERS ---
+                // i = Patient_ID
+                // s = Type (Motor/Vocal)
+                // s = Category (Simple/Complex)
+                // s = Type_Description (Specific Tic)
+                // s = Muscle_Group
+                // s = Duration
+                // i = Intensity
+                // i = Pain_Level
+                // s = Premonitory_Urge
+                // s = Describe_Text
+                // i = Self_Reported
+
+                $stmt->bind_param(
+                    "isssssiissi",
+                    $patient_id,
+                    $main_type,     // e.g. "Motor"
+                    $category,      // e.g. "Simple motor tics"
+                    $specific_tic,  // e.g. "Eye blinking"
+                    $muscle,
+                    $duration,
+                    $intensity,
+                    $pain,
+                    $pre_tic,
+                    $notes,
+                    $self_reported
+                );
 
                 if ($stmt->execute()) {
                     $message = "Tic entry logged successfully!";
                     $message_type = "success";
                 } else {
-                    $message = "Something went wrong. " . $stmt->error;
+                    $message = "Database Error: " . $stmt->error;
                 }
                 $stmt->close();
             } else {
-                $message = "Database error: " . $conn->error;
+                $message = "Prepare Error: " . $conn->error;
             }
         }
     }
@@ -121,7 +160,26 @@ include '../../includes/navbar.php';
             </h2>
         </div>
 
+        <form method="POST" class="mb-6">
+            <div class="bg-gradient-to-r from-emerald-50 to-white border border-emerald-100 p-4 rounded-lg shadow-sm flex flex-col md:flex-row items-center justify-between gap-4">
+                <div class="flex items-center gap-3">
+                    <div class="p-2 bg-emerald-100 rounded-full text-emerald-600">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-emerald-900">Good day so far?</h3>
+                        <p class="text-sm text-emerald-700">If you haven't experienced any tics, log it quickly here.</p>
+                    </div>
+                </div>
 
+                <button type="submit" name="no_tics" class="w-full md:w-auto px-6 py-2.5 bg-[#005949] hover:bg-[#004539] text-white font-bold rounded-md shadow-sm transition-all flex items-center justify-center gap-2">
+                    
+                    <span>No Tic Today!</span>
+                </button>
+            </div>
+        </form>
 
         <form action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>" method="POST" class="space-y-6">
 
@@ -142,6 +200,8 @@ include '../../includes/navbar.php';
                 $is_js = true; // Tell component to use buttons, not links
                 include '../../components/diary_tabs.php';
                 ?>
+
+
 
                 <input type="hidden" name="active_context" id="active_context" value="motor">
                 <input type="hidden" name="tic_category" id="final_tic_category">
@@ -213,21 +273,23 @@ include '../../includes/navbar.php';
                     </select>
                 </div>
 
-                <?php 
-                    $label = 'Intensity'; 
-                    $id = 'intensity'; 
-                    $name = 'intensity'; 
-                    // We reset vars to be safe
-                    include '../../components/slider_card.php'; 
+                <?php
+                $label = 'Intensity';
+                $id = 'intensity';
+                $name = 'intensity';
+                // We reset vars to be safe
+                include '../../components/slider_card.php';
                 ?>
 
-                <?php 
-                    $label = 'Pain / Discomfort'; 
-                    // We map this to 'stress' or 'pain_meter' depending on your DB column
-                    $id = 'stress'; 
-                    $name = 'stress'; 
-                    $min = 0; $max = 5; $val = 0;
-                    include '../../components/slider_card.php'; 
+                <?php
+                $label = 'Pain / Discomfort';
+                // We map this to 'stress' or 'pain_meter' depending on your DB column
+                $id = 'stress';
+                $name = 'stress';
+                $min = 0;
+                $max = 5;
+                $val = 0;
+                include '../../components/slider_card.php';
                 ?>
             </div>
 
