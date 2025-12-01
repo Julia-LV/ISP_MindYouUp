@@ -106,56 +106,13 @@ function humanize_days($daysCsv) {
     <meta charset="utf-8">
     <!-- TailwindCSS CDN -->
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
     <title>Track Medications</title>
-    <style>
-        /* Brand colors */
-        :root {
-            --bg-creme: #FFF7E1; /* background */
-            --accent-orange: #F26647; /* primary buttons */
-            --accent-green:  #005949; /* headings */
-            --muted: rgba(11,42,36,0.65);
-            --radius: 8px;
-        }
-
-        body { font-family: Arial, sans-serif; background:var(--bg-creme); margin:0; padding:20px; color:var(--muted); }
-        .container { max-width:900px; margin:20px auto; background:#fff; padding:20px; border-radius:var(--radius); box-shadow:0 2px 8px rgba(0,0,0,.05); }
-        h1 { margin-top:0; color:var(--accent-green); }
-
-        /* Vertical form layout: stack fields full width */
-    form { display:block; }
-    form > div { margin-bottom:12px; }
-    form .full { width:100%; }
-    label { display:block; font-size:.95rem; margin-bottom:6px; color:#333; }
-    input[type="text"], input[type="time"], textarea { width:100%; padding:10px; border:1px solid #ddd; border-radius:6px; box-sizing:border-box; }
-    textarea { max-width:100%; resize:vertical; }
-        .days { display:flex; gap:8px; flex-wrap:wrap; }
-        .days label { display:flex; align-items:center; gap:6px; font-size:.9rem; }
-
-        /* Button styles (primary = orange) */
-        .btn {
-            display:inline-flex; align-items:center; justify-content:center;
-            padding:12px 16px; font-size:1rem; color:#fff; border-radius:8px; border:2px solid transparent;
-            background: linear-gradient(180deg, var(--accent-orange), #e6553e);
-            cursor:pointer; box-shadow:0 6px 14px rgba(0,0,0,0.08);
-        }
-
-        .btn:active { transform:translateY(1px); }
-
-        .message { color: #155724; background:#d4edda; padding:8px; border-radius:6px; margin-bottom:12px; }
-        table { width:100%; border-collapse:collapse; margin-top:16px; }
-        th, td { padding:10px; border-bottom:1px solid #eee; text-align:left; vertical-align:top; }
-        .small { font-size:.9rem; color:#666; }
-        .actions a { color:#c0392b; text-decoration:none; margin-left:8px; }
-
-        /* two-col helper kept for optional use; not used by default to keep strict vertical order */
-        @media (min-width: 700px) {
-            .two-col { display:flex; gap:12px; }
-            .two-col > div { flex:1; }
-        }
-    </style>
+    <link href="../../CSS/medication_tracking.css" rel="stylesheet">
 </head>
 <body>
-    
+    <?php include_once __DIR__ . '/../../includes/navbar.php'; ?>
 
     <div class="container">
     <h1>Medication tracker</h1>
@@ -232,5 +189,7 @@ function humanize_days($daysCsv) {
             </table>
         <?php endif; ?>
     </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
 </body>
 </html>
