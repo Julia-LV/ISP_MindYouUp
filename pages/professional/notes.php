@@ -90,6 +90,9 @@ if (!empty($_GET['edit'])) {
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <title>Professional notes</title>
 
+    <!-- TailwindCSS CDN (needed for navbar utility classes) -->
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
 
