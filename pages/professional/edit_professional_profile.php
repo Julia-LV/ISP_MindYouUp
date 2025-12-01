@@ -4,12 +4,12 @@ include('../../config.php');
 
 // 1. Security Check
 if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true ||
-    !isset($_SESSION['role']) || $_SESSION['role'] !== 'Patient') {
+    !isset($_SESSION['role']) || $_SESSION['role'] !== 'Professional') {
     header("Location: ../auth/login.php");
     exit;
 }
 
-$user_id = $_SESSION['user_id'];
+$professional_id = $_SESSION['user_id'];
 $message = '';
 $message_type = ''; // 'success' or 'error'
 
@@ -21,14 +21,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $last_name = trim($_POST['last_name']);
     $age = (int)$_POST['age'];
 
-    // Start Transaction (Good practice for multiple updates)
+    // Start Transaction (Good practice)
     $conn->begin_transaction();
     $update_successful = false;
 
-    // Update Text Data
+    // Update Text Data (First Name, Last Name, Age)
     $sql_update = "UPDATE user_profile SET First_Name = ?, Last_Name = ?, Age = ? WHERE User_ID = ?";
     $stmt = $conn->prepare($sql_update);
-    $stmt->bind_param("ssii", $first_name, $last_name, $age, $user_id);
+    $stmt->bind_param("ssii", $first_name, $last_name, $age, $professional_id);
 
     if ($stmt->execute()) {
         $update_successful = true;
@@ -49,7 +49,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
         if (in_array($file_ext, $allowed_types)) {
             // New filename: user_ID_timestamp.ext (for unique file names)
-            $new_filename = "user_" . $user_id . "_" . time() . "." . $file_ext;
+            $new_filename = "user_" . $professional_id . "_" . time() . "." . $file_ext;
             $target_file = $target_dir . $new_filename;
             
             // Path to store in DB (relative path for the website to use)
@@ -59,7 +59,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 // Update DB with new image path
                 $sql_img = "UPDATE user_profile SET User_Image = ? WHERE User_ID = ?";
                 $stmt_img = $conn->prepare($sql_img);
-                $stmt_img->bind_param("si", $db_path, $user_id);
+                $stmt_img->bind_param("si", $db_path, $professional_id);
                 
                 if ($stmt_img->execute()) {
                     $update_successful = true;
@@ -95,7 +95,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 // 4. Fetch Current Data (to pre-fill the form)
 $sql = "SELECT First_Name, Last_Name, Age, User_Image FROM user_profile WHERE User_ID = ?";
 $stmt = $conn->prepare($sql);
-$stmt->bind_param("i", $user_id);
+$stmt->bind_param("i", $professional_id);
 $stmt->execute();
 $result = $stmt->get_result();
 $user = $result->fetch_assoc();
@@ -106,7 +106,7 @@ $db_image_path = $user['User_Image'];
 $default_image = 'https://via.placeholder.com/150';
 
 if (!empty($db_image_path)) {
-    // Remove the leading slash (/) and prepend the necessary folder traversal (../../)
+    // Path: Go up two levels (../../) to get to the root, then find the image.
     $relative_path_segment = substr($db_image_path, 1); 
     $current_image = '../../' . $relative_path_segment;
 } else {
@@ -123,7 +123,7 @@ $final_image_src = htmlspecialchars($current_image) . "?" . $cache_buster;
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Edit Profile</title>
+    <title>Edit Professional Profile</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-[#E9F0E9] min-h-screen">
@@ -132,8 +132,8 @@ $final_image_src = htmlspecialchars($current_image) . "?" . $cache_buster;
     <div class="max-w-7xl mx-auto py-10 px-4 sm:px-6 lg:px-8">
         
         <div class="mb-6 flex items-center justify-between">
-            <h1 class="text-3xl font-bold text-gray-900">Edit Profile</h1>
-            <a href="patient_profile.php" class="text-sm text-[#005949] hover:underline">Back to Profile</a>
+            <h1 class="text-3xl font-bold text-gray-900">Edit Professional Profile</h1>
+            <a href="professional_profile.php" class="text-sm text-[#005949] hover:underline">Back to Profile</a>
         </div>
 
         <?php if ($message): ?>
@@ -189,11 +189,12 @@ $final_image_src = htmlspecialchars($current_image) . "?" . $cache_buster;
 
                 <div class="pt-4">
                     <?php
+                        // Configuração para button.php
                         $button_text = 'Save Changes';
                         $button_type = 'submit'; 
                         $extra_classes = 'w-full'; 
                         
-                        // FIX: Using __DIR__ for a reliable path for include
+                        // FIX: Usando __DIR__ para um caminho fiável para include
                         $path_to_button = __DIR__ . '/../../components/button.php';
 
                         if (file_exists($path_to_button)) {
