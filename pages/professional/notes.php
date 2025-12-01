@@ -13,30 +13,27 @@ if (!$userId || strtolower($role) !== 'professional') {
     exit;
 }
 
-// Data storage: per-professional JSON file to avoid touching DB schema here
-$dataDir = __DIR__ . '/../../data';
-if (!is_dir($dataDir)) @mkdir($dataDir, 0755, true);
-$notesFile = $dataDir . '/professional_notes_' . (int)$userId . '.json';
+// Data storage: use database table `professional_notes` and include shared DB config
+require_once __DIR__ . '/../../config.php';
 
 $notes = [];
-if (file_exists($notesFile)) {
-    $raw = file_get_contents($notesFile);
-    $notes = json_decode($raw, true) ?: [];
-}
-
 $message = '';
 
-// Handle delete via GET
+// fetch notes for this professional (newest first)
+$stmt = $conn->prepare("SELECT Note_ID, Note_Title, Note_Text FROM professional_notes WHERE Professional_ID = ? ORDER BY Note_ID DESC");
+if ($stmt) {
+    $stmt->bind_param('i', $userId);
+    $stmt->execute();
+    $res = $stmt->get_result();
+    while ($r = $res->fetch_assoc()) { $notes[] = $r; }
+    $stmt->close();
+}
+
+// Handle delete via GET (only delete notes belonging to this professional)
 if (!empty($_GET['delete'])) {
-    $del = (string)$_GET['delete'];
-    $changed = false;
-    foreach ($notes as $i => $n) {
-        if ((string)$n['id'] === $del) { unset($notes[$i]); $changed = true; break; }
-    }
-    if ($changed) {
-        file_put_contents($notesFile, json_encode(array_values($notes), JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
-        $message = 'Note deleted.';
-    }
+    $del = (int)$_GET['delete'];
+    $dstmt = $conn->prepare("DELETE FROM professional_notes WHERE Note_ID = ? AND Professional_ID = ?");
+    if ($dstmt) { $dstmt->bind_param('ii', $del, $userId); $dstmt->execute(); $dstmt->close(); }
     header('Location: notes.php'); exit;
 }
 
@@ -50,42 +47,39 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($title === '' && $text === '') {
         $message = 'Please enter a title or note text.';
     } else {
+        // Preserve optional patient ID by prefixing it into the stored text (no schema change)
+        $store_text = $text;
+        if ($patient !== '') {
+            $patient_clean = str_replace(["\n","\r","]"], [' ',' ',''], $patient);
+            $store_text = "[patient:" . $patient_clean . "]\n" . $text;
+        }
+
         if ($editId !== '') {
-            // update existing
-            foreach ($notes as &$n) {
-                if ((string)$n['id'] === $editId) {
-                    $n['title'] = $title;
-                    $n['text'] = $text;
-                    $n['patient'] = $patient;
-                    $n['updated'] = date('c');
-                    break;
-                }
-            }
-            unset($n);
+            $eid = (int)$editId;
+            $ustmt = $conn->prepare("UPDATE professional_notes SET Note_Title = ?, Note_Text = ? WHERE Note_ID = ? AND Professional_ID = ?");
+            if ($ustmt) { $ustmt->bind_param('ssii', $title, $store_text, $eid, $userId); $ustmt->execute(); $ustmt->close(); }
             $message = 'Note updated.';
         } else {
-            // create new
-            $note = [
-                'id' => uniqid('', true),
-                'title' => $title,
-                'text' => $text,
-                'patient' => $patient,
-                'created' => date('c'),
-            ];
-            array_unshift($notes, $note); // newest first
+            $istmt = $conn->prepare("INSERT INTO professional_notes (Professional_ID, Note_Title, Note_Text) VALUES (?, ?, ?)");
+            if ($istmt) { $istmt->bind_param('iss', $userId, $title, $store_text); $istmt->execute(); $istmt->close(); }
             $message = 'Note saved.';
         }
-        file_put_contents($notesFile, json_encode(array_values($notes), JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
-        // redirect to avoid resubmit
         header('Location: notes.php?ok=1'); exit;
     }
 }
 
-// Helper: find note by id for edit
+// Helper: load a single note for edit (if requested)
 $editNote = null;
 if (!empty($_GET['edit'])) {
-    $eid = (string)$_GET['edit'];
-    foreach ($notes as $n) if ((string)$n['id'] === $eid) { $editNote = $n; break; }
+    $eid = (int)$_GET['edit'];
+    $est = $conn->prepare("SELECT Note_ID, Note_Title, Note_Text FROM professional_notes WHERE Note_ID = ? AND Professional_ID = ? LIMIT 1");
+    if ($est) {
+        $est->bind_param('ii', $eid, $userId);
+        $est->execute();
+        $res = $est->get_result();
+        $editNote = $res->fetch_assoc() ?: null;
+        $est->close();
+    }
 }
 
 ?>
@@ -114,6 +108,7 @@ if (!empty($_GET['edit'])) {
     </style>
 </head>
 <body>
+    <?php include_once __DIR__ . '/../../includes/navbar.php'; ?>
     <div class="wrap">
         <a href="../common/index.php" class="small">&larr; Back</a>
         <h1>My professional notes</h1>
@@ -121,26 +116,44 @@ if (!empty($_GET['edit'])) {
             Action completed.
         </div><?php endif; ?>
 
-        <div class="grid">
+        <div class="grid" style="grid-template-columns:1fr">
             <div>
                 <div class="card">
+                    <?php
+                    // Prepare form values from DB-loaded $editNote (if present)
+                    $form_id = '';
+                    $form_title = '';
+                    $form_text = '';
+                    $form_patient = '';
+                    if (!empty($editNote)) {
+                        $form_id = $editNote['Note_ID'];
+                        $form_title = $editNote['Note_Title'];
+                        $stored = $editNote['Note_Text'] ?? '';
+                        if (preg_match('/^\[patient:(.*?)\]\s*(.*)$/s', $stored, $m)) {
+                            $form_patient = $m[1];
+                            $form_text = $m[2];
+                        } else {
+                            $form_text = $stored;
+                        }
+                    }
+                    ?>
                     <form method="post">
-                        <input type="hidden" name="edit_id" value="<?php echo htmlspecialchars($editNote['id'] ?? '') ?>">
+                        <input type="hidden" name="edit_id" value="<?php echo htmlspecialchars($form_id) ?>">
                         <div style="margin-bottom:12px">
                             <label for="title">Title</label>
-                            <input id="title" name="title" type="text" value="<?php echo htmlspecialchars($editNote['title'] ?? '') ?>">
+                            <input id="title" name="title" type="text" value="<?php echo htmlspecialchars($form_title) ?>">
                         </div>
                         <div style="margin-bottom:12px">
                             <label for="text">Note</label>
-                            <textarea id="text" name="text"><?php echo htmlspecialchars($editNote['text'] ?? '') ?></textarea>
+                            <textarea id="text" name="text"><?php echo htmlspecialchars($form_text) ?></textarea>
                         </div>
                         <div style="margin-bottom:12px">
                             <label for="patient">Patient ID (optional)</label>
-                            <input id="patient" name="patient" type="text" value="<?php echo htmlspecialchars($editNote['patient'] ?? '') ?>">
+                            <input id="patient" name="patient" type="text" value="<?php echo htmlspecialchars($form_patient) ?>">
                         </div>
                         <div style="display:flex;gap:8px;justify-content:flex-end">
-                            <?php if ($editNote): ?><a class="btn ghost" href="notes.php">Cancel</a><?php endif; ?>
-                            <button class="btn" type="submit"><?php echo $editNote ? 'Update note' : 'Save note' ?></button>
+                            <?php if ($form_id): ?><a class="btn ghost" href="notes.php">Cancel</a><?php endif; ?>
+                            <button class="btn" type="submit"><?php echo $form_id ? 'Update note' : 'Save note' ?></button>
                         </div>
                     </form>
                 </div>
@@ -152,18 +165,28 @@ if (!empty($_GET['edit'])) {
                             <p class="small">No notes yet. Use the form to add one.</p>
                         <?php else: ?>
                             <?php foreach ($notes as $n): ?>
+                                <?php
+                                $display_text = $n['Note_Text'] ?? '';
+                                $display_patient = '';
+                                if (preg_match('/^\[patient:(.*?)\]\s*(.*)$/s', $display_text, $m)) {
+                                    $display_patient = $m[1];
+                                    $display_text = $m[2];
+                                }
+                                $note_id = $n['Note_ID'];
+                                $note_title = $n['Note_Title'];
+                                ?>
                                 <div class="note-item">
                                     <div style="display:flex;justify-content:space-between;align-items:start">
                                         <div>
-                                            <strong><?php echo htmlspecialchars($n['title'] ?: '(no title)') ?></strong>
-                                            <div class="note-meta"><?php echo htmlspecialchars($n['patient'] ? 'Patient: '.$n['patient'] : 'General') ?> • <?php echo htmlspecialchars(date('Y-m-d H:i', strtotime($n['created']))) ?></div>
+                                            <strong><?php echo htmlspecialchars($note_title ?: '(no title)') ?></strong>
+                                            <div class="note-meta"><?php echo $display_patient ? htmlspecialchars('Patient: '.$display_patient) : 'General' ?> • <?php echo htmlspecialchars('ID: '.$note_id) ?></div>
                                         </div>
                                         <div class="actions">
-                                            <a class="small" href="?edit=<?php echo urlencode($n['id']) ?>">Edit</a>
-                                            <a class="small" href="?delete=<?php echo urlencode($n['id']) ?>" onclick="return confirm('Delete this note?')">Delete</a>
+                                            <a class="small" href="?edit=<?php echo urlencode($note_id) ?>">Edit</a>
+                                            <a class="small" href="?delete=<?php echo urlencode($note_id) ?>" onclick="return confirm('Delete this note?')">Delete</a>
                                         </div>
                                     </div>
-                                    <?php if ($n['text']): ?><div style="margin-top:8px;color:#222"><?php echo nl2br(htmlspecialchars($n['text'])) ?></div><?php endif; ?>
+                                    <?php if ($display_text): ?><div style="margin-top:8px;color:#222"><?php echo nl2br(htmlspecialchars($display_text)) ?></div><?php endif; ?>
                                 </div>
                             <?php endforeach; ?>
                         <?php endif; ?>
@@ -171,19 +194,7 @@ if (!empty($_GET['edit'])) {
                 </div>
             </div>
 
-            <aside>
-                <div class="card">
-                    <h3 style="margin-top:0">Tips</h3>
-                    <p class="small">Use notes to record session summaries, recommendations, or tasks for patients. Patient ID is optional.</p>
-                    <hr>
-                    <h4 style="margin:8px 0">DB integration (optional)</h4>
-                    <p class="small">If you prefer to store notes in the database table <code>professional_notes</code>, you can replace the JSON save/load with prepared INSERT/UPDATE/DELETE statements. Example (commented):</p>
-                    <pre style="background:#f6f6f6;padding:8px;border-radius:6px;font-size:.9rem;overflow:auto">// $sql = "INSERT INTO professional_notes (USE_USER_ID, PROFESSIONAL_ID, USER_ID, NOTE_TITLE, NOTE_TEXT) VALUES (?, ?, ?, ?, ?)";
-// // $stmt = $conn->prepare($sql);
-// // $stmt->bind_param('iiiss', $use_user_id, $professional_id, $patient_id, $title, $text);
-// // $stmt->execute();</pre>
-                </div>
-            </aside>
+            <!-- aside removed: Tips and JSON instructions intentionally omitted (DB integrated) -->
         </div>
     </div>
 </body>
