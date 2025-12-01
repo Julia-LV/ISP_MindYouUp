@@ -101,6 +101,7 @@ if (!empty($_GET['edit'])) {
 </head>
 <body>
     <?php include_once __DIR__ . '/../../includes/navbar.php'; ?>
+    <?php include __DIR__ . '/../../components/header_component.php'; ?>
     <div class="wrap">
         <a href="../common/index.php" class="small">&larr; Back</a>
         <h1>My professional notes</h1>

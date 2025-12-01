@@ -70,6 +70,7 @@ if ($conn && $foundTable) {
 </head>
 <body>
     <?php include __DIR__ . '/../../includes/navbar.php'; ?>
+    <?php include __DIR__ . '/../../components/header_component.php'; ?>
     <div class="page-wrap">
         <div class="notifications-panel">
         <a class="back" href="settings.php">&larr; Back to Settings</a>

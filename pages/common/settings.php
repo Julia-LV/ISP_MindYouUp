@@ -135,12 +135,10 @@
 </head>
 <body>
     <?php include '../../includes/navbar.php'; ?>
+    <?php include __DIR__ . '/../../components/header_component.php'; ?>
 
-    <h1>Settings</h1>
-    <div class="settings-container">
-        <a class="btn" href="notifications.php">Notifications</a>
-        <a class="btn" href="privacy.php">Privacy</a>
-        <a class="btn green" href="language.php">Language</a>
+
+  <a class="btn green" href="language.php">Language</a>
         <a class="btn outline" href="about.php">About the app</a>
     </div>
 </body>

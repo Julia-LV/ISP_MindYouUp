@@ -36,6 +36,7 @@ $selectedFileExists = $docKey && isset($docs[$docKey]) && file_exists($docs[$doc
 </head>
 <body>
   <?php include_once __DIR__ . '/../../includes/navbar.php'; ?>
+  <?php include __DIR__ . '/../../components/header_component.php'; ?>
   <div class="container">
     <h1>Terms & Conditions and Privacy Policy</h1>
     <p class="lead">Download or view the official documents below. If you need these files in another format, contact the site administrator.</p>
