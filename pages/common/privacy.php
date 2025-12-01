@@ -24,22 +24,12 @@ $selectedFileExists = $docKey && isset($docs[$docKey]) && file_exists($docs[$doc
   <meta charset="utf-8" />
   <title>Terms & Conditions — MindYouUp</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <style>
-    :root{--bg-creme:#FFF7E1;--accent-orange:#F26647;--accent-green:#005949;--muted:#666;--card-bg:#fff;--radius:10px}
-    html,body{height:100%}
-    body{font-family:Arial,Helvetica,sans-serif;margin:0;background:var(--bg-creme);color:#0b2a24}
-    .container{max-width:960px;margin:28px auto;padding:20px;background:var(--card-bg);border-radius:var(--radius);box-shadow:0 8px 24px rgba(0,0,0,0.06)}
-    h1{margin:0 0 12px;font-size:22px;color:var(--accent-green)}
-    p.lead{margin:0 0 18px;color:#444}
-    .list{display:flex;gap:12px;margin-bottom:18px}
-    .card{flex:1;padding:14px;border:1px solid #ececec;border-radius:8px;background:#fcfdff}
-    .card a{display:inline-block;margin-top:8px;padding:8px 12px;background:linear-gradient(180deg,var(--accent-green),#004b40);color:#fff;text-decoration:none;border-radius:6px}
-    .viewer{height:720px;border:1px solid #e6e9ef;border-radius:6px;overflow:hidden}
-    .notice{font-size:13px;color:var(--muted);margin-top:12px}
-    .fallback{padding:18px;text-align:center}
-    /* Responsive stack for small screens */
-    @media (max-width:820px){ .list{flex-direction:column} .viewer{height:520px} }
-  </style>
+
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
+
+  <!-- Page CSS (relative path) -->
+  <link href="../../CSS/privacy.css" rel="stylesheet">
 </head>
 <body>
   <?php include_once __DIR__ . '/../../includes/navbar.php'; ?>
@@ -91,5 +81,6 @@ $selectedFileExists = $docKey && isset($docs[$docKey]) && file_exists($docs[$doc
     <?php endif; ?>
 
   </div>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
 </body>
 </html>
