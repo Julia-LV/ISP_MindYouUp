@@ -94,10 +94,10 @@ $test_pid = 1;
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>MYU Portal</title>
   <!-- use the shared stylesheet -->
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="web_portal.css" />
   <style>
     /* Only keep modal-specific styles here so everything else
-       comes from style.css */
+       comes from web_portal.css */
     #delete-modal {
         position: fixed;
         inset: 0;
@@ -208,8 +208,25 @@ $test_pid = 1;
   </main>
 
   <footer class="app-footer">
-    <small>Connected to <code>mindyouup_db</code> · v3 schema with <code>created_at</code> patch</small>
-  </footer>
+  <div class="container small-text app-footer-inner">
+    <span>TicTracker – Mind You Up Portal</span>
+    <span>For clinical use and ongoing support in tic disorders.</span>
+    <span class="footer-links">
+      <a href="/ISP_MindYouUp/Privacy-Policy.pdf"
+         target="_blank"
+         rel="noopener">
+        Privacy Policy
+      </a>
+      <span aria-hidden="true">·</span>
+      <a href="/ISP_MindYouUp/Terms-Conditions.pdf"
+         target="_blank"
+         rel="noopener">
+        Terms &amp; Conditions
+      </a>
+    </span>
+  </div>
+</footer>
+
 
   <div id="delete-modal">
     <div class="card" style="max-width:400px; width:100%; text-align:center;">

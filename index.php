@@ -7,7 +7,7 @@ session_start();
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>TicTracker – Mind You Up Portal</title>
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="web_portal.css" />
 </head>
 <body>
   <!-- Sticky top bar -->
@@ -17,6 +17,16 @@ session_start();
         <a href="index.php" class="brand-main">TicTracker</a>
         <span class="brand-sub">by Mind You Up</span>
       </div>
+
+      <!-- Mobile hamburger -->
+      <button class="nav-toggle" type="button"
+              aria-label="Toggle navigation"
+              aria-expanded="false">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+
       <nav class="top-nav">
         <a href="#team">Team</a>
         <a href="#tictracker">TicTracker</a>
@@ -25,77 +35,35 @@ session_start();
         <a href="#articles">Articles</a>
         <a href="#faq">FAQ</a>
         <a href="about.php">About</a>
-        <a
-          href="https://your-app-url.example"
-          class="top-cta"
-          target="_blank"
-          rel="noopener"
-        >
+        <a href="pages/auth/login.php" class="top-cta">
           <span>•</span> Sign in / Sign up
         </a>
       </nav>
     </div>
   </header>
 
-  <main class="container">
-    <!-- HERO -->
-    <section class="portal-hero">
-      <div class="hero-grid">
-        <!-- Left: text + KPIs -->
-        <div>
-          <span class="pill">Digital support for tic disorders</span>
-          <h2 class="hero-title">
-            A calmer way to track tics
-          </h2>
-          <p class="hero-lead">
-            TicTracker helps you log tics, see patterns, and bring clearer
-            information into every appointment.
-          </p>
-          <ul class="hero-list">
-            <li>Track tics in seconds, wherever you are</li>
-            <li>Share a simple timeline with your clinician</li>
-            <li>Feel less alone between appointments</li>
-          </ul>
-
-          <div class="kpi-row">
-            <article class="kpi-card">
-              <div class="kpi-label">Monthly subscribers</div>
-              <div class="kpi-value">2,450+</div>
-              <div class="kpi-note">
-                Families and professionals using TicTracker each month
-              </div>
-            </article>
-
-            <article class="kpi-card">
-              <div class="kpi-label">Sessions supported</div>
-              <div class="kpi-value">18,000+</div>
-              <div class="kpi-note">
-                Therapy sessions prepared with TicTracker logs
-              </div>
-            </article>
-
-            <article class="kpi-card">
-              <div class="kpi-label">Countries</div>
-              <div class="kpi-value">12</div>
-              <div class="kpi-note">
-                Teams using Mind You Up around the world
-              </div>
-            </article>
-          </div>
-        </div>
-
-        <!-- Right: single calming photo -->
-        <aside class="hero-image-card" aria-label="Calming nature scene">
-          <!-- Save your lake photo as /images/forest.jpg -->
-          <img src="images/forest.jpg" alt="Children sitting by a calm lake in nature" />
-          <div class="hero-image-overlay">
-            <strong>Take a breath.</strong>
-            This space is designed to feel calm while you keep track of what matters.
-          </div>
-        </aside>
+  <!-- HERO (full-width background, text on left) -->
+  <section class="portal-hero">
+    <div class="hero-grid hero-left">
+      <div class="hero-text-block">
+        <span class="pill">Digital support for tic disorders</span>
+        <h2 class="hero-title">
+          A calmer way to track tics
+        </h2>
+        <p class="hero-lead">
+          TicTracker helps you log tics, see patterns, and bring clearer
+          information into every appointment.
+        </p>
+        <ul class="hero-list">
+          <li>Track tics in seconds, wherever you are</li>
+          <li>Share a simple timeline with your clinician</li>
+          <li>Feel less alone between appointments</li>
+        </ul>
       </div>
-    </section>
+    </div>
+  </section>
 
+  <main class="container">
     <!-- TEAM: circle cards linking to separate pages -->
     <section id="team">
       <div class="section-title">Our clinical team</div>
@@ -230,28 +198,24 @@ session_start();
       </div>
     </section>
 
-    <!-- STARS / TESTIMONIALS -->
+    <!-- TESTIMONIALS -->
     <section>
       <div class="section-title">What people say</div>
-      <div class="stars-wrap">
-        <div class="stars-score">
-          <div class="stars-score-value">4.8</div>
-          <div class="stars-stars">★★★★★</div>
-          <span>Average rating from families and clinicians using TicTracker</span>
+      <div class="testimonial-list">
+        <div class="testimonial">
+          <strong>Sarah, Parent of 11-year-old</strong>
+          <div class="testimonial-stars" aria-hidden="true">★★★★★</div>
+          “We finally see when tics spike and what might be setting them off. It’s been a game changer.”
         </div>
-        <div class="testimonial-list">
-          <div class="testimonial">
-            <strong>Parent of 11-year-old</strong>
-            “We finally see when tics spike and what might be setting them off. It’s been a game changer.”
-          </div>
-          <div class="testimonial">
-            <strong>Clinician</strong>
-            “I can focus sessions on what really changed instead of trying to remember the last few weeks.”
-          </div>
-          <div class="testimonial">
-            <strong>Young person with tics</strong>
-            “It’s nice to just tap and be done, rather than explaining everything every time.”
-          </div>
+        <div class="testimonial">
+          <strong>Dr. Emily Chen, Clinician</strong>
+          <div class="testimonial-stars" aria-hidden="true">★★★★☆</div>
+          “I can focus sessions on what really changed instead of trying to remember the last few weeks.”
+        </div>
+        <div class="testimonial">
+          <strong>Alex, Young person with tics</strong>
+          <div class="testimonial-stars" aria-hidden="true">★★★★★</div>
+          “It’s nice to just tap and be done, rather than explaining everything every time.”
         </div>
       </div>
     </section>
@@ -416,9 +380,23 @@ session_start();
     <div class="container small-text app-footer-inner">
       <span>TicTracker – Mind You Up Portal</span>
       <span>For clinical use and ongoing support in tic disorders.</span>
+      <span class="footer-links">
+        <a href="/ISP_MindYouUp/Privacy-Policy.pdf"
+           target="_blank"
+           rel="noopener">
+          Privacy Policy
+        </a>
+        <span aria-hidden="true">·</span>
+        <a href="/ISP_MindYouUp/Terms-Conditions.pdf"
+           target="_blank"
+           rel="noopener">
+          Terms &amp; Conditions
+        </a>
+      </span>
     </div>
   </footer>
 
+  <!-- Existing JS for cards & FAQ -->
   <script>
     // app cards
     (function () {
@@ -450,6 +428,45 @@ session_start();
           item.classList.toggle('is-open');
         });
       });
+    })();
+  </script>
+
+  <!-- Mobile nav toggle -->
+  <script>
+    (function () {
+      const toggle = document.querySelector('.nav-toggle');
+      const nav = document.querySelector('.top-nav');
+      if (!toggle || !nav) return;
+
+      toggle.addEventListener('click', () => {
+        const isOpen = nav.classList.toggle('is-open');
+        toggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+      });
+    })();
+  </script>
+
+  <!-- Rotate hero background between multiple images -->
+  <script>
+    (function () {
+      const hero = document.querySelector('.portal-hero');
+      if (!hero) return;
+
+      const backgrounds = [
+        'images/forest.jpg',
+        'images/forest2.jpg',
+        'images/nature.jpg'
+      ];
+
+      let current = 0;
+
+      function setBackground() {
+        hero.style.backgroundImage = 'url(' + backgrounds[current] + ')';
+        current = (current + 1) % backgrounds.length;
+      }
+
+      // Set initial background and change every 10 seconds
+      setBackground();
+      setInterval(setBackground, 10000);
     })();
   </script>
 </body>
