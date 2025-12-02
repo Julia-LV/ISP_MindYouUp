@@ -40,7 +40,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     } 
     $stmt->close();
 
-    // 3. Handle Image Upload - LÓGICA COMPLETA RESTAURADA
+    // 3. Handle Image Upload (Lógica Completa)
     if (isset($_FILES['profile_image']) && $_FILES['profile_image']['error'] == 0) {
         $target_dir = "../../images/users/"; // Garanta que esta pasta existe
         
@@ -200,17 +200,18 @@ $final_image_src = htmlspecialchars($current_image) . "?" . $cache_buster;
 
                 <div class="pt-4">
                     <?php
+                        // VARIÁVEIS PARA O COMPONENTE BUTTON.PHP
                         $button_text = 'Save Changes';
-                        $button_type = 'button'; 
+                        $button_type = 'button'; // Alterado para 'button' para ser controlado pelo JS/Modal
                         $extra_classes = 'w-full'; 
-                        $button_onclick = "showConfirmationModal(event)"; 
+                        $button_onclick = "showConfirmationModal(event)"; // Chama a função JS para abrir o modal
                         
-                        // Assumindo que o ficheiro de componente é 'button.php'
-                        $path_to_button = __DIR__ . '/../../components/button.php'; 
+                        $path_to_button = __DIR__ . '/../../components/simple_button.php';
 
                         if (file_exists($path_to_button)) {
                             include($path_to_button); 
                         } else {
+                            // Fallback
                             echo '<button type="button" onclick="showConfirmationModal(event)" class="w-full py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-[#005949] hover:bg-[#004539] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">Save Changes</button>';
                         }
                     ?>
@@ -247,16 +248,16 @@ $final_image_src = htmlspecialchars($current_image) . "?" . $cache_buster;
 
         // 7. Lógica para mostrar o modal de sucesso se o PHP o sinalizar
         <?php if ($show_success_modal): ?>
+            // 7.1. Abrir o Modal de Sucesso com o título e a mensagem
             openSuccess(
                 "Profile Updated!",
                 "<?php echo htmlspecialchars($message); ?>", 
                 "View Profile"
             );
             
-            // Ajustar o botão secundário
-            document.querySelector('#successModal .bg-gray-50 .flex-row-reverse button').innerText = "Stay Here"; 
-
-            // Ajustar o link do botão primário para o perfil
+            // 7.2. Ajustar o botão secundário de "Log Another" para "Stay Here"
+            document.querySelector('#successModal button').innerText = "Stay Here";
+            // 7.3. Ajustar o link do botão primário (Home) para o perfil (patient_profile.php)
             const homeLink = document.querySelector('#successModal .bg-gray-50 .flex-row-reverse a');
             if(homeLink) homeLink.setAttribute('href', 'patient_profile.php');
             
