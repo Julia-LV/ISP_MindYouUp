@@ -13,7 +13,6 @@ if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true ||
 }
 
 $professionalUserID = $_SESSION['user_id']; // Professional User_ID
-$professionalIsSender = $professionalUserID; 
 
 // --- VERIFY PATIENT USER_ID IN URL --- //
 if (!isset($_GET['patient_user_id']) || !is_numeric($_GET['patient_user_id'])) {
@@ -51,7 +50,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['message'])) {
         $stmtSend->execute();
     }
 
-    // Redireciona para evitar re-submissão
+    // Redirect to prevent form resubmission
     header("Location: chat.php?patient_user_id=" . $patientUserID);
     exit;
 }
@@ -84,112 +83,106 @@ $patientName = $resName['First_Name'] . " " . $resName['Last_Name'];
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Chat with <?= htmlspecialchars($patientName) ?></title>
 <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
 
 <style>
-/* Estilos garantindo a altura fixa e a barra de rolagem */
-body { 
-    display: block; 
-    margin: 0; 
-    font-family: Arial, sans-serif; 
-    background: #f4f6f9; 
-}
-.chat-container { 
-    /* CORREÇÃO APLICADA: max-width para 80% */
-    max-width: 80%; 
-    margin: 50px auto 30px; 
-    background: white; 
-    border-radius: 15px; 
-    padding: 20px; 
-    box-shadow: 0 4px 15px rgba(0,0,0,0.1); 
-    display: flex; 
-    flex-direction: column; 
-    gap: 20px; 
-}
-.chat-box { 
-    flex: 1; 
-    max-height: 70vh; 
-    overflow-y: auto; 
-    padding: 15px; 
-    border-radius: 12px; 
-    background: #fafafa; 
-    display: flex; 
-    flex-direction: column; 
-    gap: 10px; 
-}
-.message { 
-    padding: 10px 15px; 
-    border-radius: 12px; 
-    max-width: 70%; 
-    word-wrap: break-word; 
-}
-.message.sent { 
-    background-color: #005949; 
-    color: white; 
-    align-self: flex-end; 
-}
-.message.received { 
-    background-color: #f26647; 
-    color: white; 
-    align-self: flex-start; 
-}
-.message-time { 
-    font-size: 11px; 
-    color: #fff; 
-    margin-top: 2px; 
-    opacity: 0.8; 
-    text-align: right; 
-}
-form { 
-    display: flex; 
-    gap: 10px; 
-}
-input[type="text"] { 
-    flex: 1; 
-    padding: 10px; 
-    border-radius: 10px; 
-    border: 1px solid #ccc; 
-}
-button { 
-    padding: 10px 20px; 
-    border: none; 
-    border-radius: 10px; 
-    background: #005949; 
-    color: white; 
-    cursor: pointer; 
-}
-button:hover { background: #004437; }
+    /* Custom Scrollbar for better look */
+    .chat-box::-webkit-scrollbar {
+        width: 6px;
+    }
+    .chat-box::-webkit-scrollbar-track {
+        background: #f1f1f1; 
+    }
+    .chat-box::-webkit-scrollbar-thumb {
+        background: #c1c1c1; 
+        border-radius: 3px;
+    }
+    .chat-box::-webkit-scrollbar-thumb:hover {
+        background: #a8a8a8; 
+    }
+
+    /* Message Bubbles Colors */
+    .message.sent { 
+        background-color: #005949; /* Green (Professional) */
+        color: white; 
+        align-self: flex-end; 
+        border-bottom-right-radius: 2px;
+    }
+    .message.received { 
+        background-color: #f26647; /* Orange (Patient) */
+        color: white; 
+        align-self: flex-start; 
+        border-bottom-left-radius: 2px;
+    }
 </style>
 </head>
-<body>
-<?php include '../../includes/navbar.php'; ?>
-<div class="chat-container">
-    <h2 class="text-2xl font-bold text-[#005949]">Chat with <?= htmlspecialchars($patientName) ?></h2>
+<body class="bg-[#f4f6f9] h-screen flex flex-col font-sans overflow-hidden">
 
-    <div class="chat-box" id="chatBox">
-        <?php while ($row = $messages->fetch_assoc()): ?>
-            <?php
-            // Se o remetente for o profissional atual (o utilizador), a classe é 'sent'. Caso contrário, é 'received'.
-            $messageClass = ($row['Sender'] == $professionalUserID) ? 'sent' : 'received';
-            ?>
-            <div class="message <?= $messageClass ?>">
-                <?= nl2br(htmlspecialchars($row['Chat_Text'])) ?>
-                <div class="message-time"><?= date("M d H:i", strtotime($row['Chat_Time'])) ?></div>
-            </div>
-        <?php endwhile; ?>
+    <div class="flex-shrink-0">
+        <?php include '../../includes/navbar.php'; ?>
     </div>
 
-    <form method="POST">
-        <input type="text" name="message" placeholder="Type your message..." required>
-        <button type="submit">Send</button>
-    </form>
-</div>
+    <div class="flex-1 flex flex-col w-full md:w-4/5 mx-auto bg-white shadow-lg md:my-6 md:rounded-xl overflow-hidden border border-gray-200">
+        
+        <div class="p-4 border-b border-gray-200 bg-white flex-shrink-0">
+            <h2 class="text-xl md:text-2xl font-bold text-[#005949] flex items-center"> 
+                Chat with <?= htmlspecialchars($patientName) ?>
+            </h2>
+        </div>
+
+        <div class="chat-box flex-1 overflow-y-auto p-4 bg-[#fafafa] flex flex-col gap-3" id="chatBox">
+            <?php if ($messages->num_rows > 0): ?>
+                <?php while ($row = $messages->fetch_assoc()): ?>
+                    <?php
+                    // Logic: If Sender is ME (Professional), class is 'sent'. Else 'received'.
+                    $messageClass = ($row['Sender'] == $professionalUserID) ? 'sent' : 'received';
+                    $alignment = ($row['Sender'] == $professionalUserID) ? 'items-end' : 'items-start';
+                    ?>
+                    
+                    <div class="flex flex-col <?= $alignment ?> w-full">
+                        <div class="message <?= $messageClass ?> px-4 py-2.5 rounded-xl max-w-[85%] md:max-w-[70%] shadow-sm text-sm md:text-base break-words">
+                            <?= nl2br(htmlspecialchars($row['Chat_Text'])) ?>
+                        </div>
+                        <span class="text-[10px] md:text-xs text-gray-400 mt-1 mx-1">
+                            <?= date("M d H:i", strtotime($row['Chat_Time'])) ?>
+                        </span>
+                    </div>
+
+                <?php endwhile; ?>
+            <?php else: ?>
+                <div class="flex-1 flex items-center justify-center text-gray-400 text-sm">
+                    <p>No messages yet. Say hello!</p>
+                </div>
+            <?php endif; ?>
+        </div>
+
+        <form method="POST" class="p-3 md:p-4 bg-white border-t border-gray-200 flex gap-2 md:gap-3 flex-shrink-0">
+            <input type="text" name="message" placeholder="Type your message..." required autocomplete="off"
+                   class="flex-1 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#005949] focus:border-transparent transition-all">
+            
+            <button type="submit" 
+                    class="bg-[#005949] hover:bg-[#004437] text-white px-5 md:px-8 py-3 rounded-lg font-medium transition-colors shadow-md flex items-center justify-center">
+                Send
+            </button>
+        </form>
+
+    </div>
 
 <script>
-// Scroll automático para o final da caixa de mensagens
-const chatBox = document.getElementById('chatBox');
-chatBox.scrollTop = chatBox.scrollHeight;
+    // Auto-scroll to bottom logic
+    const chatBox = document.getElementById('chatBox');
+    
+    function scrollToBottom() {
+        chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    // Scroll immediately
+    scrollToBottom();
+
+    // Optional: Ensure scroll stays at bottom if images/content loads later (not applicable here strictly for text but good practice)
+    window.addEventListener('load', scrollToBottom);
 </script>
 
 </body>

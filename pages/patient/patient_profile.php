@@ -129,7 +129,7 @@ $start_date_display = $user['Start_Date'] ? date("d-m-Y", strtotime($user['Start
                         $extra_classes = 'w-full sm:w-auto'; 
                         
                         // FIX: Using __DIR__ for a reliable path for include
-                        $path_to_button = __DIR__ . '/../../components/button.php';
+                        $path_to_button = __DIR__ . '/../../components/simple_button.php';
 
                         if (file_exists($path_to_button)) {
                             include($path_to_button); 
