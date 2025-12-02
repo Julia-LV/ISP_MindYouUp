@@ -2,10 +2,9 @@
 session_start();
 include('../../config.php');
 
-if (!isset($_SESSION['user_id'])) { header("Location: ../auth/login.php"); exit; }
+if (!isset($_SESSION['user_id']) || $_SESSION['role'] != 'Professional') { header("Location: ../auth/login.php"); exit; }
 
 $user_id = $_SESSION['user_id'];
-$role = $_SESSION['role'] ?? 'Patient';
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     
@@ -13,30 +12,25 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $lname = $_POST['last_name'];
     $email = $_POST['email'];
     $age   = $_POST['age'];
+    $spec  = $_POST['specialization']; 
 
-    // 1. General Update
+    // Update General
     $stmt = $conn->prepare("UPDATE user_profile SET First_Name=?, Last_Name=?, Email=?, Age=? WHERE User_ID=?");
     $stmt->bind_param("sssii", $fname, $lname, $email, $age, $user_id);
     $stmt->execute();
 
-    // 2. Treatment Type (Only if selected)
-    if ($role == 'Patient' && !empty($_POST['treatment'])) {
-        $treatment = $_POST['treatment'];
-        $sql_p = "INSERT INTO patient_profile (User_ID, Treatment_Type) VALUES (?, ?) 
-                  ON DUPLICATE KEY UPDATE Treatment_Type = VALUES(Treatment_Type)";
-        $stmt_p = $conn->prepare($sql_p);
-        $stmt_p->bind_param("is", $user_id, $treatment);
-        $stmt_p->execute();
-    }
+    // Update Specialization
+    $sql_prof = "INSERT INTO professional_profile (User_ID, Specialization) VALUES (?, ?) ON DUPLICATE KEY UPDATE Specialization = VALUES(Specialization)";
+    $stmt2 = $conn->prepare($sql_prof);
+    $stmt2->bind_param("is", $user_id, $spec);
+    $stmt2->execute();
 
-    // 3. IMAGE HANDLING
-    // A. Check if "Remove Photo" was clicked
+    // IMAGE HANDLING
     if (isset($_POST['remove_photo'])) {
         $stmt = $conn->prepare("UPDATE user_profile SET User_Image = NULL WHERE User_ID=?");
         $stmt->bind_param("i", $user_id);
         $stmt->execute();
     }
-    // B. If a new file is uploaded, it overrides the removal
     if (isset($_FILES['profile_pic']) && $_FILES['profile_pic']['error'] == 0) {
         $file_name = time() . "_" . basename($_FILES["profile_pic"]["name"]);
         $target = "../../uploads/" . $file_name;
@@ -47,13 +41,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         }
     }
     
-    header("Location: patient_profile.php");
+    header("Location: professional_profile.php");
     exit;
 }
 
 // Fetch Data
-$sql = "SELECT u.First_Name, u.Last_Name, u.Email, u.Age, u.User_Image, p.Treatment_Type 
-        FROM user_profile u LEFT JOIN patient_profile p ON u.User_ID = p.User_ID WHERE u.User_ID = ?";
+$sql = "SELECT u.First_Name, u.Last_Name, u.Email, u.Age, u.User_Image, p.Specialization 
+        FROM user_profile u LEFT JOIN professional_profile p ON u.User_ID = p.User_ID WHERE u.User_ID = ?";
 $stmt = $conn->prepare($sql);
 $stmt->bind_param("i", $user_id);
 $stmt->execute();
@@ -104,22 +98,15 @@ include('../../components/header_component.php');
                         </div>
                     </div>
 
-                    <?php if($role == 'Patient'): ?>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Treatment Type</label>
-                        <select name="treatment" class="w-full rounded-lg border-gray-300 border p-2.5 bg-white">
-                            <option value="" disabled <?= empty($profile['Treatment_Type']) ? 'selected' : '' ?>>Select Type</option>
-                            <option value="Psychological" <?= ($profile['Treatment_Type'] ?? '') == 'Psychological' ? 'selected' : '' ?>>Psychological</option>
-                            <option value="Medical" <?= ($profile['Treatment_Type'] ?? '') == 'Medical' ? 'selected' : '' ?>>Medical</option>
-                            <option value="Both" <?= ($profile['Treatment_Type'] ?? '') == 'Both' ? 'selected' : '' ?>>Both</option>
-                        </select>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Specialization</label>
+                        <input type="text" name="specialization" value="<?= htmlspecialchars($profile['Specialization'] ?? '') ?>" placeholder="e.g. Clinical Psychologist" class="w-full rounded-lg border-gray-300 border p-2.5">
                     </div>
-                    <?php endif; ?>
 
                     <div class="pt-4 flex justify-between items-center border-t border-gray-100 mt-6">
                          <a href="../auth/reset_password.php" class="text-indigo-600 hover:underline text-sm font-medium">Change Password</a>
                         <div class="flex gap-3">
-                            <a href="patient_profile.php" class="px-5 py-2.5 rounded-lg text-gray-700 hover:bg-gray-100">Cancel</a>
+                            <a href="professional_profile.php" class="px-5 py-2.5 rounded-lg text-gray-700 hover:bg-gray-100">Cancel</a>
                             <button type="submit" class="px-5 py-2.5 rounded-lg bg-indigo-600 text-white font-medium hover:bg-indigo-700">Save Changes</button>
                         </div>
                     </div>

@@ -155,7 +155,7 @@
 
             <!-- LOGOUT Button -->
             <li>
-                <a href="../../logout.php"
+                <a href="../../pages/auth/logout.php"
                     class="sidebar-link flex items-center py-2 rounded-lg
                             justify-center
                             border border-transparent hover:border-red-500
