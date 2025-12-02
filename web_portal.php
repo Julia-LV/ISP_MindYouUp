@@ -95,21 +95,6 @@ $test_pid = 1;
   <title>MYU Portal</title>
   <!-- use the shared stylesheet -->
   <link rel="stylesheet" href="web_portal.css" />
-  <style>
-    /* Only keep modal-specific styles here so everything else
-       comes from web_portal.css */
-    #delete-modal {
-        position: fixed;
-        inset: 0;
-        background: rgba(0,0,0,.5);
-        display: none; /* hidden until JS opens it */
-        align-items: center;
-        justify-content: center;
-        padding: 16px;
-        z-index: 1000;
-    }
-    .btn-delete-open { margin: 0; }
-  </style>
 </head>
 <body>
   <header class="app-header">
@@ -196,7 +181,11 @@ $test_pid = 1;
                   <td><?= ((int)$row['Self-reported']) ? 'Self-reported' : 'Caregiver/admin' ?></td>
                   <td><?= date('Y-m-d H:i', strtotime($row['created_at'] ?? 'now')) ?></td>
                   <td>
-                    <button class="btn btn-danger btn-delete-open" data-tic-id="<?= (int)$row['Tic_ID'] ?>">Delete</button>
+                    <a href="?delete=<?= (int)$row['Tic_ID'] ?>"
+                       class="btn btn-danger"
+                       onclick="return confirm('Are you sure you want to permanently delete this tic log entry?');">
+                       Delete
+                    </a>
                   </td>
                 </tr>
               <?php endforeach; ?>
@@ -208,62 +197,23 @@ $test_pid = 1;
   </main>
 
   <footer class="app-footer">
-  <div class="container small-text app-footer-inner">
-    <span>TicTracker – Mind You Up Portal</span>
-    <span>For clinical use and ongoing support in tic disorders.</span>
-    <span class="footer-links">
-      <a href="/ISP_MindYouUp/Privacy-Policy.pdf"
-         target="_blank"
-         rel="noopener">
-        Privacy Policy
-      </a>
-      <span aria-hidden="true">·</span>
-      <a href="/ISP_MindYouUp/Terms-Conditions.pdf"
-         target="_blank"
-         rel="noopener">
-        Terms &amp; Conditions
-      </a>
-    </span>
-  </div>
-</footer>
-
-
-  <div id="delete-modal">
-    <div class="card" style="max-width:400px; width:100%; text-align:center;">
-        <h2>Confirm deletion</h2>
-        <p>Are you sure you want to permanently delete this tic log entry?</p>
-        <div class="actions" style="justify-content:center; margin-top: 15px;">
-            <button class="btn" id="btn-delete-cancel">Cancel</button>
-            <a class="btn btn-danger" id="btn-delete-confirm" href="#">Delete log</a>
-        </div>
+    <div class="container small-text app-footer-inner">
+      <span>TicTracker – Mind You Up Portal</span>
+      <span>For clinical use and ongoing support in tic disorders.</span>
+      <span class="footer-links">
+        <a href="/ISP_MindYouUp/Privacy-Policy.pdf"
+           target="_blank"
+           rel="noopener">
+           Privacy Policy
+        </a>
+        <span aria-hidden="true">·</span>
+        <a href="/ISP_MindYouUp/Terms-Conditions.pdf"
+           target="_blank"
+           rel="noopener">
+           Terms &amp; Conditions
+        </a>
+      </span>
     </div>
-  </div>
-
-  <script>
-    const deleteModal = document.getElementById('delete-modal');
-    const deleteConfirmBtn = document.getElementById('btn-delete-confirm');
-    const deleteCancelBtn = document.getElementById('btn-delete-cancel');
-    const deleteOpenBtns = document.querySelectorAll('.btn-delete-open');
-
-    deleteOpenBtns.forEach(btn => {
-      btn.addEventListener('click', function() {
-        const ticId = this.getAttribute('data-tic-id');
-        if (ticId) {
-          deleteConfirmBtn.href = '?delete=' + ticId;
-          deleteModal.style.display = 'flex';
-        }
-      });
-    });
-
-    deleteCancelBtn.addEventListener('click', function() {
-      deleteModal.style.display = 'none';
-    });
-
-    deleteModal.addEventListener('click', function(e) {
-      if (e.target === deleteModal) {
-        deleteModal.style.display = 'none';
-      }
-    });
-  </script>
+  </footer>
 </body>
 </html>

@@ -466,7 +466,7 @@ session_start();
 
       // Set initial background and change every 10 seconds
       setBackground();
-      setInterval(setBackground, 10000);
+      setInterval(setBackground, 3000);
     })();
   </script>
 </body>

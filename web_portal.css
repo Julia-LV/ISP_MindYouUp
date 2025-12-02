@@ -8,7 +8,9 @@
   --card-border: #f0d9d2;
 }
 
+
 /* ===== Base ===== */
+
 
 *,
 *::before,
@@ -33,7 +35,9 @@ a {
   color: var(--primary);
 }
 
+
 /* ===== Header ===== */
+
 
 .app-header {
   position: sticky;
@@ -123,7 +127,9 @@ a {
   background: rgba(255, 255, 255, 0.22);
 }
 
+
 /* ===== Hero base ===== */
+
 
 .hero-grid {
   display: grid;
@@ -174,7 +180,9 @@ a {
   margin-bottom: 4px;
 }
 
+
 /* ===== KPI row ===== */
+
 
 .kpi-row {
   display: grid;
@@ -215,7 +223,9 @@ a {
   margin-top: 2px;
 }
 
+
 /* ===== Legacy hero image card (not used) ===== */
+
 
 .hero-image-card {
   position: relative;
@@ -250,7 +260,9 @@ a {
   margin-bottom: 2px;
 }
 
+
 /* ===== Generic sections ===== */
+
 
 .section-title {
   margin-top: 48px;
@@ -280,7 +292,9 @@ a {
   margin-top: 0;
 }
 
+
 /* ===== Team ===== */
+
 
 .team-circle-row {
   display: flex;
@@ -337,7 +351,9 @@ a {
   color: var(--primary);
 }
 
+
 /* ===== Info card ===== */
+
 
 .info-card {
   border-radius: 18px;
@@ -408,7 +424,9 @@ a {
   transform: rotate(180deg);
 }
 
+
 /* ===== Apps ===== */
+
 
 .apps-grid {
   display: grid;
@@ -496,7 +514,9 @@ a {
   transform: rotate(180deg);
 }
 
+
 /* ===== Testimonials ===== */
+
 
 .testimonial-list {
   display: grid;
@@ -529,12 +549,16 @@ a {
   margin-bottom: 4px;
 }
 
+
 /* ===== Relaxing videos ===== */
 
+
+/* Relaxing videos */
 .video-grid {
   display: grid;
   gap: 16px;
   margin-top: 16px;
+  grid-template-columns: repeat(3, minmax(0, 1fr)); /* 3 squares across */
 }
 
 @media (min-width: 900px) {
@@ -572,7 +596,9 @@ a {
   font-size: 0.9rem;
 }
 
+
 /* ===== Articles ===== */
+
 
 .article-list {
   display: grid;
@@ -618,7 +644,9 @@ a {
   font-weight: 500;
 }
 
+
 /* ===== FAQ ===== */
+
 
 .faq-list {
   margin-top: 18px;
@@ -671,7 +699,9 @@ a {
   max-height: 200px;
 }
 
+
 /* ===== Highlight & footer ===== */
+
 
 .highlight-banner {
   margin: 32px 0 12px;
@@ -719,57 +749,55 @@ a {
   opacity: 0.9;
 }
 
+
 /* ===== About page ===== */
+
 
 .about-layout {
   margin-top: 40px;
   display: grid;
   gap: 28px;
-  align-items: stretch; /* let columns stretch to same height */
+  align-items: start;
 }
 
-/* Desktop: image column wider and fills full column height */
+/* Desktop: small, “cute” portrait card + wider text */
 @media (min-width: 900px) {
   .about-layout {
-    grid-template-columns: minmax(0, 1.7fr) minmax(0, 1.1fr);
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 1.9fr);
   }
 
   .about-image-wrap {
-    height: 100%;       /* fill full grid row height */
-    max-width: none;
+    max-width: 360px;
+    justify-self: start;
   }
 }
 
 /* Image card base */
-
 .about-image-wrap {
   border-radius: 24px;
   overflow: hidden;
-  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.18);
+  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.18);
   background: #000;
+  max-width: 380px;
 }
-
-/* Image fills wrapper */
 
 .about-image-wrap img {
   width: 100%;
-  height: 100%;
-  object-fit: cover;
+  height: auto;
   display: block;
+  object-fit: cover;
 }
 
-/* Mobile: full width, fixed 16:9 so it isn’t too tall */
-
+/* Mobile: full width, 3:4 portrait */
 @media (max-width: 900px) {
   .about-layout {
     grid-template-columns: minmax(0, 1fr);
   }
 
   .about-image-wrap {
-    max-width: 100%;
-    margin-bottom: 16px;
-    height: auto;
-    aspect-ratio: 16 / 9;
+    max-width: 260px;
+    margin: 0 auto 16px;
+    aspect-ratio: 3 / 4;
   }
 
   .about-image-wrap img {
@@ -783,21 +811,21 @@ a {
 
 .about-main-title {
   margin: 0 0 10px;
-  font-size: 2.4rem;
-  line-height: 1.1;
+  font-size: 2.1rem;
+  line-height: 1.15;
   color: var(--primary-dark);
 }
 
 .about-intro {
-  font-size: 1.05rem;
+  font-size: 1.02rem;
   color: var(--text-muted);
   margin: 0 0 14px;
   max-width: 640px;
 }
 
 .about-body {
-  font-size: 0.98rem;
-  line-height: 1.6;
+  font-size: 0.96rem;
+  line-height: 1.65;
   margin: 0 0 12px;
 }
 
@@ -806,7 +834,7 @@ a {
 }
 
 .about-section-heading {
-  font-size: 1.3rem;
+  font-size: 1.25rem;
   color: var(--primary-dark);
   margin: 0 0 12px;
 }
@@ -847,7 +875,9 @@ a {
   font-size: 0.95rem;
 }
 
+
 /* ===== Full-width hero background (home hero) ===== */
+
 
 .portal-hero {
   position: relative;
@@ -929,7 +959,9 @@ a {
   }
 }
 
+
 /* ===== Mobile hamburger nav ===== */
+
 
 .nav-toggle {
   display: none;
