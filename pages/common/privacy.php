@@ -4,14 +4,14 @@
 
 // Configure PDF locations (relative to this PHP file or absolute paths)
 $docs = [
-    'terms'   => __DIR__ . '/../../assets/docs/terms.pdf',    // adjust path if needed
-    'privacy' => __DIR__ . '/../../assets/docs/privacy.pdf',  // adjust path if needed
+    'terms'   => __DIR__ . '/../../assets/privacy/Terms  Conditions_.pdf',
+    'privacy' => __DIR__ . '/../../assets/privacy/Terms  Conditions2.pdf',
 ];
 
 // Public URLs for download/view (relative to site root)
 $publicUrls = [
-    'terms'   => '/assets/docs/terms.pdf',
-    'privacy' => '/assets/docs/privacy.pdf',
+    'terms'   => '../../assets/privacy/Terms  Conditions_.pdf',
+    'privacy' => '../../assets/privacy/Terms  Conditions2.pdf',
 ];
 
 $docKey = isset($_GET['doc']) ? $_GET['doc'] : null;
