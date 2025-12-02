@@ -12,17 +12,18 @@ session_start();
     body {
       background: #fff7ea;
     }
-    .profile-hero {
-  padding: 48px 0 56px;
-  background: #fff7ea;  /* same as body */
-}
 
-    
+    .profile-hero {
+      padding: 48px 0 56px;
+      background: #fff7ea;  /* same as body */
+    }
+
     .profile-shell {
       max-width: 1120px;
       margin: 0 auto;
       padding: 0 16px;
     }
+
     .profile-card {
       background: #fffdf8;
       border-radius: 26px;
@@ -33,15 +34,18 @@ session_start();
       padding: 26px 30px 26px;
       align-items: flex-start;
     }
+
     @media (min-width: 960px) {
       .profile-card {
         grid-template-columns: minmax(0, 1.1fr) minmax(0, 1.9fr);
       }
     }
+
     .profile-photo-wrap {
       display: flex;
       justify-content: center;
     }
+
     .profile-photo-inner {
       width: 280px;
       max-width: 100%;
@@ -51,27 +55,32 @@ session_start();
       box-shadow: 0 20px 45px rgba(0,0,0,0.28);
       background: #000;
     }
+
     .profile-photo-inner img {
       width: 100%;
       height: 100%;
       object-fit: cover;
       display: block;
     }
+
     .profile-content {
       color: #384341;
     }
+
     .profile-name {
       font-size: 2.1rem;
       line-height: 1.1;
       margin: 0 0 6px;
       color: #0a4936;
     }
+
     .profile-tagline {
       font-size: 0.98rem;
       color: #5b6664;
       margin: 0 0 18px;
       max-width: 640px;
     }
+
     .profile-section-title {
       margin-top: 18px;
       margin-bottom: 6px;
@@ -79,20 +88,24 @@ session_start();
       font-weight: 700;
       color: #0f684f;
     }
+
     .profile-list {
       margin: 0 0 8px 18px;
       padding: 0;
       font-size: 0.95rem;
       line-height: 1.6;
     }
+
     .profile-list li {
       margin-bottom: 4px;
     }
+
     .profile-paragraph {
       font-size: 0.95rem;
       line-height: 1.7;
       margin: 0 0 10px;
     }
+
     .profile-chip-row {
       display: flex;
       flex-wrap: wrap;
@@ -100,6 +113,7 @@ session_start();
       margin-top: 10px;
       margin-bottom: 6px;
     }
+
     .profile-chip {
       padding: 4px 10px;
       border-radius: 999px;
@@ -110,10 +124,54 @@ session_start();
       text-transform: uppercase;
       letter-spacing: 0.06em;
     }
+
     .profile-footer-note {
       margin-top: 18px;
       font-size: 0.82rem;
       color: #7b8684;
+    }
+
+    /* Footer styles (same as index/about) */
+    .app-footer {
+      background: #0d5b43;
+      color: #ffffff;
+      border-top: 2px solid #0a4936;
+    }
+
+    .app-footer-inner {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      padding: 10px 16px;
+      text-align: center;
+    }
+
+    .footer-logo {
+      height: 60px;
+      margin-bottom: 4px;
+    }
+
+    .footer-main-text span {
+      display: block;
+      line-height: 1.25;
+    }
+
+    .footer-links {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: center;
+      font-size: 0.9rem;
+    }
+
+    .footer-links a {
+      color: #ffffff;
+      text-decoration: underline;
+    }
+
+    .footer-links a:hover {
+      text-decoration: none;
     }
   </style>
 </head>
@@ -158,13 +216,13 @@ session_start();
           </p>
 
           <div class="profile-chip-row">
-            <span class="profile-chip">Clinical & Health Psychology</span>
+            <span class="profile-chip">Clinical &amp; Health Psychology</span>
             <span class="profile-chip">CBT / Integrative</span>
-            <span class="profile-chip">Tic & neurodevelopmental disorders</span>
+            <span class="profile-chip">Tic &amp; neurodevelopmental disorders</span>
           </div>
 
           <section>
-            <h2 class="profile-section-title">Licensing & certifications</h2>
+            <h2 class="profile-section-title">Licensing &amp; certifications</h2>
             <ul class="profile-list">
               <li>Psicóloga Especialista em Psicologia Clínica e da Saúde e em Psicoterapia.</li>
               <li>Psicoterapeuta cognitivo‑comportamental.</li>
@@ -184,7 +242,7 @@ session_start();
           </section>
 
           <section>
-            <h2 class="profile-section-title">Memberships & professional roles</h2>
+            <h2 class="profile-section-title">Memberships &amp; professional roles</h2>
             <ul class="profile-list">
               <li>Membro Efetivo da Ordem dos Psicólogos Portugueses (OPP).</li>
               <li>Certificado Europeu de Psicologia (EuroPsy).</li>
@@ -211,21 +269,35 @@ session_start();
               As co‑founder of Mind You Up, Cláudia contributes to the creation of psychotherapeutic materials and digital tools – including TicTracker – that make evidence‑based strategies easier to use in daily life.
             </p>
           </section>
-
-          
         </div>
       </article>
     </div>
   </main>
 
+  <!-- Nice shared footer with logo -->
   <footer class="app-footer">
     <div class="container small-text app-footer-inner">
-      <span>TicTracker – Mind You Up Portal</span>
-      <span>For clinical use and ongoing support in tic disorders.</span>
+      <img src="images/nexus-logo.png" alt="Nexus Tech logo" class="footer-logo">
+
+      <div class="footer-main-text">
+        <span>TicTracker – Mind You Up Portal</span>
+        <span>For clinical use and ongoing support in tic disorders.</span>
+      </div>
+
       <span class="footer-links">
-        <a href="Privacy-Policy.pdf" target="_blank" rel="noopener">Privacy Policy</a>
+        <a href="about_blank.php">About us</a>
         <span aria-hidden="true">·</span>
-        <a href="Terms-Conditions.pdf" target="_blank" rel="noopener">Terms &amp; Conditions</a>
+        <a href="/ISP_MindYouUp/Privacy-Policy.pdf"
+           target="_blank"
+           rel="noopener">
+          Privacy Policy
+        </a>
+        <span aria-hidden="true">·</span>
+        <a href="/ISP_MindYouUp/Terms-Conditions.pdf"
+           target="_blank"
+           rel="noopener">
+          Terms &amp; Conditions
+        </a>
       </span>
     </div>
   </footer>

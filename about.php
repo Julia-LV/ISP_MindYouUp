@@ -8,6 +8,49 @@ session_start();
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>About – TicTracker by Mind You Up</title>
   <link rel="stylesheet" href="web_portal.css" />
+  <style>
+    .app-footer {
+      background: #0d5b43;
+      color: #ffffff;
+      border-top: 2px solid #0a4936;
+    }
+
+    .app-footer-inner {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      padding: 10px 16px;
+      text-align: center;
+    }
+
+    .footer-logo {
+      height: 60px;
+      margin-bottom: 4px;
+    }
+
+    .footer-main-text span {
+      display: block;
+      line-height: 1.25;
+    }
+
+    .footer-links {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: center;
+      font-size: 0.9rem;
+    }
+
+    .footer-links a {
+      color: #ffffff;
+      text-decoration: underline;
+    }
+
+    .footer-links a:hover {
+      text-decoration: none;
+    }
+  </style>
 </head>
 <body>
   <!-- Sticky top bar -->
@@ -115,11 +158,19 @@ session_start();
     </section>
   </main>
 
+  <!-- Nice shared footer with logo -->
   <footer class="app-footer">
     <div class="container small-text app-footer-inner">
-      <span>TicTracker – Mind You Up Portal</span>
-      <span>For clinical use and ongoing support in tic disorders.</span>
+      <img src="images/nexus-logo.png" alt="Nexus Tech logo" class="footer-logo">
+
+      <div class="footer-main-text">
+        <span>TicTracker – Mind You Up Portal</span>
+        <span>For clinical use and ongoing support in tic disorders.</span>
+      </div>
+
       <span class="footer-links">
+        <a href="about_blank.php">About us</a>
+        <span aria-hidden="true">·</span>
         <a href="/ISP_MindYouUp/Privacy-Policy.pdf"
            target="_blank"
            rel="noopener">

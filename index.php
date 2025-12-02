@@ -8,6 +8,49 @@ session_start();
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>TicTracker – Mind You Up Portal</title>
   <link rel="stylesheet" href="web_portal.css" />
+  <style>
+    .app-footer {
+      background: #0d5b43;
+      color: #ffffff;
+      border-top: 2px solid #0a4936;
+    }
+
+    .app-footer-inner {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      padding: 10px 16px;
+      text-align: center;
+    }
+
+    .footer-logo {
+      height: 60px;
+      margin-bottom: 4px;
+    }
+
+    .footer-main-text span {
+      display: block;
+      line-height: 1.25;
+    }
+
+    .footer-links {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: center;
+      font-size: 0.9rem;
+    }
+
+    .footer-links a {
+      color: #ffffff;
+      text-decoration: underline;
+    }
+
+    .footer-links a:hover {
+      text-decoration: none;
+    }
+  </style>
 </head>
 <body>
   <!-- Sticky top bar -->
@@ -118,8 +161,6 @@ session_start();
           <div class="info-card-body-inner">
             <p>
               Tics are sudden, brief movements or sounds that repeat and are not fully voluntary.
-              They can be motor tics (like eye blinking or shoulder movements) or vocal tics
-              (like throat clearing or small sounds).
             </p>
             <p>
               For some people tics are mild. For others they can be frequent and intense and may
@@ -376,11 +417,19 @@ session_start();
     </div>
   </main>
 
+  <!-- NICE FOOTER WITH LOGO -->
   <footer class="app-footer">
     <div class="container small-text app-footer-inner">
-      <span>TicTracker – Mind You Up Portal</span>
-      <span>For clinical use and ongoing support in tic disorders.</span>
+      <img src="images/nexus-logo.png" alt="Nexus Tech logo" class="footer-logo">
+
+      <div class="footer-main-text">
+        <span>TicTracker – Mind You Up Portal</span>
+        <span>For clinical use and ongoing support in tic disorders.</span>
+      </div>
+
       <span class="footer-links">
+        <a href="about_blank.php">About us</a>
+        <span aria-hidden="true">·</span>
         <a href="/ISP_MindYouUp/Privacy-Policy.pdf"
            target="_blank"
            rel="noopener">
@@ -464,7 +513,7 @@ session_start();
         current = (current + 1) % backgrounds.length;
       }
 
-      // Set initial background and change every 10 seconds
+      // Set initial background and change every 3 seconds
       setBackground();
       setInterval(setBackground, 3000);
     })();
