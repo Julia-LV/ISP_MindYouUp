@@ -21,9 +21,24 @@ h2, h4 {
     padding: 2rem;
     margin-bottom: 2rem;
 }
-.form-check-input:checked {
-    background-color: var(--accent-orange);
-    border-color: var(--accent-orange);
+.ygtss-section .form-check-input,
+.ygtss-section .form-check-input[type="radio"] {
+    border: 1.5px solid var(--accent-green) !important;
+    width: 1em !important;
+    height: 1em !important;
+    background-color: #fff !important;
+    box-shadow: none !important;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    border-radius: 50% !important;
+    cursor: pointer;
+}
+.ygtss-section .form-check-input:checked,
+.ygtss-section .form-check-input[type="radio"]:checked {
+    background-color: var(--accent-orange) !important;
+    border-color: var(--accent-orange) !important;
+    box-shadow: none !important;
 }
 .btn-primary {
     background: linear-gradient(180deg, var(--accent-orange), #e6553e);
