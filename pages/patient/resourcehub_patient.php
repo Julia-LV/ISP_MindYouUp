@@ -166,9 +166,8 @@ include __DIR__ . '/../../components/header_component.php';
 include __DIR__ . '/../../includes/navbar.php';
 ?>
 
-<!-- Inline styles (skills carousel + desktop wrapping fix) -->
 <style>
-/* Desktop + mobile: make skills pills wrap cleanly (kept for old markup if used) */
+/* old pills (if still used) */
 .skills-strip .skill-pill {
   display: inline-block;
   max-width: 240px;
@@ -209,7 +208,7 @@ include __DIR__ . '/../../includes/navbar.php';
   cursor: default;
 }
 
-/* Mobile carousel */
+/* Mobile carousel behaviour */
 @media (max-width: 768px) {
   .skills-strip {
     position: relative;
@@ -244,7 +243,6 @@ include __DIR__ . '/../../includes/navbar.php';
   }
   .skills-strip .card-row::-webkit-scrollbar { display: none; }
 
-  /* two items visible */
   .skills-strip .card-row > * {
     flex: 0 0 calc(50% - 10px);
     min-width: 0;
@@ -266,6 +264,17 @@ include __DIR__ . '/../../includes/navbar.php';
   .skills-nav--left { left: 6px; }
   .skills-nav--right { right: 6px; }
 }
+
+/* Desktop centering of category squares */
+@media (min-width: 769px) {
+  .skills-strip .card-row {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center; /* centre the squares */
+    gap: 16px;
+    padding: 4px 0 0;
+  }
+}
 </style>
 
 <main class="flex-1 w-full p-6 md:p-8 overflow-y-auto bg-[#E9F0E9]">
@@ -278,16 +287,16 @@ include __DIR__ . '/../../includes/navbar.php';
           Your personalised strategies, skills, and articles from your professional.
         </p>
       </div>
-      <button
+      <!-- <button
         type="button"
         onclick="confirmLogout()"
         class="px-4 py-2 rounded-full bg-[#005949] text-white text-sm shadow hover:bg-[#00453f] transition"
       >
         Log out
-      </button>
+      </button> -->
     </div>
 
-    <!-- SINGLE-COLUMN STACK: strategy, categories, then articles -->
+    <!-- SINGLE-COLUMN STACK -->
     <div class="grid grid-cols-1 gap-5 lg:gap-6 items-start">
       <!-- Daily Strategy -->
       <div class="bg-white rounded-2xl border border-[#f0e3cc] shadow-[0_10px_28px_rgba(0,0,0,0.07)] p-5 min-h-[150px]">
@@ -355,7 +364,7 @@ include __DIR__ . '/../../includes/navbar.php';
           <div class="skills-strip">
             <button type="button" class="skills-nav skills-nav--left md:hidden" aria-label="Previous skills">&#8249;</button>
 
-            <div class="card-row flex gap-3 overflow-x-auto pb-2 md:overflow-visible md:pb-0">
+            <div class="card-row">
               <?php foreach ($skills as $skill): ?>
                 <?php
                 [$sMediaExists2, $sMediaUrlWeb2] = build_media_paths($skill['media_url'] ?? null);
@@ -391,7 +400,7 @@ include __DIR__ . '/../../includes/navbar.php';
         <?php endif; ?>
       </div>
 
-      <!-- Articles & Guides (now below categories) -->
+      <!-- Articles & Guides -->
       <div class="bg-white rounded-2xl border border-[#f0e3cc] shadow-[0_10px_28px_rgba(0,0,0,0.07)] p-4">
         <h2 class="text-sm font-semibold mb-2 text-[#231f20]">Articles &amp; Guides</h2>
         <?php if (!empty($articles)): ?>
