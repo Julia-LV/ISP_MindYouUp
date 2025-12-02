@@ -376,9 +376,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <div class="top-subtitle">Create strategies, categories, and articles to share with your patients.</div>
             </div>
             <div class="top-actions">
-                <a href="../auth/logout.php">
+                <!-- <a href="../auth/logout.php">
                     <button type="button" class="btn-logout">Log out</button>
-                </a>
+                </a> -->
             </div>
         </header>
 
