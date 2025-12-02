@@ -222,6 +222,24 @@ h2 {
   cursor: pointer;
 }
 
+/* New compact multi-select for patients (alternative to long list) */
+.patient-select {
+  width: 100%;
+  margin-bottom: 12px;
+  padding: 8px 10px;
+  border-radius: 12px;
+  border: 1px solid var(--card-border);
+  background: #fff;
+  color: var(--text-main);
+  font-size: 13px;
+  font-family: inherit;
+}
+
+.patient-select option {
+  padding: 4px 6px;
+}
+
+/* Legacy pill list (if still used) */
 .patient-list {
   list-style: none;
   padding: 0;
@@ -286,6 +304,16 @@ a:hover {
   text-decoration: underline;
 }
 
+/* ==== Skills pills: allow text wrapping for long titles ==== */
+.skills-strip .card-row > a,
+.skills-strip .card-row > div {
+  max-width: 240px;
+  white-space: normal;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  line-height: 1.3;
+}
+
 /* Mobile layout */
 @media (max-width: 768px) {
   .page {
@@ -311,4 +339,291 @@ a:hover {
   .resource-grid {
     grid-template-columns: 1fr;
   }
+}
+
+/* ==== Existing resources table (fixed & tidy) ==== */
+
+/* Wrapper card (if you use it) */
+.resources-card {
+  background: #ffffff;
+  border-radius: 16px;
+  border: 1px solid var(--card-border);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+  overflow: hidden;
+  margin-top: 16px;
+}
+
+/* Table container */
+.resources-table-wrap {
+  padding: 8px 14px 14px;
+  overflow-x: auto;
+}
+
+/* Main table */
+.resources-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+  table-layout: fixed; /* keep column widths stable even with long content */
+}
+
+/* Cells */
+.resources-table th,
+.resources-table td {
+  padding: 6px 8px;
+  text-align: left;
+  border-bottom: 1px solid #eae4d9;
+  vertical-align: middle;
+}
+
+/* Header row */
+.resources-table thead {
+  background: #e2f3eb;
+}
+
+.resources-table th {
+  font-weight: 600;
+  color: var(--primary-dark);
+}
+
+/* Fix column widths: Title / Skill / Media / Action */
+.resources-table th:nth-child(1),
+.resources-table td:nth-child(1) {
+  width: 38%;
+}
+
+.resources-table th:nth-child(2),
+.resources-table td:nth-child(2) {
+  width: 20%;
+}
+
+.resources-table th:nth-child(3),
+.resources-table td:nth-child(3) {
+  width: 32%;
+}
+
+.resources-table th:nth-child(4),
+.resources-table td:nth-child(4) {
+  width: 80px;         /* give the Delete pill room */
+  text-align: right;
+  white-space: nowrap; /* keep "Delete" on one line */
+}
+
+/* Wrap long filenames nicely in Media column */
+.resources-table td:nth-child(3) {
+  word-wrap: break-word;
+  overflow-wrap: anywhere; /* modern browsers */
+}
+
+/* Remove last border */
+.resources-table tr:last-child td {
+  border-bottom: none;
+}
+
+/* Skill pill styling (inside Skill column) */
+.skill-pill {
+  display: inline-block;
+  padding: 2px 7px;
+  border-radius: 999px;
+  font-size: 11px;
+  background: #fef3c7;
+  color: #92400e;
+  max-width: 100%;
+  white-space: normal; /* allow pill text to wrap inside the cell */
+}
+
+/* --- Existing resources table polish --- */
+
+/* Keep columns stable even with long filenames */
+.card.resources-card table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  font-size: 12px;
+}
+
+/* Cells */
+.card.resources-card th,
+.card.resources-card td {
+  padding: 8px 10px;
+  border-bottom: 1px solid #eae4d9;
+  vertical-align: middle;
+}
+
+/* Header */
+.card.resources-card thead {
+  background: #e2f3eb;
+}
+
+.card.resources-card th {
+  font-weight: 600;
+  color: var(--primary-dark);
+}
+
+/* Column widths: Title / Skill / Media / Action */
+.card.resources-card th:nth-child(1),
+.card.resources-card td:nth-child(1) {
+  width: 38%;
+}
+
+.card.resources-card th:nth-child(2),
+.card.resources-card td:nth-child(2) {
+  width: 22%;
+}
+
+.card.resources-card th:nth-child(3),
+.card.resources-card td:nth-child(3) {
+  width: 30%;
+}
+
+.card.resources-card th:nth-child(4),
+.card.resources-card td:nth-child(4) {
+  width: 80px;         /* fixed width for action button */
+  text-align: right;
+  white-space: nowrap; /* keep "Delete" on one line */
+}
+
+/* Make long Media filenames not explode the layout */
+.card.resources-card td:nth-child(3) {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Last row: no extra border */
+.card.resources-card tr:last-child td {
+  border-bottom: none;
+}
+
+/* Skill pill: keep it tidy inside its cell */
+.card.resources-card .skill-pill {
+  display: inline-block;
+  max-width: 100%;
+  white-space: normal;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  background: #fef3c7;
+  color: #92400e;
+}
+
+/* Action link style (generic) */
+.card.resources-card .actions a {
+  color: #b91c1c;
+  font-weight: 600;
+  font-size: 12px;
+  text-decoration: none;
+}
+
+/* Specific delete pill button */
+.card.resources-card .btn-delete {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 12px;
+  border-radius: 999px;
+  border: 1px solid #dc2626;
+  background: #fee2e2;
+  color: #b91c1c;
+  font-size: 11px;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease,
+    box-shadow 0.15s ease,
+    transform 0.05s ease;
+}
+
+.card.resources-card .btn-delete:hover {
+  background: #dc2626;
+  color: #ffffff;
+  box-shadow: 0 0 0 1px rgba(220, 38, 38, 0.12);
+}
+
+.card.resources-card .btn-delete:active {
+  transform: scale(0.97);
+}
+
+.card.resources-card .actions a:hover {
+  text-decoration: underline;
+}
+
+/* ==== Mobile-only skills strip: 2 cards visible, nicer arrows ==== */
+
+@media (max-width: 768px) {
+  /* wrapper around the skills card-row */
+  .skills-strip {
+    position: relative;
+    margin-top: 4px;
+  }
+
+  /* soft fade at left/right edges */
+  .skills-strip::before,
+  .skills-strip::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 28px;
+    pointer-events: none;
+    z-index: 3;
+  }
+
+  .skills-strip::before {
+    left: 0;
+    background: linear-gradient(to right, #ffffff, rgba(255,255,255,0));
+  }
+
+  .skills-strip::after {
+    right: 0;
+    background: linear-gradient(to left, #ffffff, rgba(255,255,255,0));
+  }
+
+  /* row: add side padding so arrows sit in a gutter */
+  .skills-strip .card-row {
+    display: flex;
+    gap: 12px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 4px 32px 8px;  /* 32px side padding = arrow gutter */
+    scroll-behavior: smooth;
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .skills-strip .card-row::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* show two cards at a time */
+  .skills-strip .card-row > a,
+  .skills-strip .card-row > div {
+    flex: 0 0 calc(50% - 10px);
+    min-width: 0;
+  }
+
+  /* arrow buttons sit over the gutter, not on top of pills */
+  .skills-nav {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 26px;
+    height: 26px;
+    border-radius: 999px;
+    border: 1px solid rgba(0,0,0,0.06);
+    background: #ffffff;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.16);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    color: #374151;
+    cursor: pointer;
+    z-index: 4;
+  }
+
+  .skills-nav--left  { left: 6px; }
+  .skills-nav--right { right: 6px; }
 }
