@@ -120,7 +120,7 @@ session_start();
       color: #7b8684;
     }
 
-    /* Footer styles (same as index/about/Cláudia) */
+    /* Footer styles aligned like other pages */
     .app-footer {
       background: #0d5b43;
       color: #ffffff;
@@ -129,29 +129,39 @@ session_start();
 
     .app-footer-inner {
       display: flex;
-      flex-direction: column;
       align-items: center;
-      gap: 4px;
-      padding: 10px 16px;
-      text-align: center;
+      justify-content: space-between;
+      padding: 18px 32px;
+      gap: 16px;
+      text-align: left;
+    }
+
+    .footer-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
     }
 
     .footer-logo {
       height: 60px;
-      margin-bottom: 4px;
+    }
+
+    .footer-main-text {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
     }
 
     .footer-main-text span {
-      display: block;
-      line-height: 1.25;
+      line-height: 1.4;
     }
 
     .footer-links {
       display: flex;
-      gap: 8px;
+      gap: 10px;
       flex-wrap: wrap;
-      justify-content: center;
-      font-size: 0.9rem;
+      justify-content: flex-end;
+      font-size: 0.95rem;
     }
 
     .footer-links a {
@@ -161,6 +171,16 @@ session_start();
 
     .footer-links a:hover {
       text-decoration: none;
+    }
+
+    @media (max-width: 640px) {
+      .app-footer-inner {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .footer-links {
+        justify-content: flex-start;
+      }
     }
   </style>
 </head>
@@ -241,14 +261,16 @@ session_start();
     </div>
   </main>
 
-  <!-- Nice shared footer with logo -->
+  <!-- Nice shared footer with logo (not centered) -->
   <footer class="app-footer">
     <div class="container small-text app-footer-inner">
-      <img src="images/nexus-logo.png" alt="Nexus Tech logo" class="footer-logo">
+      <div class="footer-left">
+        <img src="images/nexus-logo.png" alt="Nexus Tech logo" class="footer-logo">
 
-      <div class="footer-main-text">
-        <span>TicTracker – Mind You Up Portal</span>
-        <span>For clinical use and ongoing support in tic disorders.</span>
+        <div class="footer-main-text">
+          <span>TicTracker – Mind You Up Portal</span>
+          <span>For clinical use and ongoing support in tic disorders.</span>
+        </div>
       </div>
 
       <span class="footer-links">
