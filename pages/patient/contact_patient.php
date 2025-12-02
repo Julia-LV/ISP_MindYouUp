@@ -18,10 +18,12 @@ if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true ||
 $currentUser = $_SESSION['user_id']; // Patient's User_ID
 
 // --- FETCH ASSIGNED PROFESSIONALS AND LAST MESSAGE --- //
+// ADICIONADO: u.User_Image ao SELECT
 $sql = "
 SELECT 
     ppl.Professional_ID AS Prof_User_ID,
     CONCAT(u.First_Name, ' ', u.Last_Name) AS Name,
+    u.User_Image, 
     MAX(cl.Chat_Time) AS Last_Message_Time,
     SUBSTRING_INDEX(
         GROUP_CONCAT(cl.Chat_Text ORDER BY cl.Chat_Time DESC SEPARATOR '||'),
@@ -50,50 +52,103 @@ $result = $stmt->get_result();
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<!-- Tailwind CSS -->
 <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
 
 <title>Messages – Contact List</title>
 
 </head>
-<body class="bg-[#E9F0E9]">
+<body class="bg-[#E9F0E9] min-h-screen flex flex-col font-sans">
 
-<!-- NAVBAR -->
-<?php include '../../includes/navbar.php'; ?>
-
-<!-- MAIN CONTENT WRAPPER -->
-<div class="w-full max-w-5xl mx-auto pt-6 px-4">
-
-    <h2 class="text-3xl font-bold text-[#005949] mb-6">Messages</h2>
-
-    <div class="space-y-4">
-
-        <?php if ($result->num_rows > 0): ?>
-            <?php while ($row = $result->fetch_assoc()): ?>
-
-                <?php
-                    // Prepare variables for the message card component
-                    $prof_id   = $row['Prof_User_ID'];
-                    $name      = $row['Name'];
-                    $preview   = $row['Last_Message'] 
-                                ? substr($row['Last_Message'], 0, 60) . "..."
-                                : "No messages yet";
-
-                    $timestamp = $row['Last_Message_Time']
-                                ? date("M d", strtotime($row['Last_Message_Time']))
-                                : "";
-                ?>
-
-                <?php include '../../components/message_card.php'; ?>
-
-            <?php endwhile; ?>
-        <?php else: ?>
-            <p class="text-gray-700">No assigned professionals yet.</p>
-        <?php endif; ?>
-
+    <div class="flex-shrink-0">
+        <?php include '../../includes/navbar.php'; ?>
     </div>
-</div>
+
+    <div class="flex-grow w-full max-w-6xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+
+        <h2 class="text-2xl md:text-3xl font-bold text-[#005949] mb-6">Messages</h2>
+
+        <div class="space-y-4">
+
+            <?php if ($result->num_rows > 0): ?>
+                <?php while ($row = $result->fetch_assoc()): ?>
+
+                    <?php
+                        $prof_id = $row['Prof_User_ID'];
+                        $name    = $row['Name'];
+                        
+                        // Lógica da Imagem (Similar à do perfil)
+                        $db_image_path = $row['User_Image'];
+                        $default_image = 'https://via.placeholder.com/150';
+                        $profile_image = $default_image;
+
+                        if (!empty($db_image_path)) {
+                            // Ajustar caminho relativo (../../)
+                            if (substr($db_image_path, 0, 1) === '/') {
+                                $profile_image = '../..' . $db_image_path;
+                            } else {
+                                $profile_image = '../../' . $db_image_path;
+                            }
+                        }
+                        
+                        // Cache buster para garantir que a imagem atualiza
+                        $final_image_src = htmlspecialchars($profile_image) . "?" . time();
+
+                        // Preparar texto e data
+                        $preview = $row['Last_Message'] 
+                                    ? substr($row['Last_Message'], 0, 60) . (strlen($row['Last_Message']) > 60 ? "..." : "")
+                                    : "Start a conversation...";
+                        
+                        $timestamp = $row['Last_Message_Time']
+                                    ? date("M d, H:i", strtotime($row['Last_Message_Time']))
+                                    : "";
+                        
+                        // Estilo para mensagem não lida vs lida (Opcional - aqui está tudo normal)
+                        $textColor = $row['Last_Message'] ? "text-gray-600" : "text-gray-400 italic";
+                    ?>
+
+                    <div onclick="openChat(<?php echo $prof_id; ?>)" 
+                         class="bg-white rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow cursor-pointer flex items-center border border-gray-100">
+                        
+                        <div class="flex-shrink-0 mr-4">
+                            <img class="h-12 w-12 rounded-full object-cover border-2 border-[#005949]" 
+                                 src="<?php echo $final_image_src; ?>" 
+                                 alt="<?php echo htmlspecialchars($name); ?>">
+                        </div>
+
+                        <div class="flex-1 min-w-0">
+                            <div class="flex justify-between items-baseline mb-1">
+                                <h3 class="text-lg font-semibold text-gray-900 truncate pr-2">
+                                    <?php echo htmlspecialchars($name); ?>
+                                </h3>
+                                <span class="text-xs text-gray-400 whitespace-nowrap">
+                                    <?php echo htmlspecialchars($timestamp); ?>
+                                </span>
+                            </div>
+                            <p class="text-sm <?php echo $textColor; ?> truncate">
+                                <?php echo htmlspecialchars($preview); ?>
+                            </p>
+                        </div>
+
+                        <div class="ml-2 text-gray-300">
+                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                            </svg>
+                        </div>
+                    </div>
+                    <?php endwhile; ?>
+            <?php else: ?>
+                
+                <div class="text-center py-10 bg-white rounded-xl shadow-sm">
+                    <p class="text-gray-500 text-lg">No professionals assigned yet.</p>
+                    <p class="text-gray-400 text-sm mt-1">Contact your administrator to get started.</p>
+                </div>
+
+            <?php endif; ?>
+
+        </div>
+    </div>
 
 <script>
 function openChat(profUserId) {

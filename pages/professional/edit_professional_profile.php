@@ -195,7 +195,7 @@ $final_image_src = htmlspecialchars($current_image) . "?" . $cache_buster;
                         $extra_classes = 'w-full'; 
                         
                         // FIX: Usando __DIR__ para um caminho fiável para include
-                        $path_to_button = __DIR__ . '/../../components/button.php';
+                        $path_to_button = __DIR__ . '/../../components/simple_button.php';
 
                         if (file_exists($path_to_button)) {
                             include($path_to_button); 
