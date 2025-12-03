@@ -112,11 +112,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 $page_title = 'Emotional Diary';
 
 include '../../components/header_component.php';
-include '../../includes/navbar.php';
 
 // Get the current page's filename (e.g., new_emotional_diary.php)
 $current_page = basename($_SERVER['PHP_SELF']);
 ?>
+
+<?php include '../../includes/navbar.php'; ?>
 
 
 <!-- 
@@ -125,9 +126,8 @@ $current_page = basename($_SERVER['PHP_SELF']);
 -->
 <!--link rel="stylesheet" href="../../css/new_emotional_diary.css"-->
 
-
 <!-- Main Content Wrapper -->
-<main class="flex-1 w-full p-6 md:p-2 overflow-y-auto bg-[#E9F0E9]">
+<div class="w-full p-6 md:p-2 overflow-y-auto bg-[#E9F0E9]">
 
     <div class="p-6 md:p-8 space-y-6 max-w-7xl mx-auto">
         <!-- Page title -->
@@ -200,7 +200,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
 
         </form>
     </div>
-</main>
+</div>
 
 <!-- Closing DIV from header_component's wrapper -->
 </div>
