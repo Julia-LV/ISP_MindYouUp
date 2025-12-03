@@ -93,8 +93,14 @@ include '../../components/input.php';
     </div>
 </div>
 <?php
-$button_text = 'Log In'; $button_type = 'submit'; $extra_classes = 'w-full'; 
+// CHANGE $button_text TO $label
+// CHANGE $button_type TO $type
+$label = 'Log In'; $type = 'submit'; 
+// Note: Your button.php uses $width, not $extra_classes, 
+// but it defaults to w-full anyway, so you can leave width out.
+
 include '../../components/button.php';
+
 $link_text = "Don't have an account?"; $link_url = 'sign_up.php'; $link_label = 'Sign up';
 include '../../components/auth_card_end.php'; 
 ?>

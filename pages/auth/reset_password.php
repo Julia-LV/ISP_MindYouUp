@@ -17,7 +17,7 @@ $user_email = ""; // We'll get this from the token
 require_once '../../config.php';
 
 // We now check for the token in the POST data OR the GET data.
-$token = $_POST['token'] ?? $_GET['Token'] ?? '';
+$token = $_POST['token'] ?? $_GET['token'] ?? '';
 
 if (empty($token)) {
     $message = "Invalid or missing reset token.";

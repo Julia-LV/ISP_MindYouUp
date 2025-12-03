@@ -50,14 +50,14 @@ include('../../components/header_component.php');
                             Dr. <?= htmlspecialchars($profile['First_Name'] . ' ' . $profile['Last_Name']) ?>
                         </h2>
                         
-                        <p class="text-indigo-600 font-bold uppercase text-xs tracking-widest mt-2 mb-1">
+                        <p class="text-[#F26647] font-bold uppercase text-xs tracking-widest mt-2 mb-1">
                             Professional
                         </p>
 
                         <p class="text-gray-500 text-sm mb-6"><?= htmlspecialchars($profile['Email']) ?></p>
 
                         <a href="edit_professional_profile.php" 
-                           class="block w-full py-2.5 px-4 bg-white border border-gray-300 text-gray-700 font-medium rounded-xl hover:bg-gray-50 transition shadow-sm">
+                           class="block w-full py-2.5 px-4 bg-[#F0856C] border border-gray-300 text-gray-700 font-medium rounded-xl hover:bg-[#F26647] transition shadow-sm">
                            Edit Profile
                         </a>
                     </div>
@@ -94,9 +94,9 @@ include('../../components/header_component.php');
                         </div>
                     </div>
 
-                    <a href="my_patients.php" class="flex items-center justify-between p-5 rounded-2xl bg-white border border-indigo-200 shadow-sm hover:shadow-md hover:border-indigo-300 transition group cursor-pointer">
+                    <a href="my_patients.php" class="flex items-center justify-between p-5 rounded-2xl bg-white border border-green-200 shadow-sm hover:shadow-md hover:border-green-300 transition group cursor-pointer">
                         <div class="flex items-center gap-4">
-                            <div class="w-12 h-12 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center text-xl">
+                            <div class=" text-indigo-600 flex items-center justify-center text-xl">
                                 <i class="fas fa-users"></i>
                             </div>
                             <div>
@@ -104,7 +104,7 @@ include('../../components/header_component.php');
                                 <p class="text-sm text-gray-500">View and manage your patient connections</p>
                             </div>
                         </div>
-                        <span class="w-10 h-10 flex items-center justify-center rounded-full bg-gray-50 text-gray-400 group-hover:bg-indigo-600 group-hover:text-white transition">
+                        <span class="w-10 h-10 flex items-center justify-center rounded-full bg-gray-50 text-gray-400 group-hover:bg-[#F0856C] group-hover:text-white transition">
                             &rarr;
                         </span>
                     </a>

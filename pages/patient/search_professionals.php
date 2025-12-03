@@ -32,13 +32,21 @@ include('../../components/header_component.php');
 
             <div class="space-y-4">
                 <?php while($doc = $result->fetch_assoc()): ?>
+                    
+                    <?php 
+                        // 1. Define Variables at the start of the loop
+                        $formId = "add_doc_" . $doc['User_ID']; 
+                        $name = "Dr. " . htmlspecialchars($doc['First_Name'] . ' ' . $doc['Last_Name']);
+                    ?>
+
                     <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between">
+                        
                         <div class="flex items-center gap-4">
                             <img src="<?= htmlspecialchars($doc['User_Image'] ?? '../../assets/default_doc.png') ?>" 
                                  class="w-14 h-14 rounded-full object-cover bg-gray-100">
                             <div>
                                 <h3 class="font-bold text-gray-800">
-                                    Dr. <?= htmlspecialchars($doc['First_Name'] . ' ' . $doc['Last_Name']) ?>
+                                    <?= htmlspecialchars($name) ?>
                                 </h3>
                                 <p class="text-indigo-600 text-sm font-medium">
                                     <?= htmlspecialchars($doc['Specialization'] ?? 'Medical Professional') ?>
@@ -46,15 +54,25 @@ include('../../components/header_component.php');
                             </div>
                         </div>
                         
-                        <form action="add_professional_handler.php" method="POST">
+                        <form id="<?= $formId ?>" action="add_professional_handler.php" method="POST">
                             <input type="hidden" name="doctor_id" value="<?= $doc['User_ID'] ?>">
-                            <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-indigo-700 transition shadow-md">
+                            
+                            <button type="button" 
+                                    onclick="confirmAdd('<?= $formId ?>', '<?= $name ?>')"
+                                    class="bg-[#F0856C] text-white px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-[#F26647] transition shadow-md">
                                 Connect +
                             </button>
                         </form>
+
                     </div>
                 <?php endwhile; ?>
+                
+                <?php if($result->num_rows == 0): ?>
+                    <p class="text-center text-gray-500 py-8">No new professionals found.</p>
+                <?php endif; ?>
             </div>
         </div>
     </main>
+
+    <?php include('../../components/modals.php'); ?>
 </div>

@@ -48,7 +48,7 @@ include('../../components/header_component.php');
                             
                             <form action="add_patient_handler.php" method="POST">
                                 <input type="hidden" name="patient_id" value="<?= $patient['User_ID'] ?>">
-                                <button type="submit" class="bg-indigo-600 text-white px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-indigo-700 transition shadow-md">
+                                <button type="submit" class="bg-[#F0856C] text-white px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-[#F26647] transition shadow-md">
                                     Add to List +
                                 </button>
                             </form>

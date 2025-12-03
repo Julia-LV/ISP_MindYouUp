@@ -70,13 +70,13 @@ include('../../components/header_component.php');
                             <?= htmlspecialchars($profile['First_Name'] . ' ' . $profile['Last_Name']) ?>
                         </h2>
 
-                        <p class="text-green-600 font-bold text-xs uppercase tracking-widest mt-2 mb-1">
+                        <p class="text-[#F26647] font-bold text-xs uppercase tracking-widest mt-2 mb-1">
                             Patient
                         </p>
 
                         <p class="text-gray-500 text-sm mb-6"><?= htmlspecialchars($profile['Email']) ?></p>
                         
-                        <a href="edit_profile.php" class="block w-full py-2.5 px-4 bg-white border border-gray-300 text-gray-700 font-medium rounded-xl hover:bg-gray-50 transition shadow-sm">
+                        <a href="edit_profile.php" class="block w-full py-2.5 px-4 bg-[#F0856C] border border-gray-300 text-gray-700 font-medium rounded-xl hover:bg-[#F26647] transition shadow-sm">
                             Edit Profile
                         </a>
                     </div>
@@ -128,7 +128,7 @@ include('../../components/header_component.php');
 
                     <a href="my_professionals.php" class="flex items-center justify-between p-5 rounded-2xl bg-white border border-green-200 shadow-sm hover:shadow-md hover:border-green-300 transition group cursor-pointer">
                         <div class="flex items-center gap-4">
-                            <div class="w-12 h-12 rounded-full bg-green-50 text-green-600 flex items-center justify-center text-xl">
+                            <div class=" text-green-600 flex items-center justify-center text-xl">
                                 <i class="fas fa-user-md"></i>
                             </div>
                             <div>
@@ -136,7 +136,7 @@ include('../../components/header_component.php');
                                 <p class="text-sm text-gray-500">View and manage your doctor connections</p>
                             </div>
                         </div>
-                        <span class="w-10 h-10 flex items-center justify-center rounded-full bg-gray-50 text-gray-400 group-hover:bg-green-600 group-hover:text-white transition">
+                        <span class="w-10 h-10 flex items-center justify-center rounded-full bg-gray-50 text-gray-400 group-hover:bg-[#F0856C] group-hover:text-white transition">
                             &rarr;
                         </span>
                     </a>

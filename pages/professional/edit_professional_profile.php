@@ -104,10 +104,10 @@ include('../../components/header_component.php');
                     </div>
 
                     <div class="pt-4 flex justify-between items-center border-t border-gray-100 mt-6">
-                         <a href="../auth/reset_password.php" class="text-indigo-600 hover:underline text-sm font-medium">Change Password</a>
+                         <a href="../auth/reset_password.php" class="text-[#F26647] hover:underline text-sm font-medium">Change Password</a>
                         <div class="flex gap-3">
                             <a href="professional_profile.php" class="px-5 py-2.5 rounded-lg text-gray-700 hover:bg-gray-100">Cancel</a>
-                            <button type="submit" class="px-5 py-2.5 rounded-lg bg-indigo-600 text-white font-medium hover:bg-indigo-700">Save Changes</button>
+                            <button type="submit" class="px-5 py-2.5 rounded-lg bg-[#F0856C] text-white font-medium hover:bg-[#F26647]">Save Changes</button>
                         </div>
                     </div>
                 </form>
