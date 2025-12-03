@@ -151,7 +151,7 @@
 
             <!-- LOGOUT Button -->
             <li>
-                <a href="../../logout.php"
+                <a href="../auth/logout.php"
                     class="sidebar-link flex items-center gap-4 py-2 px-4 rounded-lg transition
                            hover:bg-red-500 active:bg-red-500
                            group">
@@ -171,4 +171,3 @@
     </div>
 </nav>
 <script src="../../JS/navbar.js"></script>
-<?php include 'mobile_top_bar.php'; ?>
