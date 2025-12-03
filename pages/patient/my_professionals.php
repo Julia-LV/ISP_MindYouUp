@@ -16,8 +16,15 @@ $sql = "SELECT link.Link_ID, link.Assigned_Date,
         JOIN user_profile u ON link.Professional_ID = u.User_ID
         LEFT JOIN professional_profile p ON u.User_ID = p.User_ID
         WHERE link.Patient_ID = ?";
+
+if (!$conn) {
+    die("Database connection failed");
+}
         
 $stmt = $conn->prepare($sql);
+if (!$stmt) {
+    die("Prepare failed: " . $conn->error);
+}
 $stmt->bind_param("i", $user_id);
 $stmt->execute();
 $result = $stmt->get_result();
@@ -76,7 +83,7 @@ include('../../components/header_component.php');
                                 Dr. <?= $docName ?>
                             </h3>
                             
-                            <p class="text-indigo-600 text-sm font-medium mb-1">
+                            <p class="text-[#F26647] text-sm font-medium mb-1">
                                 <?= htmlspecialchars($doc['Specialization'] ?? 'General Practitioner') ?>
                             </p>
                             
@@ -84,7 +91,8 @@ include('../../components/header_component.php');
                                 Connected since <?= date('M Y', strtotime($doc['Assigned_Date'])) ?>
                             </p>
 
-                            <a href="mailto:<?= $doc['Email'] ?>" class="w-full py-2.5 rounded-xl border border-gray-200 text-gray-600 text-sm font-medium hover:bg-gray-50 transition">
+                            <a href="chat.php?link_id=<?= $doc['Link_ID'] ?>" 
+                               class="w-full py-2.5 rounded-xl border border-gray-200 text-gray-600 text-sm font-medium hover:bg-gray-50 transition">
                                 Send Message
                             </a>
 

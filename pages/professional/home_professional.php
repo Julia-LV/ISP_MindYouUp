@@ -2,7 +2,7 @@
 /*
  * home_professional.php
  * * Doctor/Professional Dashboard
- * * Allows selecting a patient and viewing their specific analytics.
+ * * Allows selecting a patient, viewing analytics, and exporting a PDF report.
  */
 
 session_start();
@@ -12,21 +12,19 @@ $config_path = '../../config.php';
 if (file_exists($config_path)) {
     require_once $config_path;
 } else {
-    $conn = null; // Fallback
+    $conn = null;
 }
 
 // --- SECURITY CHECK ---
-// Ensure the user is a Professional
 if (!isset($_SESSION["loggedin"]) || $_SESSION["loggedin"] !== true || $_SESSION["role"] !== "Professional") {
     // header("Location: ../auth/login.php"); exit;
 }
 
 $doctor_id = $_SESSION["user_id"] ?? 999; 
 
-// --- 1. FETCH PATIENT LIST (UPDATED FOR user_profile) ---
+// --- 1. FETCH PATIENT LIST ---
 $patients = [];
 if ($conn) {
-    // Select ID and Names from user_profile where Role is 'Patient'
     $sql = "SELECT User_ID, First_Name, Last_Name FROM user_profile WHERE Role = 'Patient'"; 
     $result = $conn->query($sql);
     if ($result) {
@@ -38,20 +36,16 @@ if ($conn) {
         }
     }
 } else {
-    // Mock Patients for Preview
+    // Mock Patients
     $patients = [
         ['id' => 1, 'name' => 'Priya Sharma'],
-        ['id' => 2, 'name' => 'Rahul Verma'],
-        ['id' => 3, 'name' => 'Amit Patel']
+        ['id' => 2, 'name' => 'Rahul Verma']
     ];
 }
 
 // --- 2. HANDLE PATIENT SELECTION ---
-// Default to the first patient if none selected
 $selected_patient_id = isset($_GET['patient_id']) ? intval($_GET['patient_id']) : ($patients[0]['id'] ?? 0);
 $selected_patient_name = "Unknown";
-
-// Find name of selected patient
 foreach ($patients as $p) {
     if ($p['id'] == $selected_patient_id) {
         $selected_patient_name = $p['name'];
@@ -59,22 +53,17 @@ foreach ($patients as $p) {
     }
 }
 
-// --- 3. FETCH ANALYTICS FOR SELECTED PATIENT ---
-
-// A. Summary Stats (Last 30 Days)
+// --- 3. FETCH ANALYTICS ---
+// (Summary Stats)
 $total_tics_30d = 0;
 $avg_stress_30d = 0;
-$top_trigger = "N/A";
-
 if ($conn && $selected_patient_id) {
-    // Total Tics
     $stmt = $conn->prepare("SELECT COUNT(*) as c FROM tic_log WHERE Patient_ID = ? AND Created_At >= DATE_SUB(NOW(), INTERVAL 30 DAY)");
     $stmt->bind_param("i", $selected_patient_id);
     $stmt->execute();
     $total_tics_30d = $stmt->get_result()->fetch_assoc()['c'];
     $stmt->close();
 
-    // Avg Stress
     $stmt = $conn->prepare("SELECT AVG(Stress) as s FROM emotional_diary WHERE Patient_ID = ? AND Occurrence >= DATE_SUB(NOW(), INTERVAL 30 DAY)");
     $stmt->bind_param("i", $selected_patient_id);
     $stmt->execute();
@@ -83,24 +72,21 @@ if ($conn && $selected_patient_id) {
     $stmt->close();
 }
 
-// B. Graph Data: Severity vs Stress (Last 7 Days)
+// (Graph Data: Last 7 Days)
 $dates = [];
-$tic_severity = []; // Max intensity per day
-$stress_levels = []; // Avg stress per day
-
+$tic_severity = [];
+$stress_levels = [];
 if ($conn && $selected_patient_id) {
     for ($i = 6; $i >= 0; $i--) {
         $date = date('Y-m-d', strtotime("-$i days"));
         $dates[] = date('D', strtotime("-$i days"));
 
-        // Max Intensity
         $stmt = $conn->prepare("SELECT MAX(Intensity) as i FROM tic_log WHERE Patient_ID = ? AND DATE(Created_At) = ?");
         $stmt->bind_param("is", $selected_patient_id, $date);
         $stmt->execute();
         $tic_severity[] = $stmt->get_result()->fetch_assoc()['i'] ?? 0;
         $stmt->close();
 
-        // Avg Stress
         $stmt = $conn->prepare("SELECT AVG(Stress) as s FROM emotional_diary WHERE Patient_ID = ? AND DATE(Occurrence) = ?");
         $stmt->bind_param("is", $selected_patient_id, $date);
         $stmt->execute();
@@ -108,18 +94,16 @@ if ($conn && $selected_patient_id) {
         $stmt->close();
     }
 } else {
-    // Mock Graph Data
+    // Mock Data
     $dates = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
     $tic_severity = [4, 5, 8, 3, 4, 7, 2];
     $stress_levels = [3, 4, 8, 2, 3, 6, 2];
 }
 
-// C. Graph Data: Tic Types (Pie Chart)
+// (Graph Data: Pie Chart)
 $motor_count = 0;
 $vocal_count = 0;
-
 if ($conn && $selected_patient_id) {
-    // We look at the 'Type' column in tic_log
     $stmt = $conn->prepare("SELECT Type, COUNT(*) as c FROM tic_log WHERE Patient_ID = ? GROUP BY Type");
     $stmt->bind_param("i", $selected_patient_id);
     $stmt->execute();
@@ -130,14 +114,12 @@ if ($conn && $selected_patient_id) {
     }
     $stmt->close();
 } else {
-    $motor_count = 15;
-    $vocal_count = 5;
+    $motor_count = 15; $vocal_count = 5;
 }
 
-// D. Recent Logs Table (Detailed View)
+// (Recent Logs)
 $recent_logs = [];
 if ($conn && $selected_patient_id) {
-    // Fetch last 10 tics with details
     $sql = "SELECT Created_At, Type, Type_Description, Intensity, Describe_Text, Pain_Level 
             FROM tic_log WHERE Patient_ID = ? ORDER BY Created_At DESC LIMIT 10";
     $stmt = $conn->prepare($sql);
@@ -151,18 +133,18 @@ if ($conn && $selected_patient_id) {
 }
 
 $page_title = "Doctor Dashboard";
-// Standard Components
 include '../../components/header_component.php'; 
-include '../../includes/navbar.php'; // Assuming you have a separate navbar for doctors
+include '../../includes/navbar.php'; 
 ?>
 
-<!-- Dependencies -->
+<!-- === 1. PDF LIBRARY === -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://unpkg.com/lucide@latest"></script>
 
-<main class="flex-1 w-full bg-[#E9F0E9] h-screen overflow-hidden flex flex-col">
+<main class="flex-1 w-full bg-gray-50 h-screen overflow-hidden flex flex-col">
 
-    <!-- 1. PATIENT SELECTOR BAR -->
+    <!-- === 2. TOP BAR === -->
     <div class="bg-white border-b border-gray-200 px-8 py-4 flex items-center justify-between shrink-0 shadow-sm z-20">
         <div class="flex items-center gap-4">
             <div class="bg-teal-100 p-2 rounded-lg text-[#005949]">
@@ -170,8 +152,6 @@ include '../../includes/navbar.php'; // Assuming you have a separate navbar for 
             </div>
             <div>
                 <h2 class="text-sm font-bold text-gray-500 uppercase tracking-wide">Viewing Patient</h2>
-                
-                <!-- Patient Dropdown Form -->
                 <form method="GET" action="" id="patientForm" class="relative">
                     <select name="patient_id" onchange="document.getElementById('patientForm').submit()" 
                             class="appearance-none bg-transparent text-xl font-bold text-gray-800 pr-8 cursor-pointer focus:outline-none hover:text-[#005949] transition-colors">
@@ -181,26 +161,38 @@ include '../../includes/navbar.php'; // Assuming you have a separate navbar for 
                             </option>
                         <?php endforeach; ?>
                     </select>
-                    <!-- Custom Arrow Icon -->
                     <i data-lucide="chevron-down" class="w-4 h-4 absolute right-0 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"></i>
                 </form>
             </div>
         </div>
 
         <div class="flex gap-3">
-            <button class="px-4 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 shadow-sm">
-                Export Report
+            <!-- PDF EXPORT BUTTON -->
+            <button onclick="exportPDF()" class="px-4 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 shadow-sm flex items-center gap-2">
+                <i data-lucide="download" class="w-4 h-4"></i>
+                Export PDF
             </button>
             <button class="px-4 py-2 text-sm font-medium text-white bg-[#005949] rounded-lg hover:bg-[#004539] shadow-sm flex items-center gap-2">
                 <i data-lucide="message-square" class="w-4 h-4"></i>
-                Message Patient
+                Message
             </button>
         </div>
     </div>
 
-    <!-- 2. SCROLLABLE CONTENT -->
+    <!-- === 3. CONTENT AREA === -->
     <div class="flex-1 overflow-y-auto p-8">
-        <div class="max-w-7xl mx-auto space-y-6">
+        
+        <!-- WRAPPER FOR PDF GENERATION -->
+        <div id="report-container" class="max-w-7xl mx-auto space-y-6">
+
+            <!-- HIDDEN HEADER FOR PDF (Visible only during export) -->
+            <div id="pdf-header" class="hidden mb-6 border-b border-gray-300 pb-4">
+                <h1 class="text-3xl font-bold text-[#005949]">Patient Analytics Report</h1>
+                <div class="flex justify-between mt-2 text-gray-600">
+                    <p><strong>Patient:</strong> <?php echo htmlspecialchars($selected_patient_name); ?></p>
+                    <p><strong>Date Generated:</strong> <?php echo date('F j, Y'); ?></p>
+                </div>
+            </div>
 
             <!-- SUMMARY CARDS -->
             <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
@@ -244,7 +236,7 @@ include '../../includes/navbar.php'; // Assuming you have a separate navbar for 
             <!-- ANALYTICS ROW -->
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 
-                <!-- Main Graph: Stress Correlation -->
+                <!-- Main Graph -->
                 <div class="lg:col-span-2 bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
                     <div class="flex justify-between items-center mb-4">
                         <h3 class="font-bold text-gray-800">Trigger Analysis: Stress vs. Severity</h3>
@@ -258,12 +250,11 @@ include '../../includes/navbar.php'; // Assuming you have a separate navbar for 
                     </div>
                 </div>
 
-                <!-- Secondary Graph: Types -->
+                <!-- Doughnut Graph -->
                 <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex flex-col">
                     <h3 class="font-bold text-gray-800 mb-4">Tic Classification</h3>
                     <div class="flex-1 flex items-center justify-center relative">
                         <canvas id="typeDoughnutChart"></canvas>
-                        <!-- Center Text -->
                         <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
                             <div class="text-center">
                                 <span class="block text-2xl font-bold text-gray-800">
@@ -284,11 +275,10 @@ include '../../includes/navbar.php'; // Assuming you have a separate navbar for 
                 </div>
             </div>
 
-            <!-- DETAILED LOG TABLE -->
+            <!-- LOG TABLE -->
             <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
                 <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center bg-gray-50">
                     <h3 class="font-bold text-gray-800">Recent Tic Logs</h3>
-                    <button class="text-sm text-[#005949] hover:underline font-medium">View Full History</button>
                 </div>
                 <div class="overflow-x-auto">
                     <table class="w-full text-sm text-left">
@@ -330,9 +320,7 @@ include '../../includes/navbar.php'; // Assuming you have a separate navbar for 
                                 <?php endforeach; ?>
                             <?php else: ?>
                                 <tr>
-                                    <td colspan="5" class="px-6 py-8 text-center text-gray-400">
-                                        No logs found for this patient.
-                                    </td>
+                                    <td colspan="5" class="px-6 py-8 text-center text-gray-400">No logs found.</td>
                                 </tr>
                             <?php endif; ?>
                         </tbody>
@@ -344,78 +332,61 @@ include '../../includes/navbar.php'; // Assuming you have a separate navbar for 
     </div>
 </main>
 
+<!-- === 4. JAVASCRIPT LOGIC === -->
 <script>
     lucide.createIcons();
 
-    // Data from PHP
+    // Chart Data
     const labels = <?php echo json_encode($dates); ?>;
     const severityData = <?php echo json_encode($tic_severity); ?>;
     const stressData = <?php echo json_encode($stress_levels); ?>;
-
     const motorCount = <?php echo $motor_count; ?>;
     const vocalCount = <?php echo $vocal_count; ?>;
 
-    // 1. Combo Chart (Stress vs Severity)
+    // Initialize Charts
     const ctxCombo = document.getElementById('doctorComboChart').getContext('2d');
     new Chart(ctxCombo, {
         type: 'bar',
         data: {
             labels: labels,
             datasets: [
-                {
-                    type: 'line',
-                    label: 'Avg Stress',
-                    data: stressData,
-                    borderColor: '#fb923c', // Orange
-                    borderWidth: 2,
-                    borderDash: [5, 5],
-                    pointBackgroundColor: '#fff',
-                    pointBorderColor: '#fb923c',
-                    pointRadius: 4,
-                    tension: 0.3,
-                    yAxisID: 'y'
-                },
-                {
-                    type: 'bar',
-                    label: 'Max Intensity',
-                    data: severityData,
-                    backgroundColor: '#005949', // Teal Brand Color
-                    borderRadius: 4,
-                    barThickness: 24,
-                    yAxisID: 'y'
-                }
+                { type: 'line', label: 'Avg Stress', data: stressData, borderColor: '#fb923c', borderWidth: 2, borderDash: [5, 5], pointRadius: 4, tension: 0.3, yAxisID: 'y' },
+                { type: 'bar', label: 'Max Intensity', data: severityData, backgroundColor: '#005949', borderRadius: 4, barThickness: 24, yAxisID: 'y' }
             ]
         },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            interaction: { mode: 'index', intersect: false },
-            plugins: { legend: { display: false } },
-            scales: {
-                x: { grid: { display: false } },
-                y: { min: 0, max: 10, grid: { borderDash: [4, 4] } }
-            }
-        }
+        options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false }, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false } }, y: { min: 0, max: 10, grid: { borderDash: [4, 4] } } } }
     });
 
-    // 2. Doughnut Chart (Motor vs Vocal)
     const ctxDoughnut = document.getElementById('typeDoughnutChart').getContext('2d');
     new Chart(ctxDoughnut, {
         type: 'doughnut',
         data: {
             labels: ['Motor', 'Vocal'],
-            datasets: [{
-                data: [motorCount, vocalCount],
-                backgroundColor: ['#005949', '#3b82f6'], // Teal vs Blue
-                borderWidth: 0,
-                hoverOffset: 4
-            }]
+            datasets: [{ data: [motorCount, vocalCount], backgroundColor: ['#005949', '#3b82f6'], borderWidth: 0, hoverOffset: 4 }]
         },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: { legend: { display: false } },
-            cutout: '75%'
-        }
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, cutout: '75%' }
     });
+
+    // --- PDF EXPORT FUNCTION ---
+    function exportPDF() {
+        const element = document.getElementById('report-container');
+        const header = document.getElementById('pdf-header');
+        
+        // Show header temporarily
+        header.classList.remove('hidden');
+
+        const opt = {
+            margin:       [0.5, 0.5], // Top, Left margins (in inches)
+            filename:     'Patient_Report_<?php echo date("Y-m-d"); ?>.pdf',
+            image:        { type: 'jpeg', quality: 0.98 },
+            html2canvas:  { scale: 2, useCORS: true }, // Higher scale for better chart quality
+            jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
+        };
+
+        // Generate PDF
+        html2pdf().set(opt).from(element).save().then(() => {
+            // Hide header again after save
+            header.classList.add('hidden');
+        });
+    }
 </script>
