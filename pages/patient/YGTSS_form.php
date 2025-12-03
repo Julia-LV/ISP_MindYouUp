@@ -1,4 +1,6 @@
 <?php
+session_start();
+
 // Questions for A1: Symptom Checklist (full, grouped, detailed, with age of onset)
 $a1_questions = [
 	'Eye Movements' => [
@@ -218,8 +220,6 @@ $a2_questions = [
 	],
 ];
 
-include_once __DIR__ . '/../../components/header_component.php';
-
 $step = isset($_POST['step']) ? intval($_POST['step']) : 1;
 $error_msg = '';
 
@@ -326,6 +326,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 	<link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
 	<!-- Bootstrap CSS -->
 	<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+	<!-- Navbar CSS -->
+	<link rel="stylesheet" href="../../CSS/navbar.css">
 	<!-- Custom CSS for YGTSS form -->
 	<link rel="stylesheet" href="../../CSS/YGTSS_form.css">
 </head>
@@ -483,6 +485,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 		</div>
 <!-- Bootstrap JS bundle -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<!-- Navbar JS -->
+<script src="../../js/navbar.js"></script>
 </body>
 </html>
 <?php endif; ?>

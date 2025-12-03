@@ -49,8 +49,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         if ($stmt = $conn->prepare($sql)) {
             $stmt->bind_param("i", $patient_id);
             if ($stmt->execute()) {
-                $message = "Great! Recorded no tics for today.";
-                $message_type = "success";
+                header("Location: ticlog_motor.php?status=success&msg=added");
+                exit;
             } else {
                 $message = "Error recording entry: " . $stmt->error;
             }
@@ -512,50 +512,52 @@ include '../../includes/navbar.php';
     });
 
     // --- 7. MODAL LOGIC (Using the Reusable Component) ---
-    let formToSubmit = null;
+    
 
     function askConfirm(type) {
         if (type === 'no_tics') {
-            formToSubmit = 'form-no-tics';
-            // Use our new helper function!
-            openConfirm("Log Good Day?", "This will record that you had NO tics today. Are you sure?", "Yes, Log it");
+            // ERROR FIX: Grab the actual Element using getElementById, not just the string ID
+            formToSubmit = document.getElementById('form-no-tics'); 
+            
+            openConfirm(
+                "Log Good Day?", 
+                "This will record that you had NO tics today. Are you sure?", 
+                "Yes, Log it"
+            );
         } else {
+            // Prepare the hidden inputs BEFORE validation
+            const context = document.getElementById('active_context').value;
+            const finalCat = document.getElementById('final_tic_category');
+            const finalSpec = document.getElementById('final_specific_tic');
+
+             if (context === 'motor') {
+                finalCat.value = document.getElementById('motor_cat').value;
+                finalSpec.value = document.getElementById('motor_spec').value;
+            } else {
+                finalCat.value = document.getElementById('vocal_cat').value;
+                finalSpec.value = document.getElementById('vocal_spec').value;
+            }
+
             // Validation Logic
-            const cat = document.getElementById('final_tic_category').value || (document.getElementById('active_context').value === 'motor' ? document.getElementById('motor_cat').value : document.getElementById('vocal_cat').value);
-            const spec = document.getElementById('final_specific_tic').value || (document.getElementById('active_context').value === 'motor' ? document.getElementById('motor_spec').value : document.getElementById('vocal_spec').value);
+            const cat = finalCat.value;
+            const spec = finalSpec.value;
 
             if (!cat || !spec) {
+                // Using alert here is fine, or you could make an error modal
                 alert("Please select a Tic Type and Specific Tic before saving.");
                 return;
             }
 
-            formToSubmit = 'form-main';
-            // Use our new helper function!
-            openConfirm("Save Tic Entry", "Are you sure you want to save this tic entry to your log?", "Yes, Save");
+            // ERROR FIX: Grab the actual Main Form Element
+            formToSubmit = document.getElementById('form-main');
+
+            openConfirm(
+                "Save Entry?", 
+                "Are you sure you want to log this tic?", 
+                "Yes, Save"
+            );
         }
     }
-
-    // Attach click event to the component's button
-    document.getElementById('globalConfirmBtn').addEventListener('click', function() {
-        if (formToSubmit) {
-            // Populate hidden fields if main form
-            if (formToSubmit === 'form-main') {
-                const context = document.getElementById('active_context').value;
-                if (context === 'motor') {
-                    document.getElementById('final_tic_category').value = document.getElementById('motor_cat').value;
-                    document.getElementById('final_specific_tic').value = document.getElementById('motor_spec').value;
-                } else {
-                    document.getElementById('final_tic_category').value = document.getElementById('vocal_cat').value;
-                    document.getElementById('final_specific_tic').value = document.getElementById('vocal_spec').value;
-                }
-            }
-            // Submit
-            document.getElementById(formToSubmit).submit();
-        }
-    });
-
-
-
 </script>
 
 <?php if (!empty($message) && $message_type === 'success'): ?>

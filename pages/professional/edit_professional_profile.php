@@ -2,270 +2,116 @@
 session_start();
 include('../../config.php');
 
-// 1. Security Check
-if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true ||
-    !isset($_SESSION['role']) || $_SESSION['role'] !== 'Professional') {
-    header("Location: ../auth/login.php");
+if (!isset($_SESSION['user_id']) || $_SESSION['role'] != 'Professional') { header("Location: ../auth/login.php"); exit; }
+
+$user_id = $_SESSION['user_id'];
+
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    
+    $fname = $_POST['first_name'];
+    $lname = $_POST['last_name'];
+    $email = $_POST['email'];
+    $age   = $_POST['age'];
+    $spec  = $_POST['specialization']; 
+
+    // Update General
+    $stmt = $conn->prepare("UPDATE user_profile SET First_Name=?, Last_Name=?, Email=?, Age=? WHERE User_ID=?");
+    $stmt->bind_param("sssii", $fname, $lname, $email, $age, $user_id);
+    $stmt->execute();
+
+    // Update Specialization
+    $sql_prof = "INSERT INTO professional_profile (User_ID, Specialization) VALUES (?, ?) ON DUPLICATE KEY UPDATE Specialization = VALUES(Specialization)";
+    $stmt2 = $conn->prepare($sql_prof);
+    $stmt2->bind_param("is", $user_id, $spec);
+    $stmt2->execute();
+
+    // IMAGE HANDLING
+    if (isset($_POST['remove_photo'])) {
+        $stmt = $conn->prepare("UPDATE user_profile SET User_Image = NULL WHERE User_ID=?");
+        $stmt->bind_param("i", $user_id);
+        $stmt->execute();
+    }
+    if (isset($_FILES['profile_pic']) && $_FILES['profile_pic']['error'] == 0) {
+        $file_name = time() . "_" . basename($_FILES["profile_pic"]["name"]);
+        $target = "../../uploads/" . $file_name;
+        if(move_uploaded_file($_FILES["profile_pic"]["tmp_name"], $target)){
+            $stmt = $conn->prepare("UPDATE user_profile SET User_Image=? WHERE User_ID=?");
+            $stmt->bind_param("si", $target, $user_id);
+            $stmt->execute();
+        }
+    }
+    
+    header("Location: professional_profile.php");
     exit;
 }
 
-$professional_id = $_SESSION['user_id'];
-$message = '';
-$message_type = ''; // 'success' or 'error'
-$show_success_modal = false; // 💡 NOVO: Flag para o modal de sucesso
-
-// 2. Handle Form Submission
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    
-    // Sanitize text inputs
-    $first_name = trim($_POST['first_name']);
-    $last_name = trim($_POST['last_name']);
-    $age = (int)$_POST['age'];
-
-    // Start Transaction (Good practice)
-    $conn->begin_transaction();
-    $update_successful = false;
-    $has_updates = false; // 💡 NOVO: Para verificar se alguma linha foi afetada
-
-    // Update Text Data (First Name, Last Name, Age)
-    $sql_update = "UPDATE user_profile SET First_Name = ?, Last_Name = ?, Age = ? WHERE User_ID = ?";
-    $stmt = $conn->prepare($sql_update);
-    $stmt->bind_param("ssii", $first_name, $last_name, $age, $professional_id);
-
-    if ($stmt->execute()) {
-        if ($stmt->affected_rows > 0) {
-            $has_updates = true;
-        }
-        $update_successful = true;
-    } 
-    $stmt->close();
-
-    // 3. Handle Image Upload
-    if (isset($_FILES['profile_image']) && $_FILES['profile_image']['error'] == 0) {
-        $target_dir = "../../images/users/"; // Ensure this folder exists
-        
-        // Create the directory if it doesn't exist
-        if (!file_exists($target_dir)) {
-            mkdir($target_dir, 0777, true);
-        }
-
-        $file_ext = strtolower(pathinfo($_FILES["profile_image"]["name"], PATHINFO_EXTENSION));
-        $allowed_types = ['jpg', 'jpeg', 'png', 'gif'];
-
-        if (in_array($file_ext, $allowed_types)) {
-            // New filename: user_ID_timestamp.ext (for unique file names)
-            $new_filename = "user_" . $professional_id . "_" . time() . "." . $file_ext;
-            $target_file = $target_dir . $new_filename;
-            
-            // Path to store in DB (relative path for the website to use)
-            $db_path = "/images/users/" . $new_filename;
-
-            if (move_uploaded_file($_FILES["profile_image"]["tmp_name"], $target_file)) {
-                // Update DB with new image path
-                $sql_img = "UPDATE user_profile SET User_Image = ? WHERE User_ID = ?";
-                $stmt_img = $conn->prepare($sql_img);
-                $stmt_img->bind_param("si", $db_path, $professional_id);
-                
-                if ($stmt_img->execute()) {
-                    $has_updates = true; // A imagem foi alterada
-                    $update_successful = true;
-                } else {
-                    $update_successful = false;
-                }
-                $stmt_img->close();
-                
-            } else {
-                $message = "Error uploading the file.";
-                $message_type = "error";
-                $update_successful = false;
-            }
-        } else {
-            $message = "Invalid file type. Only JPG, JPEG, PNG & GIF allowed.";
-            $message_type = "error";
-            $update_successful = false;
-        }
-    }
-    
-    // Commit or Rollback transaction
-    if ($update_successful && $has_updates) {
-        $conn->commit();
-        $message = "Profile updated successfully.";
-        $message_type = "success";
-        $show_success_modal = true; // 💡 ATIVAR MODAL
-    } elseif (!$has_updates && $update_successful) {
-        $conn->rollback();
-        $message = "No changes were made to the profile.";
-        $message_type = "info";
-    } elseif (empty($message)) {
-        $conn->rollback();
-        $message = "Error updating profile.";
-        $message_type = "error";
-    }
-}
-
-// 4. Fetch Current Data (to pre-fill the form)
-$sql = "SELECT First_Name, Last_Name, Age, User_Image FROM user_profile WHERE User_ID = ?";
+// Fetch Data
+$sql = "SELECT u.First_Name, u.Last_Name, u.Email, u.Age, u.User_Image, p.Specialization 
+        FROM user_profile u LEFT JOIN professional_profile p ON u.User_ID = p.User_ID WHERE u.User_ID = ?";
 $stmt = $conn->prepare($sql);
-$stmt->bind_param("i", $professional_id);
+$stmt->bind_param("i", $user_id);
 $stmt->execute();
-$result = $stmt->get_result();
-$user = $result->fetch_assoc();
-$stmt->close();
+$profile = $stmt->get_result()->fetch_assoc();
 
-// IMAGE PATH FIX: Constructing the RELATIVE path 
-$db_image_path = $user['User_Image'];
-$default_image = 'https://via.placeholder.com/150';
-
-if (!empty($db_image_path)) {
-    // Path: Go up two levels (../../) to get to the root, then find the image.
-    $relative_path_segment = substr($db_image_path, 1); 
-    $current_image = '../../' . $relative_path_segment;
-} else {
-    $current_image = $default_image;
-}
-
-// CACHE BUSTER FIX: Append timestamp for image preview
-$cache_buster = time();
-$final_image_src = htmlspecialchars($current_image) . "?" . $cache_buster;
+include('../../components/header_component.php'); 
 ?>
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Edit Professional Profile</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-</head>
-<body class="bg-[#E9F0E9] min-h-screen">
-<?php include '../../includes/navbar.php'; ?>
-
-    <div class="max-w-7xl mx-auto py-10 px-4 sm:px-6 lg:px-8">
-        
-        <div class="mb-6 flex items-center justify-between">
-            <h1 class="text-3xl font-bold text-gray-900">Edit Professional Profile</h1>
-            <a href="professional_profile.php" class="text-sm text-[#005949] hover:underline">Back to Profile</a>
-        </div>
-
-        <?php if ($message && !$show_success_modal): ?>
-            <div class="mb-4 p-4 rounded-md <?php echo $message_type == 'success' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'; ?>">
-                <?php echo htmlspecialchars($message); ?>
-            </div>
-        <?php endif; ?>
-
-        <div class="bg-white shadow overflow-hidden sm:rounded-lg p-6">
-            
-            <form id="editProfileForm" action="" method="POST" enctype="multipart/form-data" class="space-y-6">
-                
-                <div class="flex flex-col items-center">
-                    <span class="text-gray-700 text-sm font-bold mb-2">Current Photo</span>
-                    <img class="h-24 w-24 rounded-full object-cover border-2 border-[#005949] mb-4" 
-                            src="<?php echo $final_image_src; ?>" 
-                            alt="Current Profile">
+<div class="flex h-screen bg-[#E9F0E9] font-sans">
+    <?php include('../../includes/navbar.php'); ?>
+    <main class="flex-1 overflow-y-auto p-8">
+        <div class="max-w-3xl mx-auto">
+            <h1 class="text-2xl font-bold text-gray-800 mb-8">Edit Profile</h1>
+            <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-8">
+                <form method="POST" enctype="multipart/form-data" class="space-y-6">
                     
-                    <label class="block text-sm font-medium text-gray-700">
-                        Change Photo
-                    </label>
-                    <input type="file" name="profile_image" accept="image/*" 
-                            class="mt-1 block w-full text-sm text-gray-500
-                                    file:mr-4 file:py-2 file:px-4
-                                    file:rounded-full file:border-0
-                                    file:text-sm file:font-semibold
-                                    file:bg-green-50 file:text-[#005949]
-                                    hover:file:bg-green-100">
-                </div>
-
-                <hr class="border-gray-200">
-
-                <div>
-                    <label for="first_name" class="block text-sm font-medium text-gray-700">First Name</label>
-                    <input type="text" name="first_name" id="first_name" required
-                            value="<?php echo htmlspecialchars($user['First_Name']); ?>"
-                            class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm">
-                </div>
-
-                <div>
-                    <label for="last_name" class="block text-sm font-medium text-gray-700">Last Name</label>
-                    <input type="text" name="last_name" id="last_name" required
-                            value="<?php echo htmlspecialchars($user['Last_Name']); ?>"
-                            class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm">
-                </div>
-
-                <div>
-                    <label for="age" class="block text-sm font-medium text-gray-700">Age</label>
-                    <input type="number" name="age" id="age" required
-                            value="<?php echo htmlspecialchars($user['Age']); ?>"
-                            class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm">
-                </div>
-
-                <div class="pt-4">
-                    <?php
-                        // Configuração para simple_button.php
-                        $button_text = 'Save Changes';
-                        // 💡 ALTERADO: Tipo de botão para 'button' para ser controlado pelo JS/Modal
-                        $button_type = 'button'; 
-                        $extra_classes = 'w-full'; 
-                        // 💡 NOVO: Chama a função JS para abrir o modal
-                        $button_onclick = "showConfirmationModal(event)";
+                    <div class="p-4 bg-gray-50 rounded-xl border border-gray-100">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Profile Photo</label>
+                        <input type="file" name="profile_pic" accept="image/*" class="block w-full text-sm text-gray-500 mb-2"/>
                         
-                        $path_to_button = __DIR__ . '/../../components/simple_button.php';
+                        <?php if(!empty($profile['User_Image'])): ?>
+                            <div class="flex items-center gap-2 mt-2">
+                                <input type="checkbox" name="remove_photo" id="rm_photo" class="rounded text-indigo-600 focus:ring-indigo-500">
+                                <label for="rm_photo" class="text-sm text-red-500 font-medium cursor-pointer">Remove current photo</label>
+                            </div>
+                        <?php endif; ?>
+                    </div>
 
-                        if (file_exists($path_to_button)) {
-                            include($path_to_button); 
-                        } else {
-                            // Fallback com o novo onclick
-                            echo '<button type="button" onclick="showConfirmationModal(event)" class="w-full py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-[#005949] hover:bg-[#004539] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">Save Changes</button>';
-                        }
-                    ?>
-                </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">First Name</label>
+                            <input type="text" name="first_name" value="<?= htmlspecialchars($profile['First_Name'] ?? '') ?>" required class="w-full rounded-lg border-gray-300 border p-2.5">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
+                            <input type="text" name="last_name" value="<?= htmlspecialchars($profile['Last_Name'] ?? '') ?>" required class="w-full rounded-lg border-gray-300 border p-2.5">
+                        </div>
+                    </div>
 
-            </form>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                            <input type="email" name="email" value="<?= htmlspecialchars($profile['Email'] ?? '') ?>" required class="w-full rounded-lg border-gray-300 border p-2.5">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Age</label>
+                            <input type="number" name="age" value="<?= htmlspecialchars($profile['Age'] ?? '') ?>" class="w-full rounded-lg border-gray-300 border p-2.5">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Specialization</label>
+                        <input type="text" name="specialization" value="<?= htmlspecialchars($profile['Specialization'] ?? '') ?>" placeholder="e.g. Clinical Psychologist" class="w-full rounded-lg border-gray-300 border p-2.5">
+                    </div>
+
+                    <div class="pt-4 flex justify-between items-center border-t border-gray-100 mt-6">
+                         <a href="../auth/reset_password.php" class="text-[#F26647] hover:underline text-sm font-medium">Change Password</a>
+                        <div class="flex gap-3">
+                            <a href="professional_profile.php" class="px-5 py-2.5 rounded-lg text-gray-700 hover:bg-gray-100">Cancel</a>
+                            <button type="submit" class="px-5 py-2.5 rounded-lg bg-[#F0856C] text-white font-medium hover:bg-[#F26647]">Save Changes</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
         </div>
-    </div>
-    
-    <?php include '../../components/modals.php'; ?>
-    
-    <script>
-        // 5. Função para abrir o Modal de Confirmação
-        function showConfirmationModal(event) {
-            event.preventDefault(); // Previne o envio padrão
-            
-            const form = document.getElementById('editProfileForm');
-            if (form.checkValidity()) {
-                openConfirm(
-                    "Confirm Save Changes",
-                    "Are you sure you want to update your professional profile information? This action cannot be undone.",
-                    "Save Changes"
-                );
-            } else {
-                form.reportValidity();
-            }
-        }
-
-        // 6. Adicionar Listener para submeter o formulário após a confirmação
-        document.getElementById('globalConfirmBtn').addEventListener('click', function() {
-            closeModals(); 
-            // Submete o formulário após a confirmação do modal
-            document.getElementById('editProfileForm').submit();
-        });
-
-        // 7. Lógica para mostrar o modal de sucesso se o PHP o sinalizar
-        <?php if ($show_success_modal): ?>
-            // Usamos a variável PHP $message para o corpo do modal.
-            openSuccess(
-                "Profile Updated!",
-                "<?php echo htmlspecialchars($message); ?>", 
-                "View Profile"
-            );
-            
-            // Ajustar o botão secundário para "Ficar Aqui"
-            document.querySelector('#successModal .bg-gray-50 .flex-row-reverse button').innerText = "Stay Here"; 
-
-            // Ajustar o link do botão primário para o perfil do profissional
-            const homeLink = document.querySelector('#successModal .bg-gray-50 .flex-row-reverse a');
-            if(homeLink) homeLink.setAttribute('href', 'professional_profile.php');
-            
-        <?php endif; ?>
-    </script>
-</body>
-</html>
+    </main>
+</div>

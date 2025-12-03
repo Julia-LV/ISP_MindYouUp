@@ -3,145 +3,148 @@ session_start();
 include('../../config.php');
 
 // 1. Security Check
-if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true ||
-    !isset($_SESSION['role']) || $_SESSION['role'] !== 'Patient') {
+if (!isset($_SESSION['user_id'])) { 
     header("Location: ../auth/login.php");
     exit;
 }
-
-// 2. Get User ID from session
-$user_id = $_SESSION['user_id'];
-
-// 3. Database Query (Joining user_profile and patient_profile)
-$sql = "SELECT 
-            up.User_ID, up.First_Name, up.Last_Name, up.Age, up.User_Image, up.Email,
-            pp.Patient_Status, pp.Treatment_Type, pp.Start_Date
-        FROM user_profile up
-        LEFT JOIN patient_profile pp ON up.User_ID = pp.User_ID
-        WHERE up.User_ID = ?";
-
-$stmt = $conn->prepare($sql);
-$stmt->bind_param("i", $user_id);
-$stmt->execute();
-$result = $stmt->get_result();
-$user = $result->fetch_assoc();
-
-if (!$user) {
-    echo "Error: User profile not found.";
+if (isset($_SESSION['role']) && $_SESSION['role'] != 'Patient') {
+    header("Location: ../professional/professional_profile.php");
     exit;
 }
 
-// 4. IMAGE PATH FIX: Constructing the RELATIVE path 
-$db_image_path = $user['User_Image'];
-$default_image = 'https://via.placeholder.com/150';
+$user_id = $_SESSION['user_id'];
 
-if (!empty($db_image_path)) {
-    // Remove the leading slash (/) and prepend the necessary folder traversal (../../)
-    $relative_path_segment = substr($db_image_path, 1); 
-    $profile_image = '../../' . $relative_path_segment;
-} else {
-    $profile_image = $default_image;
+// 2. Fetch Data 
+// UPDATED SQL: We removed 'p.Patient_Status' and added a subquery for 'Latest_Status'
+$sql = "SELECT u.First_Name, u.Last_Name, u.Email, u.User_Image, u.Age,
+               p.Treatment_Type,
+               -- Subquery: Go find the most recent status from the link table
+               (SELECT Status FROM patient_professional_link 
+                WHERE Patient_ID = u.User_ID 
+                ORDER BY Link_ID DESC LIMIT 1) AS Latest_Status
+        FROM user_profile u 
+        LEFT JOIN patient_profile p ON u.User_ID = p.User_ID 
+        WHERE u.User_ID = ?";
+    
+$stmt = $conn->prepare($sql);
+$stmt->bind_param("i", $user_id);
+$stmt->execute();
+$profile = $stmt->get_result()->fetch_assoc();
+
+function displayVal($val) {
+    return !empty($val) ? htmlspecialchars($val) : '<span class="text-gray-400 italic">Not Set</span>';
 }
 
-// CACHE BUSTER FIX: Append a query parameter with the current time.
-$cache_buster = time();
-$final_image_src = htmlspecialchars($profile_image) . "?" . $cache_buster;
+// Helper for Status Colors (Visual Upgrade)
+function getStatusColor($status) {
+    switch($status) {
+        case 'Pending': return 'text-yellow-600 bg-yellow-50 border-yellow-200';
+        case 'Currently Followed': return 'text-green-600 bg-green-50 border-green-200';
+        case 'Discharged': return 'text-orange-600 bg-orange-50 border-orange-200';
+        case 'Drop Out': return 'text-gray-600 bg-gray-50 border-gray-200';
+        default: return 'text-gray-500 italic';
+    }
+}
 
-// Format Start Date
-$start_date_display = $user['Start_Date'] ? date("d-m-Y", strtotime($user['Start_Date'])) : 'N/A';
+include('../../components/header_component.php'); 
 ?>
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Profile</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-</head>
-<body class="bg-[#E9F0E9] min-h-screen">
-<?php include '../../includes/navbar.php'; ?>
-    <div class="max-w-7xl mx-auto py-10 px-4 sm:px-6 lg:px-8">
-        
-        <div class="mb-8 text-center">
-            <h1 class="text-3xl font-bold text-gray-900">Patient Profile</h1>
-            <p class="mt-2 text-gray-600">View your personal and treatment information.</p>
-        </div>
+<div class="flex h-screen bg-[#E9F0E9] font-sans">
+    <?php include('../../includes/navbar.php'); ?>
 
-        <div class="bg-white shadow overflow-hidden sm:rounded-lg">
-            
-            <div class="px-4 py-5 sm:px-6 flex flex-col items-center pb-8 border-b border-gray-200">
-                <img class="h-32 w-32 rounded-full object-cover border-4 border-[#005949]" 
-                     src="<?php echo $final_image_src; ?>" 
-                     alt="Profile Picture"> 
+    <main class="flex-1 overflow-y-auto p-8">
+        <div class="max-w-5xl mx-auto">
+            <h1 class="text-2xl font-bold text-gray-800 mb-8">My Profile</h1>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 
-                <h2 class="mt-4 text-2xl font-bold text-gray-900">
-                    <?php echo htmlspecialchars($user['First_Name'] . ' ' . $user['Last_Name']); ?>
-                </h2>
-                <p class="text-sm text-gray-500">User ID: #<?php echo htmlspecialchars($user['User_ID']); ?></p>
-            </div>
-
-            <div class="border-t border-gray-200">
-                <dl>
-                    <div class="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                        <dt class="text-sm font-medium text-gray-500">Age</dt>
-                        <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                            <?php echo htmlspecialchars($user['Age']); ?> years
-                        </dd>
-                    </div>
-
-                    <div class="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                        <dt class="text-sm font-medium text-gray-500">Email</dt>
-                        <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                            <?php echo htmlspecialchars($user['Email']); ?>
-                        </dd>
-                    </div>
-
-                    <div class="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                        <dt class="text-sm font-medium text-gray-500">Patient Status</dt>
-                        <dd class="mt-1 text-sm font-semibold text-[#005949] sm:mt-0 sm:col-span-2">
-                            <?php echo htmlspecialchars($user['Patient_Status'] ?? 'Not defined'); ?>
-                        </dd>
-                    </div>
-
-                    <div class="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                        <dt class="text-sm font-medium text-gray-500">Treatment Type</dt>
-                        <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                            <?php echo htmlspecialchars($user['Treatment_Type'] ?? 'Not defined'); ?>
-                        </dd>
-                    </div>
-
-                    <div class="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                        <dt class="text-sm font-medium text-gray-500">Start Date</dt>
-                        <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                            <?php echo htmlspecialchars($start_date_display); ?>
-                        </dd>
-                    </div>
-                </dl>
-            </div>
-            
-            <div class="bg-white px-4 py-5 sm:px-6 border-t border-gray-200">
-                <form action="edit_profile.php" method="GET">
-                    <?php
-                        // Configuration for button.php
-                        $button_text = 'Edit Profile';
-                        $button_type = 'submit'; 
-                        $extra_classes = 'w-full sm:w-auto'; 
+                <div class="lg:col-span-1">
+                    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 text-center">
+                        <div class="relative inline-block mb-4">
+                            <?php $img = !empty($profile['User_Image']) ? $profile['User_Image'] : '../../assets/default_user.png'; ?>
+                            <img src="<?= htmlspecialchars($img) ?>" 
+                                 class="w-32 h-32 rounded-full object-cover border-4 border-green-50 shadow-sm">
+                        </div>
                         
-                        // FIX: Using __DIR__ for a reliable path for include
-                        $path_to_button = __DIR__ . '/../../components/simple_button.php';
+                        <h2 class="text-xl font-bold text-gray-800 leading-tight">
+                            <?= htmlspecialchars($profile['First_Name'] . ' ' . $profile['Last_Name']) ?>
+                        </h2>
 
-                        if (file_exists($path_to_button)) {
-                            include($path_to_button); 
-                        } else {
-                            echo "<p class='text-red-600 font-bold text-center'>ERROR: Button component file not found.</p>";
-                        }
-                    ?>
-                </form>
+                        <p class="text-[#F26647] font-bold text-xs uppercase tracking-widest mt-2 mb-1">
+                            Patient
+                        </p>
+
+                        <p class="text-gray-500 text-sm mb-6"><?= htmlspecialchars($profile['Email']) ?></p>
+                        
+                        <a href="edit_profile.php" class="block w-full py-2.5 px-4 bg-[#F0856C] border border-gray-300 text-gray-700 font-medium rounded-xl hover:bg-[#F26647] transition shadow-sm">
+                            Edit Profile
+                        </a>
+                    </div>
+                </div>
+
+                <div class="lg:col-span-2 space-y-6">
+                    
+                    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                        <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center">
+                            <h3 class="font-bold text-gray-800 text-lg">Account Details</h3>
+                        </div>
+
+                        <div class="text-sm">
+                            <div class="grid grid-cols-3 px-6 py-4 bg-white border-b border-gray-50">
+                                <div class="font-medium text-gray-500 col-span-1">Full Name</div>
+                                <div class="font-semibold text-gray-800 col-span-2">
+                                    <?= displayVal($profile['First_Name'] . ' ' . $profile['Last_Name']) ?>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-3 px-6 py-4 bg-gray-50 border-b border-gray-50">
+                                <div class="font-medium text-gray-500 col-span-1">Age</div>
+                                <div class="font-semibold text-gray-800 col-span-2">
+                                    <?= displayVal($profile['Age']) ?> Years
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-3 px-6 py-4 bg-white border-b border-gray-50">
+                                <div class="font-medium text-gray-500 col-span-1">Current Status</div>
+                                <div class="font-semibold col-span-2">
+                                    <?php 
+                                        $status = $profile['Latest_Status'] ?? 'Not Connected';
+                                        $color = getStatusColor($status);
+                                    ?>
+                                    <span class="px-2 py-1 rounded-md border text-xs uppercase tracking-wider <?= $color ?>">
+                                        <?= $status ?>
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-3 px-6 py-4 bg-gray-50">
+                                <div class="font-medium text-gray-500 col-span-1">Treatment Type</div>
+                                <div class="font-semibold text-gray-800 col-span-2">
+                                    <?= displayVal($profile['Treatment_Type']) ?>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <a href="my_professionals.php" class="flex items-center justify-between p-5 rounded-2xl bg-white border border-green-200 shadow-sm hover:shadow-md hover:border-green-300 transition group cursor-pointer">
+                        <div class="flex items-center gap-4">
+                            <div class=" text-green-600 flex items-center justify-center text-xl">
+                                <i class="fas fa-user-md"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-gray-800 text-lg">My Professionals</h4>
+                                <p class="text-sm text-gray-500">View and manage your doctor connections</p>
+                            </div>
+                        </div>
+                        <span class="w-10 h-10 flex items-center justify-center rounded-full bg-gray-50 text-gray-400 group-hover:bg-[#F0856C] group-hover:text-white transition">
+                            &rarr;
+                        </span>
+                    </a>
+
+                </div>
             </div>
-
         </div>
-    </div>
-
+    </main>
+</div>
 </body>
 </html>

@@ -1,106 +1,195 @@
-const sidebar = document.getElementById('sidebar');
-const toggleButton = document.getElementById('toggleButton');
-const linkTexts = document.querySelectorAll('.link-text');
-const navLinks = document.querySelectorAll('.sidebar-link');
-const menuText = document.getElementById('menuText');
-const mainWrapper = document.getElementById('main-wrapper');
-const overlay = document.getElementById('sidebar-overlay'); // Add this line
+// navbar.js
 
-// State variable to track if sidebar is open
-let isSidebarOpen = false;
-
-// Function to toggle the sidebar
-function toggleSidebar() {
-    isSidebarOpen = !isSidebarOpen; // Toggle state
-
-    // --- RESPONSIVE LOGIC START ---
-    // Desktop Breakpoint (xl in Tailwind is usually 1280px, but let's assume 1024px for tablet boundary)
-    const isDesktop = window.innerWidth >= 1024;
+document.addEventListener('DOMContentLoaded', function() {
+    // Elementos DOM
+    const sidebar = document.getElementById('sidebar');
+    const toggleButton = document.getElementById('toggleButton');
+    const sidebarOverlay = document.getElementById('sidebar-overlay');
+    const menuText = document.getElementById('menuText');
+    const linkTexts = document.querySelectorAll('.link-text');
+    const sidebarLinks = document.querySelectorAll('.sidebar-link');
     
-    if (isSidebarOpen) {
-        // --- OPEN SIDEBAR (Wide) ---
-        
-        // 1. Sidebar Width
+    // Estado do sidebar
+    let isExpanded = false;
+    
+    // Função para expandir o sidebar (mostrar textos)
+    function expandSidebar() {
         sidebar.classList.remove('w-20');
         sidebar.classList.add('w-64');
-
-        // 2. Main Content Padding
-        if (mainWrapper) {
-            mainWrapper.classList.remove('md:pl-20');
-            mainWrapper.classList.add('md:pl-64');
-        }
-
-        // 3. Links Layout (Left Align)
-        navLinks.forEach(link => {
-            link.classList.remove('justify-center', 'px-0');
-            link.classList.add('justify-start', 'px-4', 'gap-4');
-        });
-
-        // 4. Show Text Labels
+        
+        // Mostra textos
         linkTexts.forEach(text => text.classList.remove('hidden'));
-        menuText.classList.remove('hidden');
-
-    } else {
-        // --- CLOSE SIDEBAR (Narrow) ---
-
-        // 1. Sidebar Width
-        sidebar.classList.add('w-20');
-        sidebar.classList.remove('w-64');
-
-        // 2. Main Content Padding
-        if (mainWrapper) {
-            mainWrapper.classList.add('md:pl-20');
-            mainWrapper.classList.remove('md:pl-64');
+        if (menuText) menuText.classList.remove('hidden');
+        
+        // Mostra overlay apenas em mobile
+        if (window.innerWidth < 768) {
+            sidebar.classList.remove('-translate-x-full');
+            sidebar.classList.add('translate-x-0');
+            if (sidebarOverlay) sidebarOverlay.classList.remove('hidden');
         }
-
-        // 3. Links Layout (Center Align)
-        navLinks.forEach(link => {
-            link.classList.add('justify-center', 'px-0');
-            link.classList.remove('justify-start', 'px-4', 'gap-4');
-        });
-
-        // 4. Hide Text Labels
-        linkTexts.forEach(text => text.classList.add('hidden'));
-        menuText.classList.add('hidden');
+        
+        isExpanded = true;
+        
+        // Salva estado no localStorage
+        localStorage.setItem('sidebarExpanded', 'true');
     }
-}
-
-// Initialization Function
-function initializeSidebar() {
-    // Mobile vs Desktop visibility
-    if (window.innerWidth >= 768) {
-        sidebar.classList.remove('-translate-x-full');
-        sidebar.classList.add('translate-x-0');
-    } else {
-        sidebar.classList.add('-translate-x-full');
-        sidebar.classList.remove('translate-x-0');
-    }
-
-    // Force Closed State on Load/Resize (Default)
-    isSidebarOpen = false; 
     
-    sidebar.classList.remove('w-64');
-    sidebar.classList.add('w-20');
-
-    if (mainWrapper) {
-        mainWrapper.classList.remove('md:pl-64');
-        mainWrapper.classList.add('md:pl-20');
+    // Função para recolher o sidebar (esconder textos)
+    function collapseSidebar() {
+        sidebar.classList.remove('w-64');
+        sidebar.classList.add('w-20');
+        
+        // Esconde textos
+        linkTexts.forEach(text => text.classList.add('hidden'));
+        if (menuText) menuText.classList.add('hidden');
+        
+        // Em mobile, esconde completamente
+        if (window.innerWidth < 768) {
+            sidebar.classList.remove('translate-x-0');
+            sidebar.classList.add('-translate-x-full');
+            if (sidebarOverlay) sidebarOverlay.classList.add('hidden');
+        }
+        
+        isExpanded = false;
+        
+        // Salva estado no localStorage
+        localStorage.setItem('sidebarExpanded', 'false');
     }
-
-    navLinks.forEach(link => {
-        link.classList.remove('justify-start', 'px-4', 'gap-4');
-        link.classList.add('justify-center', 'px-0');
+    
+    // Função para alternar entre expandido/recolhido
+    function toggleSidebar() {
+        if (isExpanded) {
+            collapseSidebar();
+        } else {
+            expandSidebar();
+        }
+    }
+    
+    // Inicializa o sidebar
+    function initSidebar() {
+        // Verifica estado salvo no localStorage
+        const savedState = localStorage.getItem('sidebarExpanded');
+        
+        // Por padrão, inicia recolhido (apenas ícones)
+        if (savedState === 'true') {
+            expandSidebar();
+        } else {
+            collapseSidebar();
+        }
+        
+        // Em desktop, garante que está visível
+        if (window.innerWidth >= 768) {
+            sidebar.classList.remove('-translate-x-full');
+            sidebar.classList.add('translate-x-0');
+        }
+    }
+    
+    // Função para highlight do item ativo
+    function highlightActivePage() {
+        const currentPath = window.location.pathname;
+        
+        sidebarLinks.forEach(link => {
+            // Remove a classe ativa de todos os links
+            link.classList.remove('active', 'bg-[#005949]');
+            
+            // Remove classes de cor branca
+            const icon = link.querySelector('svg');
+            const text = link.querySelector('.link-text');
+            const path = link.querySelector('svg path');
+            
+            if (icon) icon.classList.remove('text-white');
+            if (text) text.classList.remove('text-white');
+            if (path) path.classList.remove('fill-white');
+            
+            // Verifica se este link corresponde à página atual
+            const linkHref = link.getAttribute('href');
+            if (linkHref) {
+                // Extrai apenas o nome do arquivo do href
+                const linkFileName = linkHref.split('/').pop();
+                const currentFileName = currentPath.split('/').pop();
+                
+                // Compara os nomes dos arquivos
+                if (linkFileName && currentFileName && linkFileName === currentFileName) {
+                    // Adiciona classes para o estado ativo
+                    link.classList.add('active', 'bg-[#005949]');
+                    
+                    // Adiciona classes para cor branca
+                    if (icon) icon.classList.add('text-white');
+                    if (text) text.classList.add('text-white');
+                    if (path) path.classList.add('fill-white');
+                }
+            }
+        });
+    }
+    
+    // Adiciona evento de clique para destacar o item clicado
+    sidebarLinks.forEach(link => {
+        link.addEventListener('click', function(e) {
+            // Se for mobile e sidebar está expandido, recolhe após clicar
+            if (window.innerWidth < 768 && isExpanded) {
+                collapseSidebar();
+            }
+            
+            // Remove a classe ativa de todos os links
+            sidebarLinks.forEach(l => {
+                l.classList.remove('active', 'bg-[#005949]');
+                const icon = l.querySelector('svg');
+                const text = l.querySelector('.link-text');
+                const path = l.querySelector('svg path');
+                
+                if (icon) icon.classList.remove('text-white');
+                if (text) text.classList.remove('text-white');
+                if (path) path.classList.remove('fill-white');
+            });
+            
+            // Adiciona a classe ativa ao link clicado
+            this.classList.add('active', 'bg-[#005949]');
+            
+            // Adiciona classes para cor branca
+            const icon = this.querySelector('svg');
+            const text = this.querySelector('.link-text');
+            const path = this.querySelector('svg path');
+            
+            if (icon) icon.classList.add('text-white');
+            if (text) text.classList.add('text-white');
+            if (path) path.classList.add('fill-white');
+        });
     });
-
-    linkTexts.forEach(text => text.classList.add('hidden'));
-    menuText.classList.add('hidden');
-}
-
-// Event Listeners
-if (toggleButton) {
-    toggleButton.addEventListener('click', toggleSidebar);
-}
-
-window.addEventListener('load', initializeSidebar);
-// Optional: re-initialize on resize to reset layout
-window.addEventListener('resize', initializeSidebar);
+    
+    // Event Listeners
+    if (toggleButton) {
+        toggleButton.addEventListener('click', toggleSidebar);
+    }
+    
+    if (sidebarOverlay) {
+        sidebarOverlay.addEventListener('click', collapseSidebar);
+    }
+    
+    // Gerencia redimensionamento da janela
+    window.addEventListener('resize', function() {
+        if (window.innerWidth >= 768) {
+            // Desktop: sidebar sempre visível
+            sidebar.classList.remove('-translate-x-full');
+            sidebar.classList.add('translate-x-0');
+            if (sidebarOverlay) sidebarOverlay.classList.add('hidden');
+        } else {
+            // Mobile: se estiver expandido, mostra overlay
+            if (isExpanded) {
+                sidebar.classList.remove('-translate-x-full');
+                sidebar.classList.add('translate-x-0');
+                if (sidebarOverlay) sidebarOverlay.classList.remove('hidden');
+            } else {
+                sidebar.classList.remove('translate-x-0');
+                sidebar.classList.add('-translate-x-full');
+                if (sidebarOverlay) sidebarOverlay.classList.add('hidden');
+            }
+        }
+    });
+    
+    // Inicializa
+    initSidebar();
+    highlightActivePage();
+    
+    // Atualiza o highlight quando a página muda
+    window.addEventListener('popstate', highlightActivePage);
+});

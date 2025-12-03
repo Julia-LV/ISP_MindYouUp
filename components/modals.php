@@ -65,40 +65,82 @@
 </div>
 
 <script>
-    // 1. Close Function
+    // --- 1. GLOBAL VARIABLES & HELPERS ---
+    let formToSubmit = null; // Variable to remember which form to submit
+
     function closeModals() {
         document.getElementById('confirmModal').classList.add('hidden');
         document.getElementById('successModal').classList.add('hidden');
+        // Clean URL
+        const url = new URL(window.location);
+        url.searchParams.delete('status');
+        url.searchParams.delete('msg');
+        window.history.replaceState({}, '', url);
     }
 
-    // 2. Open Confirmation (Fully Dynamic)
     function openConfirm(title, message, confirmBtnText, cancelBtnText) {
-        // Set Title
         document.getElementById('confirm-modal-title').innerText = title || "Confirm Action";
-        
-        // Set Message
         document.getElementById('confirm-modal-message').innerText = message || "Are you sure?";
-        
-        // Set Confirm Button Text (Default: Yes, Proceed)
         document.getElementById('globalConfirmBtn').innerText = confirmBtnText || "Yes, Proceed";
         
-        // Set Cancel Button Text (Default: Cancel) - Optional
-        // You need to give your cancel button an ID in the HTML first: id="globalCancelBtn"
         const cancelBtn = document.getElementById('globalCancelBtn');
         if(cancelBtn) cancelBtn.innerText = cancelBtnText || "Cancel";
 
-        // Show the modal
         document.getElementById('confirmModal').classList.remove('hidden');
     }
     
-    // 3. Open Success (Fully Dynamic)
-    function openSuccess(title, message, primaryBtnText, secondaryBtnText) {
+    function openSuccess(title, message) {
         if(title) document.getElementById('success-modal-title').innerText = title;
         if(message) document.getElementById('success-modal-message').innerText = message;
-        
-        // If you wanted to change button text here too, you'd add IDs to them in HTML
-        // But usually "Dashboard" and "Log Another" are standard.
-        
         document.getElementById('successModal').classList.remove('hidden');
     }
+
+    // --- 2. ACTION FUNCTIONS (Called by your buttons) ---
+
+    // A. For Deleting
+    function confirmDelete(formId, itemName) {
+        formToSubmit = document.getElementById(formId);
+        openConfirm(
+            'Remove Connection?', 
+            'Are you sure you want to remove ' + itemName + ' from your list?', 
+            'Yes, Remove'
+        );
+    }
+
+    // B. For Adding (This was trapped before, now it is fixed!)
+    function confirmAdd(formId, itemName) {
+        formToSubmit = document.getElementById(formId);
+        openConfirm(
+            'Add Connection?', 
+            'Do you want to add ' + itemName + ' to your list?', 
+            'Yes, Add'
+        );
+    }
+
+    // --- 3. EVENT LISTENERS ---
+
+    // Handle the "Yes" Button Click
+    document.getElementById('globalConfirmBtn').addEventListener('click', function() {
+        if(formToSubmit) {
+            formToSubmit.submit(); // Actually submit the PHP form
+        } else {
+            closeModals(); 
+        }
+    });
+
+    // Check URL for Success Messages on Page Load
+    window.addEventListener('DOMContentLoaded', (event) => {
+        const urlParams = new URLSearchParams(window.location.search);
+        
+        if(urlParams.get('status') === 'success') {
+            let msg = "Action completed successfully.";
+            
+            // Customize messages
+            if(urlParams.get('msg') === 'deleted') msg = "The contact has been removed.";
+            if(urlParams.get('msg') === 'added') msg = "New contact added successfully!";
+            if(urlParams.get('msg') === 'saved') msg = "Profile saved successfully!"; // <--- ADDED THIS FOR EDIT PROFILE
+            
+            openSuccess('Success!', msg);
+        }
+    });
 </script>

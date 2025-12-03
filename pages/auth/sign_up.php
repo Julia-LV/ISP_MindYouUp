@@ -84,7 +84,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 $page_title = 'Sign Up - Mind You Up';
 $no_layout = true; // disable topbar + wrapper for this page
 // Define Custom Body Classes for Centering & Background Color
-$body_class = "bg-[#FFF7E1] min-h-screen flex items-center justify-center p-4 ";
+$body_class = "bg-[#E9F0E9] min-h-screen flex items-center justify-center p-4 ";
 include '../../components/header_component.php'; 
 
 
@@ -135,9 +135,15 @@ include '../../components/input.php';
     </label>
 </div>
 <?php
+// CHANGE $button_text TO $label
+// CHANGE $button_type TO $type
+$label = 'Sign Up'; $type = 'submit'; 
+// Note: Your button.php uses $width, not $extra_classes, 
+// but it defaults to w-full anyway, so you can leave width out.
 
-$button_text = 'Sign Up'; $button_type = 'submit'; $extra_classes = 'w-full'; 
 include '../../components/button.php';
+
+
 
 $link_text = "Already have an account?"; $link_url = 'login.php'; $link_label = 'Log in';
 include '../../components/auth_card_end.php'; 
