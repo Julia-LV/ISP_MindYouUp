@@ -2,488 +2,215 @@
 session_start();
 require_once __DIR__ . '/../../config.php';
 
-/* ---------- AUTH GUARD only logged-in patients ---------- */
-if (empty($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
-    header("Location: ../auth/login.php");
+/*
+ // USER INFO & AUTH (COMMENTED OUT)
+ // Example: check logged-in user and verify they can view resources.
+ // All lines are commented so nothing executes.
+ // $current_user_id = $_SESSION['user_id'] ?? null;
+ // $CURRENT_USER = null;
+ // if ($current_user_id) {
+ //     // fetch basic profile
+ //     $sql = "SELECT User_ID, First_Name, Last_Name, `E-mail`, `Role` FROM user_profile WHERE User_ID = ? LIMIT 1";
+ //     if ($s = $conn->prepare($sql)) {
+ //         $s->bind_param('i', $current_user_id);
+ //         $s->execute();
+ //         $s->bind_result($uid,$fn,$ln,$em,$rl);
+ //         if ($s->fetch()) { $CURRENT_USER = ['id'=>$uid,'first'=>$fn,'last'=>$ln,'email'=>$em,'role'=>$rl]; }
+ //         $s->close();
+ //     }
+ // }
+ // // Example: authorize access to a patient's resources (replace with your logic)
+ // // $patientId = $_GET['patient_id'] ?? $_SESSION['patient_id'] ?? null;
+ // // $canView = false;
+ // // if ($CURRENT_USER && $patientId) {
+ // //     // professional or same patient can view; sample query to check link
+ // //     $check = "SELECT 1 FROM patient_professional_link WHERE Patient_ID = ? AND Professional_ID = ? LIMIT 1";
+ // //     if ($chkStmt = $conn->prepare($check)) {
+ // //         $chkStmt->bind_param('ii',$patientId,$CURRENT_USER['id']);
+ // //         $chkStmt->execute(); $chkStmt->store_result();
+ // //         if ($chkStmt->num_rows === 1) $canView = true;
+ // //         $chkStmt->close();
+ // //     }
+ // // }
+ */
+
+// If download requested, stream PDF blob and exit (single-page handling)
+if (!empty($_GET['download'])) {
+    $did = (int)$_GET['download'];
+    $stmtD = mysqli_prepare($conn, "SELECT RESOURCE_PDF FROM resource_hub WHERE RESOURCE_ID = ? LIMIT 1");
+    mysqli_stmt_bind_param($stmtD, 'i', $did);
+    mysqli_stmt_execute($stmtD);
+    mysqli_stmt_bind_result($stmtD, $blob);
+    if (mysqli_stmt_fetch($stmtD) && $blob !== null) {
+        header('Content-Type: application/pdf');
+        header('Content-Disposition: inline; filename="resource_' . $did . '.pdf"');
+        echo $blob;
+        mysqli_stmt_close($stmtD);
+        exit;
+    }
+    mysqli_stmt_close($stmtD);
+    http_response_code(404);
+    echo 'Not found';
     exit;
 }
 
-$role = $_SESSION['role'] ?? '';
-if (strtolower($role) !== 'patient') {
-    header("Location: ../professional/home_professional.php");
-    exit;
+// Determine patient id to show resources for (prefer explicit param, fallback to session)
+$patientId = isset($_GET['patient_id']) ? (int)$_GET['patient_id'] : ($_SESSION['patient_id'] ?? null);
+// Placeholder: do not enforce user verification for now. If no patient_id is provided
+// we'll show all resources for demo purposes. Replace with proper auth later.
+$showingAll = false;
+if (!$patientId) {
+    $showingAll = true;
 }
 
-$currentPatientId = $_SESSION['user_id'] ?? 0;
-
-/* ---------- FIND LINKED PROFESSIONAL FOR THIS PATIENT ---------- */
-$currentProfessionalId = 0;
-if ($currentPatientId) {
-    $sql = "SELECT Professional_ID FROM patient_profile WHERE User_ID = ?";
-    if ($stmt = $conn->prepare($sql)) {
-        $stmt->bind_param('i', $currentPatientId);
-        $stmt->execute();
-        $stmt->bind_result($profId);
-        if ($stmt->fetch()) {
-            $currentProfessionalId = (int)$profId;
-        }
-        $stmt->close();
+// Detect available columns in resource_hub to support pdf/link/video fields flexibly
+$cols = [];
+$sqlCols = "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'resource_hub'";
+$resCols = mysqli_query($conn, $sqlCols);
+if ($resCols) {
+    while ($r = mysqli_fetch_assoc($resCols)) {
+        $cols[] = $r['COLUMN_NAME'];
     }
 }
 
-/* ---------- HELPERS ---------- */
-function build_media_paths(?string $stored): array {
-    if (!$stored) {
-        return [false, null, null];
-    }
-    $stored = trim($stored);
-    if ($stored === '') {
-        return [false, null, null];
-    }
-
-    if (str_starts_with($stored, 'uploads/')) {
-        $rel = $stored;
-    } else {
-        $rel = 'uploads/' . ltrim($stored, '/');
-    }
-
-    // From pages/patient - project root web is "../../"
-    $web    = '../../' . $rel;
-    $fs     = __DIR__ . '/../../' . $rel;
-    $exists = file_exists($fs);
-
-    return [$exists, $web, $fs];
+// Build select - include commonly expected columns if present
+$selectCols = [];
+foreach (['RESOURCE_ID','USE_USER_ID','PATIENT_ID','PROFESSIONAL_ID','RESOURCE_PDF','RESOURCE_URL','RESOURCE_TYPE','RESOURCE_NAME','RESOURCE_TITLE','RESOURCE_DESC'] as $c) {
+    if (in_array($c, $cols)) $selectCols[] = $c;
+}
+if (empty($selectCols)) {
+    // fallback - select all
+    $select = "*";
+} else {
+    $select = implode(',', $selectCols);
 }
 
-/* ---------- FETCH STRATEGIES (ONLY FROM THIS PROFESSIONAL) ---------- */
-$strategies = [];
-if ($currentPatientId && $currentProfessionalId) {
-    $sql = "SELECT rh.*
-            FROM patient_resources pr
-            JOIN resource_hub rh ON pr.resource_id = rh.id
-            WHERE pr.patient_id = ?
-              AND pr.sent_by = ?
-              AND rh.item_type = 'strategy'
-            ORDER BY rh.sort_order, rh.id";
-    if ($stmt = $conn->prepare($sql)) {
-        $stmt->bind_param('ii', $currentPatientId, $currentProfessionalId);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        while ($row = $result->fetch_assoc()) {
-            $strategies[] = $row;
-        }
-        $stmt->close();
-    }
+$res = false;
+if ($showingAll) {
+    $stmt = mysqli_prepare($conn, "SELECT $select FROM resource_hub ORDER BY RESOURCE_ID DESC");
+    mysqli_stmt_execute($stmt);
+    $res = mysqli_stmt_get_result($stmt);
+} else {
+    $stmt = mysqli_prepare($conn, "SELECT $select FROM resource_hub WHERE PATIENT_ID = ? ORDER BY RESOURCE_ID DESC");
+    mysqli_stmt_bind_param($stmt, 'i', $patientId);
+    mysqli_stmt_execute($stmt);
+    $res = mysqli_stmt_get_result($stmt);
 }
-
-/* ---------- FETCH SKILLS (ONLY FROM THIS PROFESSIONAL) ---------- */
-$skills = [];
-if ($currentPatientId && $currentProfessionalId) {
-    $sql = "SELECT rh.*
-            FROM patient_resources pr
-            JOIN resource_hub rh ON pr.resource_id = rh.id
-            WHERE pr.patient_id = ?
-              AND pr.sent_by = ?
-              AND rh.item_type = 'skill'
-            ORDER BY rh.sort_order, rh.id";
-    if ($stmt = $conn->prepare($sql)) {
-        $stmt->bind_param('ii', $currentPatientId, $currentProfessionalId);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        while ($row = $result->fetch_assoc()) {
-            $skills[] = $row;
-        }
-        $stmt->close();
-    }
+$resources = [];
+if ($res) {
+    while ($row = mysqli_fetch_assoc($res)) $resources[] = $row;
 }
-
-/* ---------- FETCH ARTICLES (ONLY FROM THIS PROFESSIONAL) ---------- */
-$articles = [];
-if ($currentPatientId && $currentProfessionalId) {
-    $sql = "SELECT rh.*
-            FROM patient_resources pr
-            JOIN resource_hub rh ON pr.resource_id = rh.id
-            WHERE pr.patient_id = ?
-              AND pr.sent_by = ?
-              AND rh.item_type = 'article'
-            ORDER BY rh.sort_order, rh.id";
-    if ($stmt = $conn->prepare($sql)) {
-        $stmt->bind_param('ii', $currentPatientId, $currentProfessionalId);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        while ($row = $result->fetch_assoc()) {
-            $articles[] = $row;
-        }
-        $stmt->close();
-    }
-}
-
-/* ---------- STRATEGY NAVIGATION ---------- */
-$currentStrategy = null;
-$prevId = null;
-$nextId = null;
-$mediaExists = false;
-$mediaUrlWeb = null;
-
-if (!empty($strategies)) {
-    $currentId = isset($_GET['strategy_id']) ? (int)$_GET['strategy_id'] : 0;
-
-    if ($currentId === 0) {
-        $currentStrategy = $strategies[0];
-    } else {
-        foreach ($strategies as $s) {
-            if ((int)$s['id'] === $currentId) {
-                $currentStrategy = $s;
-                break;
-            }
-        }
-        if ($currentStrategy === null) {
-            $currentStrategy = $strategies[0];
-        }
-    }
-
-    $ids   = array_column($strategies, 'id');
-    $index = array_search((int)$currentStrategy['id'], array_map('intval', $ids), true);
-    if ($index === false) {
-        $index = 0;
-    }
-
-    $prevIndex = ($index === 0) ? count($strategies) - 1 : $index - 1;
-    $nextIndex = ($index === count($strategies) - 1) ? 0 : $index + 1;
-
-    $prevId = $strategies[$prevIndex]['id'];
-    $nextId = $strategies[$nextIndex]['id'];
-
-    [$mediaExists, $mediaUrlWeb] = build_media_paths($currentStrategy['media_url'] ?? null);
-}
-
-/* ---------- PAGE SETUP ---------- */
-$page_title = 'Resource Hub';
-$body_class = 'h-full bg-gray-100';
-$no_layout  = false;
-
-include __DIR__ . '/../../components/header_component.php';
-include __DIR__ . '/../../includes/navbar.php';
+mysqli_stmt_close($stmt);
 ?>
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <!-- TailwindCSS CDN -->
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <title>Resource Hub</title>
+    <style>
+        :root{--bg-creme:#FFF7E1;--accent-orange:#F26647;--accent-green:#005949;--radius:10px}
+        body{font-family:Arial,Helvetica,sans-serif;background:var(--bg-creme);margin:0;padding:20px;color:#0b2a24}
+        .wrap{max-width:980px;margin:0 auto}
+        .header{display:flex;align-items:center;gap:12px;margin-bottom:18px}
+        .back{color:var(--accent-green);text-decoration:none}
+        h1{margin:0;color:var(--accent-green)}
 
-<style>
-/* old pills (if still used) */
-.skills-strip .skill-pill {
-  display: inline-block;
-  max-width: 240px;
-  white-space: normal;
-  overflow-wrap: anywhere;
-  hyphens: auto;
-  line-height: 1.3;
-}
+        .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px}
+        .card{background:#fff;border-radius:var(--radius);padding:14px;box-shadow:0 6px 16px rgba(0,0,0,0.06);display:flex;flex-direction:column;gap:10px}
+        .card .title{font-weight:600;color:#102b23}
+        .card .meta{color:#666;font-size:.9rem}
+        .card .actions{margin-top:auto;display:flex;gap:8px}
+        .btn{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:8px;border:0;color:#fff;background:linear-gradient(180deg,var(--accent-orange),#e6553e);text-decoration:none}
+        .btn.secondary{background:linear-gradient(180deg,var(--accent-green),#00463f)}
 
-/* Square category cards */
-.skill-card {
-  min-width: 180px;
-  min-height: 180px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 16px;
-  border-radius: 16px;
-  border: 2px solid #d1d5db;
-  background: #ffffff;
-  font-size: 15px;
-  font-weight: 500;
-  color: #111827;
-  text-align: center;
-  line-height: 1.4;
-  text-decoration: none;
-  box-shadow: 0 3px 8px rgba(0,0,0,0.05);
-}
+        .pdf-icon{width:48px;height:48px;border-radius:6px;background:#f6f6f6;display:flex;align-items:center;justify-content:center;font-weight:700;color:#c33}
+        .link-preview{word-break:break-all;color:var(--accent-green)}
+        .video-wrap iframe{width:100%;height:180px;border-radius:6px}
+    </style>
+</head>
+<body>
 
-.skill-card:hover {
-  border-color: #9ca3af;
-  box-shadow: 0 6px 14px rgba(0,0,0,0.08);
-  background: #f9fafb;
-}
-
-.skill-card--disabled {
-  color: #6b7280;
-  cursor: default;
-}
-
-/* Mobile carousel behaviour */
-@media (max-width: 768px) {
-  .skills-strip {
-    position: relative;
-    margin-top: 4px;
-  }
-  .skills-strip::before,
-  .skills-strip::after {
-    content: '';
-    position: absolute;
-    top: 0; bottom: 0; width: 28px;
-    pointer-events: none;
-    z-index: 3;
-  }
-  .skills-strip::before {
-    left: 0;
-    background: linear-gradient(to right, #ffffff, rgba(255,255,255,0));
-  }
-  .skills-strip::after {
-    right: 0;
-    background: linear-gradient(to left, #ffffff, rgba(255,255,255,0));
-  }
-
-  .skills-strip .card-row {
-    display: flex;
-    gap: 12px;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    padding: 4px 32px 8px;
-    scroll-behavior: smooth;
-    -ms-overflow-style: none;
-    scrollbar-width: none;
-  }
-  .skills-strip .card-row::-webkit-scrollbar { display: none; }
-
-  .skills-strip .card-row > * {
-    flex: 0 0 calc(50% - 10px);
-    min-width: 0;
-  }
-
-  .skills-nav {
-    position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 26px; height: 26px;
-    border-radius: 999px;
-    border: 1px solid rgba(0,0,0,0.06);
-    background: #ffffff;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.16);
-    display: flex; align-items: center; justify-content: center;
-    font-size: 16px; color: #374151;
-    cursor: pointer; z-index: 4;
-  }
-  .skills-nav--left { left: 6px; }
-  .skills-nav--right { right: 6px; }
-}
-
-/* Desktop centering of category squares */
-@media (min-width: 769px) {
-  .skills-strip .card-row {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center; /* centre the squares */
-    gap: 16px;
-    padding: 4px 0 0;
-  }
-}
-</style>
-
-<main class="flex-1 w-full p-6 md:p-8 overflow-y-auto bg-[#E9F0E9]">
-  <div class="p-6 md:p-8 space-y-6 max-w-7xl mx-auto">
-    <!-- Header -->
-    <div class="flex items-center justify-between">
-      <div>
-        <h2 class="text-3xl font-bold text-[#005949]">Resource Hub</h2>
-        <p class="mt-1 text-sm text-[#6b7280]">
-          Your personalised strategies, skills, and articles from your professional.
-        </p>
-      </div>
-      <!-- <button
-        type="button"
-        onclick="confirmLogout()"
-        class="px-4 py-2 rounded-full bg-[#005949] text-white text-sm shadow hover:bg-[#00453f] transition"
-      >
-        Log out
-      </button> -->
-    </div>
-
-    <!-- SINGLE-COLUMN STACK -->
-    <div class="grid grid-cols-1 gap-5 lg:gap-6 items-start">
-      <!-- Daily Strategy -->
-      <div class="bg-white rounded-2xl border border-[#f0e3cc] shadow-[0_10px_28px_rgba(0,0,0,0.07)] p-5 min-h-[150px]">
-        <div class="flex items-baseline justify-between mb-3">
-          <?php if ($currentStrategy): ?>
-            <p class="text-xs text-[#6b7280]">Use this exercise to calm down</p>
-          <?php endif; ?>
+    <div class="wrap">
+        <div class="header">
+            <h1>Resource Hub</h1>
         </div>
+        <?php if (!empty($showingAll)): ?>
+            <div class="note" style="margin-bottom:12px;padding:8px;background:#fff8f4;border-left:4px solid var(--accent-orange);border-radius:6px">Authentication placeholder: showing all resources for demo purposes.</div>
+        <?php endif; ?>
 
-        <?php if ($currentStrategy): ?>
-          <?php
-          [$sMediaExists, $sMediaUrlWeb] = build_media_paths($currentStrategy['media_url'] ?? null);
-          $strategyUrl = null;
-          if ($sMediaExists && $sMediaUrlWeb) {
-              $strategyUrl = $sMediaUrlWeb;
-          } else {
-              $rawStrategyContent = $currentStrategy['content'] ?? '';
-              if (preg_match('/https?:\/\/\S+/i', $rawStrategyContent, $m)) {
-                  $strategyUrl = $m[0];
-              }
-          }
-          $strategyHasLink = !empty($strategyUrl);
-          ?>
-          <div class="grid grid-cols-[auto_1fr_auto] gap-2 items-center">
-            <a href="?strategy_id=<?php echo (int)$prevId; ?>"
-               class="w-8 h-8 rounded-full border border-[#e2d7c1] bg-white flex items-center justify-center text-[15px] text-[#867a5a] hover:bg-[#f9f5eb]"
-               aria-label="Previous strategy">&#8249;</a>
+        <?php if (empty($resources)): ?>
+            <p>No resources have been added by your professional yet.</p>
+        <?php else: ?>
+            <div class="grid">
+                <?php foreach ($resources as $r): ?>
+                    <div class="card">
+                        <?php
+                        // Determine title/desc
+                        $title = $r['RESOURCE_TITLE'] ?? $r['RESOURCE_NAME'] ?? ('Resource #' . ($r['RESOURCE_ID'] ?? ''));
+                        $desc = $r['RESOURCE_DESC'] ?? '';
+                        echo '<div class="title">' . htmlspecialchars($title) . '</div>';
+                        if ($desc) echo '<div class="meta">' . htmlspecialchars($desc) . '</div>';
 
-            <div class="flex items-center justify-between gap-3">
-              <div>
-                <?php if (!empty($currentStrategy['subtitle'])): ?>
-                  <p class="text-[11px] uppercase tracking-[0.06em] text-[#F26647] mb-1">
-                    <?php echo htmlspecialchars($currentStrategy['subtitle']); ?>
-                  </p>
-                <?php endif; ?>
-                <p class="text-[18px] font-semibold text-[#111827]">
-                  <?php echo htmlspecialchars($currentStrategy['title'] ?? ''); ?>
-                </p>
-              </div>
+                        // Detect type
+                        $type = null;
+                        if (!empty($r['RESOURCE_PDF'])) $type = 'pdf';
+                        if (!empty($r['RESOURCE_URL'])) {
+                            $url = trim($r['RESOURCE_URL']);
+                            // crude video detection
+                            if (strpos($url,'youtube.com') !== false || strpos($url,'youtu.be') !== false) $type = 'video';
+                            else $type = 'link';
+                        }
+                        // If RESOURCE_TYPE column exists, prefer it
+                        if (!empty($r['RESOURCE_TYPE'])) $type = strtolower($r['RESOURCE_TYPE']);
 
-              <?php if ($strategyHasLink): ?>
-                <a href="<?php echo htmlspecialchars($strategyUrl); ?>" target="_blank"
-                   class="w-11 h-11 rounded-full bg-[#005949] text-white flex items-center justify-center text-[21px] shadow-[0_7px_16px_rgba(0,0,0,0.18)] hover:bg-[#00453f]"
-                   aria-label="Open strategy">&#9654;</a>
-              <?php else: ?>
-                <button type="button"
-                        class="w-11 h-11 rounded-full bg-[#d4d7cf] text-white flex items-center justify-center text-[21px] cursor-default"
-                        aria-disabled="true">&#9654;</button>
-              <?php endif; ?>
+                        if ($type === 'pdf'):
+                            $id = (int)$r['RESOURCE_ID'];
+                        ?>
+                            <div style="display:flex;gap:10px;align-items:center">
+                                <div class="pdf-icon">PDF</div>
+                                <div style="flex:1">
+                                    <div class="meta">PDF document</div>
+                                </div>
+                            </div>
+                            <div class="actions">
+                                <a class="btn" href="?download=<?php echo $id ?>" target="_blank">Open / Download</a>
+                            </div>
+                        <?php elseif ($type === 'video'):
+                            $url = $r['RESOURCE_URL'];
+                            // simple youtube embed handling
+                            $embed = '';
+                            if (preg_match('#(?:v=|youtu\.be/)([A-Za-z0-9_-]{6,})#', $url, $m)) {
+                                $vid = $m[1];
+                                $embed = 'https://www.youtube.com/embed/' . $vid;
+                            }
+                        ?>
+                            <?php if ($embed): ?>
+                                <div class="video-wrap"><iframe src="<?php echo htmlspecialchars($embed) ?>" frameborder="0" allowfullscreen></iframe></div>
+                            <?php else: ?>
+                                <div class="meta">Video</div>
+                            <?php endif; ?>
+                            <div class="actions">
+                                <a class="btn" href="<?php echo htmlspecialchars($url) ?>" target="_blank">Open video</a>
+                            </div>
+                        <?php elseif ($type === 'link'):
+                            $url = $r['RESOURCE_URL'];
+                        ?>
+                            <div class="meta">Link</div>
+                            <div class="link-preview"><?php echo htmlspecialchars($url) ?></div>
+                            <div class="actions">
+                                <a class="btn" href="<?php echo htmlspecialchars($url) ?>" target="_blank">Open link</a>
+                                <a class="btn secondary" href="?save=<?php echo (int)$r['RESOURCE_ID'] ?>">Save</a>
+                            </div>
+                        <?php else: ?>
+                            <div class="meta">Unknown resource type</div>
+                        <?php endif; ?>
+                    </div>
+                <?php endforeach; ?>
             </div>
-
-            <a href="?strategy_id=<?php echo (int)$nextId; ?>"
-               class="w-8 h-8 rounded-full border border-[#e2d7c1] bg-white flex items-center justify-center text-[15px] text-[#867a5a] hover:bg-[#f9f5eb]"
-               aria-label="Next strategy">&#8250;</a>
-          </div>
-        <?php else: ?>
-          <p class="text-sm text-[#6b7280]">No strategies available yet.</p>
         <?php endif; ?>
-      </div>
-
-      <!-- Skills / Categories -->
-      <div class="bg-white rounded-2xl border border-[#f0e3cc] shadow-[0_10px_28px_rgba(0,0,0,0.07)] p-4">
-        <h2 class="text-sm font-semibold mb-2 text-[#231f20]">Categories</h2>
-        <?php if (!empty($skills)): ?>
-          <div class="skills-strip">
-            <button type="button" class="skills-nav skills-nav--left md:hidden" aria-label="Previous skills">&#8249;</button>
-
-            <div class="card-row">
-              <?php foreach ($skills as $skill): ?>
-                <?php
-                [$sMediaExists2, $sMediaUrlWeb2] = build_media_paths($skill['media_url'] ?? null);
-                $skillUrl = null;
-                if ($sMediaExists2 && $sMediaUrlWeb2) {
-                    $skillUrl = $sMediaUrlWeb2;
-                } else {
-                    $rawSkillContent = $skill['content'] ?? '';
-                    if (preg_match('/https?:\/\/\S+/i', $rawSkillContent, $m)) {
-                        $skillUrl = $m[0];
-                    }
-                }
-                $skillHasLink = !empty($skillUrl);
-                ?>
-                <?php if ($skillHasLink): ?>
-                  <a href="<?php echo htmlspecialchars($skillUrl); ?>" target="_blank"
-                     class="skill-card"
-                     title="Open skill resource">
-                    <?php echo htmlspecialchars($skill['title'] ?? ''); ?>
-                  </a>
-                <?php else: ?>
-                  <div class="skill-card skill-card--disabled">
-                    <?php echo htmlspecialchars($skill['title'] ?? ''); ?>
-                  </div>
-                <?php endif; ?>
-              <?php endforeach; ?>
-            </div>
-
-            <button type="button" class="skills-nav skills-nav--right md:hidden" aria-label="Next skills">&#8250;</button>
-          </div>
-        <?php else: ?>
-          <p class="text-sm text-[#6b7280]">No skills added yet.</p>
-        <?php endif; ?>
-      </div>
-
-      <!-- Articles & Guides -->
-      <div class="bg-white rounded-2xl border border-[#f0e3cc] shadow-[0_10px_28px_rgba(0,0,0,0.07)] p-4">
-        <h2 class="text-sm font-semibold mb-2 text-[#231f20]">Articles &amp; Guides</h2>
-        <?php if (!empty($articles)): ?>
-          <div class="flex flex-col gap-2">
-            <?php foreach ($articles as $article): ?>
-              <?php
-              [$aMediaExists, $aMediaUrlWeb] = build_media_paths($article['media_url'] ?? null);
-              $url = null;
-              if ($aMediaExists && $aMediaUrlWeb) {
-                  $url = $aMediaUrlWeb;
-              } else {
-                  $rawContent = $article['content'] ?? '';
-                  if (preg_match('/https?:\/\/\S+/i', $rawContent, $m)) {
-                      $url = $m[0];
-                  }
-              }
-              $hasLink = !empty($url);
-              ?>
-              <?php if ($hasLink): ?>
-                <a href="<?php echo htmlspecialchars($url); ?>" target="_blank"
-                   class="flex items-center gap-3 bg-white rounded-xl border border-[#f0e3cc] px-3 py-2 no-underline hover:bg-[#f9fafb]">
-                  <div class="w-8 h-8 rounded-full bg-[#e6f3ec] flex-shrink-0 relative">
-                    <div class="absolute inset-2 rounded-full border-2 border-[#c7e4d7]"></div>
-                  </div>
-                  <p class="m-0 text-[13px] text-[#111827] whitespace-nowrap overflow-hidden text-ellipsis">
-                    <?php echo htmlspecialchars($article['title'] ?? ''); ?>
-                  </p>
-                  <span class="ml-auto text-[16px] text-[#bcae8c] flex-shrink-0">&#8250;</span>
-                </a>
-              <?php else: ?>
-                <div class="flex items-center gap-3 bg-white rounded-xl border border-[#f0e3cc] px-3 py-2 opacity-65">
-                  <div class="w-8 h-8 rounded-full bg-[#e6f3ec] flex-shrink-0 relative">
-                    <div class="absolute inset-2 rounded-full border-2 border-[#c7e4d7]"></div>
-                  </div>
-                  <p class="m-0 text-[13px] text-[#6b7280] whitespace-nowrap overflow-hidden text-ellipsis">
-                    <?php echo htmlspecialchars($article['title'] ?? ''); ?>
-                  </p>
-                  <span class="ml-auto text-[16px] text-[#bcae8c] flex-shrink-0">&#8250;</span>
-                </div>
-              <?php endif; ?>
-            <?php endforeach; ?>
-          </div>
-        <?php else: ?>
-          <p class="text-sm text-[#6b7280]">No articles yet.</p>
-        <?php endif; ?>
-      </div>
     </div>
-  </div>
-</main>
-
-</div>
-
-<?php
-if (file_exists(__DIR__ . '/../../components/modals.php')) {
-    include __DIR__ . '/../../components/modals.php';
-}
-?>
-
-<script>
-function confirmLogout() {
-  if (confirm('Are you sure you want to log out?')) {
-    window.location.href = '../auth/logout.php';
-  }
-}
-
-document.addEventListener('DOMContentLoaded', function () {
-  const row  = document.querySelector('.skills-strip .card-row');
-  if (!row) return;
-
-  const prev = document.querySelector('.skills-nav--left');
-  const next = document.querySelector('.skills-nav--right');
-
-  function getStep() {
-    const item = row.children[0];
-    return item ? item.offsetWidth + 12 : 160;
-  }
-
-  prev && prev.addEventListener('click', function () {
-    row.scrollBy({ left: -getStep(), behavior: 'smooth' });
-  });
-
-  next && next.addEventListener('click', function () {
-    row.scrollBy({ left: getStep(), behavior: 'smooth' });
-  });
-});
-</script>
+</body>
+</html>
