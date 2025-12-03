@@ -1,0 +1,55 @@
+/* YGTSS Form Custom Styles */
+:root {
+    --bg-creme: #FFF7E1;
+    --accent-orange: #F26647;
+    --accent-green: #005949;
+    --text-dark: #0b2a24;
+    --muted: rgba(11,42,36,0.65);
+    --radius: 10px;
+}
+body {
+    background: var(--bg-creme);
+    color: var(--text-dark);
+}
+h2, h4 {
+    color: var(--accent-green);
+}
+.ygtss-section {
+    background: #fff;
+    border-radius: var(--radius);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+    padding: 2rem;
+    margin-bottom: 2rem;
+}
+.ygtss-section .form-check-input,
+.ygtss-section .form-check-input[type="radio"] {
+    border: 1.5px solid var(--accent-green) !important;
+    width: 1em !important;
+    height: 1em !important;
+    background-color: #fff !important;
+    box-shadow: none !important;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    border-radius: 50% !important;
+    cursor: pointer;
+}
+.ygtss-section .form-check-input:checked,
+.ygtss-section .form-check-input[type="radio"]:checked {
+    background-color: var(--accent-orange) !important;
+    border-color: var(--accent-orange) !important;
+    box-shadow: none !important;
+}
+.btn-primary {
+    background: linear-gradient(180deg, var(--accent-orange), #e6553e);
+    border: none;
+}
+.btn-success {
+    background: linear-gradient(180deg, var(--accent-green), #007d63);
+    border: none;
+}
+.alert-info {
+    background: #e6f9ee;
+    color: var(--accent-green);
+    border-radius: var(--radius);
+}

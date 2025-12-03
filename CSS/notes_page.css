@@ -1,0 +1,283 @@
+/* Notes Page Styles */
+/* Uses Bootstrap classes where applicable */
+
+:root {
+    --bg-creme: #FFF7E1;
+    --accent-orange: #F26647;
+    --accent-green: #005949;
+    --text-dark: #0b2a24;
+    --danger-red: #dc3545;
+    --danger-red-dark: #c82333;
+    --primary-blue: #4A90D9;
+    --primary-blue-dark: #357ABD;
+}
+
+body {
+    padding: 0 !important;
+    margin: 0 !important;
+    background: var(--bg-creme);
+}
+
+/* Main Content Area */
+.main-content {
+    padding: 20px;
+    min-height: calc(100vh - 140px);
+}
+
+/* Notes Wrapper - White container */
+.notes-wrapper {
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    padding: 30px;
+    min-height: calc(100vh - 200px);
+    position: relative;
+}
+
+/* Notes Header */
+.notes-header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.notes-header h1 {
+    font-size: 1.75rem;
+    font-weight: 500;
+    color: var(--text-dark);
+    margin: 0;
+}
+
+/* Notes Container */
+.notes-container {
+    max-width: 500px;
+    margin: 0 auto;
+    padding-bottom: 80px;
+}
+
+/* Note Card */
+.note-card {
+    display: flex;
+    align-items: center;
+    background: #fff;
+    border: 2px solid #333;
+    border-radius: 12px;
+    padding: 16px 20px;
+    margin-bottom: 16px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.note-card:hover {
+    border-color: var(--accent-green);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+/* Note Checkbox */
+.note-checkbox {
+    width: 24px;
+    height: 24px;
+    border: 2px solid #999;
+    border-radius: 4px;
+    margin-right: 16px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.note-checkbox.checked {
+    background: var(--accent-green);
+    border-color: var(--accent-green);
+}
+
+.note-checkbox.checked::after {
+    content: '✓';
+    color: #fff;
+    font-size: 14px;
+}
+
+/* Note Title */
+.note-title {
+    flex: 1;
+    font-size: 1.1rem;
+    color: var(--text-dark);
+    text-decoration: none;
+}
+
+/* Floating Action Buttons Container */
+.fab-buttons {
+    position: absolute;
+    bottom: 30px;
+    right: 30px;
+    display: flex;
+    flex-direction: row;
+    gap: 16px;
+    align-items: center;
+}
+
+/* Delete Button */
+.fab-delete {
+    display: none;
+    width: 60px;
+    height: 60px;
+    background: linear-gradient(180deg, var(--danger-red), var(--danger-red-dark));
+    border-radius: 50%;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(220,53,69,0.4);
+    cursor: pointer;
+    text-decoration: none;
+    border: none;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.fab-delete.visible {
+    display: flex;
+}
+
+.fab-delete:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 16px rgba(220,53,69,0.5);
+}
+
+.fab-delete svg {
+    width: 24px;
+    height: 24px;
+    fill: #fff;
+}
+
+/* Add Button */
+.fab-add {
+    width: 60px;
+    height: 60px;
+    background: linear-gradient(180deg, var(--primary-blue), var(--primary-blue-dark));
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(74,144,217,0.4);
+    cursor: pointer;
+    text-decoration: none;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.fab-add:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 16px rgba(74,144,217,0.5);
+}
+
+.fab-add svg {
+    width: 28px;
+    height: 28px;
+    fill: #fff;
+}
+
+/* Empty State */
+.empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: #666;
+}
+
+.empty-state p {
+    font-size: 1.1rem;
+    margin-bottom: 8px;
+}
+
+/* Success Toast */
+.success-toast {
+    position: fixed;
+    top: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #e6f9ee;
+    color: #055;
+    padding: 12px 24px;
+    border-radius: 8px;
+    border-left: 4px solid var(--accent-green);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    z-index: 1000;
+    animation: fadeInOut 3s ease forwards;
+}
+
+@keyframes fadeInOut {
+    0% { opacity: 0; transform: translateX(-50%) translateY(-10px); }
+    10% { opacity: 1; transform: translateX(-50%) translateY(0); }
+    80% { opacity: 1; }
+    100% { opacity: 0; }
+}
+
+/* ========================================
+   Note Edit Page Styles
+   ======================================== */
+
+.note-form-container {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+/* Form Card */
+.form-card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.form-card label {
+    display: block;
+    margin-bottom: 6px;
+    font-weight: 600;
+    color: var(--text-dark);
+}
+
+.form-card input[type="text"],
+.form-card textarea {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 1rem;
+    margin-bottom: 16px;
+    box-sizing: border-box;
+}
+
+.form-card input[type="text"]:focus,
+.form-card textarea:focus {
+    border-color: var(--accent-green);
+    outline: none;
+}
+
+.form-card textarea {
+    min-height: 150px;
+    resize: vertical;
+}
+
+/* Save Button */
+.btn-save {
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(180deg, var(--accent-orange), #e6553e);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.btn-save:hover {
+    background: linear-gradient(180deg, #e6553e, #d44a35);
+}
+
+/* Error Message */
+.error-msg {
+    background: #ffe6e6;
+    color: #c00;
+    padding: 12px;
+    border-radius: 8px;
+    margin-bottom: 16px;
+}

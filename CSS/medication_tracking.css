@@ -1,0 +1,491 @@
+/* Brand colors and layout for medication_tracking.php */
+:root {
+    --bg-creme: #FFF7E1;
+    --accent-orange: #F26647;
+    --accent-green: #005949;
+    --text-dark: #0b2a24;
+    --muted: rgba(11,42,36,0.65);
+    --radius: 12px;
+    --primary-blue: #4A90D9;
+}
+
+body { 
+    font-family: Arial, sans-serif; 
+    background: var(--bg-creme); 
+    margin: 0; 
+    padding: 0 !important; 
+    color: var(--text-dark); 
+}
+
+/* Main Content Area */
+.main-content {
+    padding: 20px;
+    min-height: calc(100vh - 140px);
+}
+
+/* Main Wrapper */
+.med-wrapper {
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    padding: 30px;
+    min-height: calc(100vh - 200px);
+    position: relative;
+}
+
+/* Header */
+.med-header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.med-header h1 {
+    font-size: 1.75rem;
+    font-weight: 500;
+    color: var(--text-dark);
+    margin: 0;
+}
+
+/* Medication List */
+.med-list {
+    max-width: 500px;
+    margin: 0 auto;
+    padding-bottom: 80px;
+}
+
+/* Medication Card */
+.med-card {
+    display: flex;
+    align-items: center;
+    background: #fff;
+    border: 2px solid #333;
+    border-radius: 8px;
+    padding: 14px 16px;
+    margin-bottom: 12px;
+    transition: all 0.2s ease;
+}
+
+.med-card:hover {
+    border-color: var(--accent-green);
+}
+
+.med-card.selected {
+    border-color: var(--primary-blue);
+    background: rgba(74, 144, 217, 0.08);
+}
+
+.med-card.selected .select-checkmark {
+    background: var(--accent-green);
+    border-color: var(--accent-green);
+}
+
+.med-card.selected .select-checkmark::after {
+    content: '✓';
+    color: #fff;
+    font-size: 14px;
+}
+
+.med-card.taken {
+    opacity: 0.6;
+}
+
+/* Selection Checkbox - Square like notes.php */
+.med-select-checkbox {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    margin-right: 14px;
+}
+
+.select-checkmark {
+    width: 22px;
+    height: 22px;
+    border: 2px solid #999;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+/* Checkbox styling */
+.med-checkbox {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    margin-right: 14px;
+    cursor: pointer;
+}
+
+.med-checkbox input {
+    position: absolute;
+    opacity: 0;
+    cursor: pointer;
+    width: 100%;
+    height: 100%;
+}
+
+.med-checkbox .checkmark {
+    width: 22px;
+    height: 22px;
+    border: 2px solid #999;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.med-checkbox input:checked + .checkmark {
+    background: var(--accent-green);
+    border-color: var(--accent-green);
+}
+
+.med-checkbox input:checked + .checkmark::after {
+    content: '✓';
+    color: #fff;
+    font-size: 14px;
+}
+
+/* Medication Info */
+.med-info {
+    flex: 1;
+}
+
+.med-name {
+    font-size: 1rem;
+    color: var(--text-dark);
+}
+
+/* Taken Section */
+.taken-section {
+    margin-top: 20px;
+    border-top: 1px solid #eee;
+    padding-top: 12px;
+}
+
+.taken-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 12px 0;
+    color: var(--muted);
+    font-size: 0.95rem;
+    width: 100%;
+    text-align: left;
+}
+
+.taken-toggle .chevron {
+    transition: transform 0.2s;
+}
+
+.taken-toggle .chevron.rotated {
+    transform: rotate(-90deg);
+}
+
+.taken-list {
+    transition: all 0.3s;
+}
+
+.taken-list.collapsed {
+    display: none;
+}
+
+/* Floating Buttons Container */
+.fab-buttons {
+    position: absolute;
+    bottom: 30px;
+    right: 30px;
+    display: flex;
+    flex-direction: row;
+    gap: 16px;
+    align-items: center;
+}
+
+/* Floating Delete Button */
+.fab-delete {
+    display: none;
+    width: 60px;
+    height: 60px;
+    background: linear-gradient(180deg, #dc3545, #c82333);
+    border-radius: 50%;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(220,53,69,0.4);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.fab-delete.visible {
+    display: flex;
+}
+
+.fab-delete:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 16px rgba(220,53,69,0.5);
+}
+
+/* Floating Add Button */
+.fab-add {
+    width: 60px;
+    height: 60px;
+    background: linear-gradient(180deg, var(--primary-blue), #357ABD);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(74,144,217,0.4);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.fab-add:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 16px rgba(74,144,217,0.5);
+}
+
+/* Empty State */
+.empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: #666;
+}
+
+.empty-state p {
+    margin: 8px 0;
+}
+
+.empty-state .small {
+    font-size: 0.9rem;
+    color: #999;
+}
+
+/* Modal Overlay */
+.modal-overlay,
+.reminder-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.5);
+    display: none;
+    align-items: flex-end;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.modal-overlay.active,
+.reminder-overlay.active {
+    display: flex;
+}
+
+/* Modal Content */
+.modal-content {
+    background: #fff;
+    width: 100%;
+    max-width: 500px;
+    border-radius: 16px 16px 0 0;
+    padding: 20px;
+    animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+}
+
+.modal-body {
+    padding: 16px 0;
+}
+
+.med-input {
+    flex: 1;
+    border: none;
+    border-bottom: 2px solid #ddd;
+    font-size: 1rem;
+    padding: 12px 0;
+    outline: none;
+    color: var(--text-dark);
+    width: 100%;
+}
+
+.med-input:focus {
+    border-bottom-color: var(--primary-blue);
+}
+
+.med-input::placeholder {
+    color: #999;
+}
+
+.modal-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 16px;
+    border-top: 1px solid #eee;
+}
+
+.reminder-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--text-dark);
+    font-size: 0.95rem;
+    padding: 10px 0;
+}
+
+.reminder-btn:hover {
+    color: var(--accent-green);
+}
+
+.done-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--muted);
+    font-size: 1rem;
+    padding: 10px 16px;
+}
+
+.done-btn:hover {
+    color: var(--accent-green);
+}
+
+/* Reminder Picker */
+.reminder-content {
+    background: #fff;
+    width: 90%;
+    max-width: 360px;
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 20%;
+    animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+.reminder-content h3 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text-dark);
+    margin: 0 0 4px;
+}
+
+.reminder-preview {
+    color: #999;
+    font-size: 0.9rem;
+    margin: 0 0 20px;
+}
+
+.repeat-section {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid #eee;
+    margin-bottom: 16px;
+}
+
+.repeat-section label {
+    color: var(--text-dark);
+    font-size: 0.95rem;
+    font-weight: 500;
+}
+
+.repeat-section select {
+    background: none;
+    border: 1px solid #ddd;
+    padding: 8px 12px;
+    border-radius: 8px;
+    color: var(--text-dark);
+    font-size: 0.95rem;
+    cursor: pointer;
+}
+
+.datetime-picker {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.field-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.field-group label {
+    font-size: 0.85rem;
+    color: var(--muted);
+    font-weight: 500;
+}
+
+.datetime-picker input,
+.datetime-picker select {
+    padding: 14px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 1rem;
+    color: var(--text-dark);
+    background: #fff;
+}
+
+.datetime-picker input:focus,
+.datetime-picker select:focus {
+    border-color: var(--primary-blue);
+    outline: none;
+}
+
+.reminder-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+}
+
+.cancel-btn,
+.ok-btn {
+    padding: 12px 28px;
+    border-radius: 24px;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.cancel-btn {
+    background: #f5f5f5;
+    border: none;
+    color: var(--text-dark);
+}
+
+.cancel-btn:hover {
+    background: #eee;
+}
+
+.ok-btn {
+    background: var(--primary-blue);
+    border: none;
+    color: #fff;
+}
+
+.ok-btn:hover {
+    background: #357ABD;
+}
+
