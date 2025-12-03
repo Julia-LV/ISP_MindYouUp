@@ -12,7 +12,7 @@ if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true ||
 $professional_id = $_SESSION['user_id'];
 $message = '';
 $message_type = ''; // 'success' or 'error'
-$show_success_modal = false; // Flag para o modal de sucesso
+$show_success_modal = false; // 💡 NOVO: Flag para o modal de sucesso
 
 // 2. Handle Form Submission
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
@@ -25,7 +25,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     // Start Transaction (Good practice)
     $conn->begin_transaction();
     $update_successful = false;
-    $has_updates = false; // Para verificar se alguma linha foi afetada
+    $has_updates = false; // 💡 NOVO: Para verificar se alguma linha foi afetada
 
     // Update Text Data (First Name, Last Name, Age)
     $sql_update = "UPDATE user_profile SET First_Name = ?, Last_Name = ?, Age = ? WHERE User_ID = ?";
@@ -91,7 +91,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $conn->commit();
         $message = "Profile updated successfully.";
         $message_type = "success";
-        $show_success_modal = true; // ATIVAR MODAL
+        $show_success_modal = true; // 💡 ATIVAR MODAL
     } elseif (!$has_updates && $update_successful) {
         $conn->rollback();
         $message = "No changes were made to the profile.";
@@ -202,8 +202,10 @@ $final_image_src = htmlspecialchars($current_image) . "?" . $cache_buster;
                     <?php
                         // Configuração para simple_button.php
                         $button_text = 'Save Changes';
+                        // 💡 ALTERADO: Tipo de botão para 'button' para ser controlado pelo JS/Modal
                         $button_type = 'button'; 
                         $extra_classes = 'w-full'; 
+                        // 💡 NOVO: Chama a função JS para abrir o modal
                         $button_onclick = "showConfirmationModal(event)";
                         
                         $path_to_button = __DIR__ . '/../../components/simple_button.php';
@@ -249,18 +251,17 @@ $final_image_src = htmlspecialchars($current_image) . "?" . $cache_buster;
 
         // 7. Lógica para mostrar o modal de sucesso se o PHP o sinalizar
         <?php if ($show_success_modal): ?>
-            // 7.1. Abrir o Modal de Sucesso com o título e a mensagem
+            // Usamos a variável PHP $message para o corpo do modal.
             openSuccess(
                 "Profile Updated!",
                 "<?php echo htmlspecialchars($message); ?>", 
-                "View Profile" // Este é o texto do botão primário (link)
+                "View Profile"
             );
             
-            // 7.2. Ajustar o botão secundário de "Log Another" para "Stay Here"
-            // ⭐ NOVO SELETOR MAIS ROBUSTO
-            document.querySelector('#successModal button').innerText = "Stay Here"; 
+            // Ajustar o botão secundário para "Ficar Aqui"
+            document.querySelector('#successModal .bg-gray-50 .flex-row-reverse button').innerText = "Stay Here"; 
 
-            // 7.3. Ajustar o link do botão primário para o perfil do profissional
+            // Ajustar o link do botão primário para o perfil do profissional
             const homeLink = document.querySelector('#successModal .bg-gray-50 .flex-row-reverse a');
             if(homeLink) homeLink.setAttribute('href', 'professional_profile.php');
             
