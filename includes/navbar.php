@@ -41,7 +41,7 @@
 
         <!-- TIC LOGIN -->
         <li>
-            <a href="ticlog_motor.php"
+            <a href="../../pages/patient/ticlog_motor.php"
                class="sidebar-link flex items-center py-2 hover:bg-red-100 rounded-lg transition
                           justify-center px-0">
                 <svg class="w-6 h-6 text-gray-700" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="#005949">
@@ -56,7 +56,7 @@
 
         <!-- EMOTIONAL DIARY -->
         <li>
-            <a href="new_emotional_diary.php"
+            <a href="../../pages/patient/new_emotional_diary.php"
                class="sidebar-link flex items-center py-2 hover:bg-red-100 rounded-lg transition
                           justify-center px-0">
                 <svg class="w-6 h-6 text-gray-700" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
@@ -82,7 +82,7 @@
 
         <!-- CHAT -->
         <li>
-            <a href="chat.php"
+            <a href="../../pages/patient/chat.php"
                class="sidebar-link flex items-center py-2 hover:bg-red-100 rounded-lg transition
                           justify-center px-0">
                <svg class="w-6 h-6 text-gray-700" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512">
@@ -107,7 +107,7 @@
         </li>
         <!-- FORMS PAGE -->
         <li>
-            <a href="../../pages/patient/forms_patient.php"
+            <a href="../../pages/patient/YGTSS_form.php"
                class="sidebar-link flex items-center py-2 hover:bg-red-100 rounded-lg transition
                           justify-center px-0">
                 <svg class="w-6 h-6 text-gray-700" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">

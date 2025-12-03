@@ -102,7 +102,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 $page_title = 'Forgot Password - Mind You Up';
 $no_layout = true; // disable topbar + wrapper for this page
 // Define Custom Body Classes for Centering & Background Color
-$body_class = "bg-[#FFF7E1] min-h-screen flex items-center justify-center p-4 ";
+$body_class = "bg-[#E9F0E9] min-h-screen flex items-center justify-center p-4 ";
 include '../../components/header_component.php'; 
 
 $form_title = 'Forgot Password';
