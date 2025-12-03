@@ -2,10 +2,28 @@
 // File: /c:/Users/rodri/OneDrive/Documents/GitHub/ISP_MindYouUp/pages/common/privacy.php
 // Terms & Conditions / Privacy Policy page with links and inline viewer for two PDF files.
 
+if (session_status() === PHP_SESSION_NONE) { session_start(); }
+require_once __DIR__ . '/../../config.php';
+
+$CURRENT_USER = null;
+if (!empty($_SESSION['user_id']) && isset($conn)) {
+  $uid = (int) $_SESSION['user_id'];
+  $stmt = mysqli_prepare($conn, "SELECT User_ID, First_Name, Last_Name, Email, Role FROM user_profile WHERE User_ID = ? LIMIT 1");
+  if ($stmt) {
+    mysqli_stmt_bind_param($stmt, 'i', $uid);
+    mysqli_stmt_execute($stmt);
+    $res = mysqli_stmt_get_result($stmt);
+    if ($res && $row = mysqli_fetch_assoc($res)) {
+      $CURRENT_USER = $row;
+    }
+    mysqli_stmt_close($stmt);
+  }
+}
+
 // Configure PDF locations (relative to this PHP file or absolute paths)
 $docs = [
-    'terms'   => __DIR__ . '/../../assets/privacy/Terms  Conditions_.pdf',
-    'privacy' => __DIR__ . '/../../assets/privacy/Terms  Conditions2.pdf',
+  'terms'   => __DIR__ . '/../../assets/privacy/Terms  Conditions_.pdf',
+  'privacy' => __DIR__ . '/../../assets/privacy/Terms  Conditions2.pdf',
 ];
 
 // Public URLs for download/view (relative to site root)

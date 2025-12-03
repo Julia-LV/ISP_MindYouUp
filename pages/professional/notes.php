@@ -13,6 +13,21 @@ if (!$userId || strtolower($role) !== 'professional') {
 
 require_once __DIR__ . '/../../config.php';
 
+$CURRENT_USER = null;
+if (!empty($_SESSION['user_id']) && isset($conn)) {
+    $uid = (int) $_SESSION['user_id'];
+    $stmtUsr = mysqli_prepare($conn, "SELECT User_ID, First_Name, Last_Name, Email, Role FROM user_profile WHERE User_ID = ? LIMIT 1");
+    if ($stmtUsr) {
+        mysqli_stmt_bind_param($stmtUsr, 'i', $uid);
+        mysqli_stmt_execute($stmtUsr);
+        $resUsr = mysqli_stmt_get_result($stmtUsr);
+        if ($resUsr && $rowu = mysqli_fetch_assoc($resUsr)) {
+            $CURRENT_USER = $rowu;
+        }
+        mysqli_stmt_close($stmtUsr);
+    }
+}
+
 $notes = [];
 
 // Fetch notes for this professional (newest first)
@@ -64,6 +79,15 @@ $page_title = 'Notes';
     <div class="notes-wrapper">
         <div class="notes-header">
             <h1>Notes</h1>
+            <?php if (!empty($CURRENT_USER)): ?>
+                <div class="user-card" style="margin-top:8px; display:flex; gap:10px; align-items:center;">
+                    <div class="user-avatar" style="width:36px;height:36px;border-radius:8px;background:#f0f0f0;display:flex;align-items:center;justify-content:center;font-weight:600;color:#444"><?= htmlspecialchars(substr($CURRENT_USER['First_Name'] ?? '',0,1)) ?></div>
+                    <div class="user-info" style="font-size:0.92rem;">
+                        <div style="font-weight:600"><?= htmlspecialchars(($CURRENT_USER['First_Name'] ?? '') . ' ' . ($CURRENT_USER['Last_Name'] ?? '')) ?></div>
+                        <div style="font-size:0.82rem;color:#666"><?= htmlspecialchars($CURRENT_USER['Role'] ?? '') ?> &nbsp;|&nbsp; <?= htmlspecialchars($CURRENT_USER['Email'] ?? '') ?></div>
+                    </div>
+                </div>
+            <?php endif; ?>
         </div>
         
         <div class="notes-container">

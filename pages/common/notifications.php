@@ -2,6 +2,21 @@
 session_start();
 require_once __DIR__ . '/../../config.php'; // adjust path if needed
 
+$CURRENT_USER = null;
+if (!empty($_SESSION['user_id']) && isset($conn)) {
+    $uid = (int) $_SESSION['user_id'];
+    $stmtUsr = mysqli_prepare($conn, "SELECT User_ID, First_Name, Last_Name, Email, Role FROM user_profile WHERE User_ID = ? LIMIT 1");
+    if ($stmtUsr) {
+        mysqli_stmt_bind_param($stmtUsr, 'i', $uid);
+        mysqli_stmt_execute($stmtUsr);
+        $resUsr = mysqli_stmt_get_result($stmtUsr);
+        if ($resUsr && $rowu = mysqli_fetch_assoc($resUsr)) {
+            $CURRENT_USER = $rowu;
+        }
+        mysqli_stmt_close($stmtUsr);
+    }
+}
+
 /*
  // USER INFO (COMMENTED OUT)
  // Example: fetch current user's profile from DB using session user_id.

@@ -223,8 +223,25 @@ include_once __DIR__ . '/../../components/header_component.php';
 $step = isset($_POST['step']) ? intval($_POST['step']) : 1;
 $error_msg = '';
 
+// Ensure session and current user
+if (session_status() === PHP_SESSION_NONE) { session_start(); }
+require_once __DIR__ . '/../../config.php';
+$CURRENT_USER = null;
+if (!empty($_SESSION['user_id']) && isset($conn)) {
+	$uid = (int) $_SESSION['user_id'];
+	$stmtUsr = mysqli_prepare($conn, "SELECT User_ID, First_Name, Last_Name, Email, Role FROM user_profile WHERE User_ID = ? LIMIT 1");
+	if ($stmtUsr) {
+		mysqli_stmt_bind_param($stmtUsr, 'i', $uid);
+		mysqli_stmt_execute($stmtUsr);
+		$resUsr = mysqli_stmt_get_result($stmtUsr);
+		if ($resUsr && $rowu = mysqli_fetch_assoc($resUsr)) {
+			$CURRENT_USER = $rowu;
+		}
+		mysqli_stmt_close($stmtUsr);
+	}
+}
+
 // Store answers between steps
-session_start();
 if (!isset($_SESSION['ygtss_answers'])) {
 	$_SESSION['ygtss_answers'] = [];
 }
@@ -253,6 +270,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 			$_SESSION['ygtss_answers']['A1_multiple_groups_desc'] = $_POST['A1_multiple_groups_desc'] ?? '';
 			$step = 2;
 		} else {
+			// Save partial A1 answers so fields are pre-filled on return
+			$_SESSION['ygtss_answers']['A1'] = $a1_answers;
+			$_SESSION['ygtss_answers']['A1_simultaneous_tics'] = $_POST['A1_simultaneous_tics'] ?? '';
+			$_SESSION['ygtss_answers']['A1_simultaneous_tics_desc'] = $_POST['A1_simultaneous_tics_desc'] ?? '';
+			$_SESSION['ygtss_answers']['A1_multiple_groups'] = $_POST['A1_multiple_groups'] ?? '';
+			$_SESSION['ygtss_answers']['A1_multiple_groups_desc'] = $_POST['A1_multiple_groups_desc'] ?? '';
 			$error_msg = 'Please answer all symptom checklist questions before proceeding.';
 			$step = 1;
 		}
