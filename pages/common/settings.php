@@ -1,4 +1,23 @@
 <?php
+if (session_status() === PHP_SESSION_NONE) { session_start(); }
+// Ensure DB connection is available
+require_once __DIR__ . '/../../config.php';
+
+$CURRENT_USER = null;
+if (!empty($_SESSION['user_id']) && isset($conn)) {
+    $uid = (int) $_SESSION['user_id'];
+    $stmt = mysqli_prepare($conn, "SELECT User_ID, First_Name, Last_Name, Email, Role FROM user_profile WHERE User_ID = ? LIMIT 1");
+    if ($stmt) {
+        mysqli_stmt_bind_param($stmt, 'i', $uid);
+        mysqli_stmt_execute($stmt);
+        $res = mysqli_stmt_get_result($stmt);
+        if ($res && $row = mysqli_fetch_assoc($res)) {
+            $CURRENT_USER = $row;
+        }
+        mysqli_stmt_close($stmt);
+    }
+}
+
 $page_title = 'Settings';
 ?>
 <!DOCTYPE html>
