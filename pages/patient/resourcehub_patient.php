@@ -16,21 +16,6 @@ if (strtolower($role) !== 'patient') {
 
 $currentPatientId = $_SESSION['user_id'] ?? 0;
 
-/* ---------- FIND LINKED PROFESSIONAL FOR THIS PATIENT ---------- */
-$currentProfessionalId = 0;
-if ($currentPatientId) {
-    $sql = "SELECT Professional_ID FROM patient_profile WHERE User_ID = ?";
-    if ($stmt = $conn->prepare($sql)) {
-        $stmt->bind_param('i', $currentPatientId);
-        $stmt->execute();
-        $stmt->bind_result($profId);
-        if ($stmt->fetch()) {
-            $currentProfessionalId = (int)$profId;
-        }
-        $stmt->close();
-    }
-}
-
 /* ---------- HELPERS ---------- */
 function build_media_paths(?string $stored): array {
     if (!$stored) {
@@ -55,18 +40,16 @@ function build_media_paths(?string $stored): array {
     return [$exists, $web, $fs];
 }
 
-/* ---------- FETCH STRATEGIES (ONLY FROM THIS PROFESSIONAL) ---------- */
+/* ---------- FETCH STRATEGIES ---------- */
 $strategies = [];
-if ($currentPatientId && $currentProfessionalId) {
+if ($currentPatientId) {
     $sql = "SELECT rh.*
             FROM patient_resources pr
             JOIN resource_hub rh ON pr.resource_id = rh.id
-            WHERE pr.patient_id = ?
-              AND pr.sent_by = ?
-              AND rh.item_type = 'strategy'
+            WHERE pr.patient_id = ? AND rh.item_type = 'strategy'
             ORDER BY rh.sort_order, rh.id";
     if ($stmt = $conn->prepare($sql)) {
-        $stmt->bind_param('ii', $currentPatientId, $currentProfessionalId);
+        $stmt->bind_param('i', $currentPatientId);
         $stmt->execute();
         $result = $stmt->get_result();
         while ($row = $result->fetch_assoc()) {
@@ -76,18 +59,16 @@ if ($currentPatientId && $currentProfessionalId) {
     }
 }
 
-/* ---------- FETCH SKILLS (ONLY FROM THIS PROFESSIONAL) ---------- */
+/* ---------- FETCH SKILLS ---------- */
 $skills = [];
-if ($currentPatientId && $currentProfessionalId) {
+if ($currentPatientId) {
     $sql = "SELECT rh.*
             FROM patient_resources pr
             JOIN resource_hub rh ON pr.resource_id = rh.id
-            WHERE pr.patient_id = ?
-              AND pr.sent_by = ?
-              AND rh.item_type = 'skill'
+            WHERE pr.patient_id = ? AND rh.item_type = 'skill'
             ORDER BY rh.sort_order, rh.id";
     if ($stmt = $conn->prepare($sql)) {
-        $stmt->bind_param('ii', $currentPatientId, $currentProfessionalId);
+        $stmt->bind_param('i', $currentPatientId);
         $stmt->execute();
         $result = $stmt->get_result();
         while ($row = $result->fetch_assoc()) {
@@ -97,18 +78,16 @@ if ($currentPatientId && $currentProfessionalId) {
     }
 }
 
-/* ---------- FETCH ARTICLES (ONLY FROM THIS PROFESSIONAL) ---------- */
+/* ---------- FETCH ARTICLES ---------- */
 $articles = [];
-if ($currentPatientId && $currentProfessionalId) {
+if ($currentPatientId) {
     $sql = "SELECT rh.*
             FROM patient_resources pr
             JOIN resource_hub rh ON pr.resource_id = rh.id
-            WHERE pr.patient_id = ?
-              AND pr.sent_by = ?
-              AND rh.item_type = 'article'
+            WHERE pr.patient_id = ? AND rh.item_type = 'article'
             ORDER BY rh.sort_order, rh.id";
     if ($stmt = $conn->prepare($sql)) {
-        $stmt->bind_param('ii', $currentPatientId, $currentProfessionalId);
+        $stmt->bind_param('i', $currentPatientId);
         $stmt->execute();
         $result = $stmt->get_result();
         while ($row = $result->fetch_assoc()) {
@@ -157,301 +136,211 @@ if (!empty($strategies)) {
     [$mediaExists, $mediaUrlWeb] = build_media_paths($currentStrategy['media_url'] ?? null);
 }
 
-/* ---------- PAGE SETUP ---------- */
+/* ---------- PAGE SETUP (MATCH DIARY) ---------- */
 $page_title = 'Resource Hub';
 $body_class = 'h-full bg-gray-100';
 $no_layout  = false;
 
+/* ---------- SHARED LAYOUT (SAME AS new_emotional_diary.php) ---------- */
 include __DIR__ . '/../../components/header_component.php';
 include __DIR__ . '/../../includes/navbar.php';
 ?>
 
-<style>
-/* old pills (if still used) */
-.skills-strip .skill-pill {
-  display: inline-block;
-  max-width: 240px;
-  white-space: normal;
-  overflow-wrap: anywhere;
-  hyphens: auto;
-  line-height: 1.3;
-}
-
-/* Square category cards */
-.skill-card {
-  min-width: 180px;
-  min-height: 180px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 16px;
-  border-radius: 16px;
-  border: 2px solid #d1d5db;
-  background: #ffffff;
-  font-size: 15px;
-  font-weight: 500;
-  color: #111827;
-  text-align: center;
-  line-height: 1.4;
-  text-decoration: none;
-  box-shadow: 0 3px 8px rgba(0,0,0,0.05);
-}
-
-.skill-card:hover {
-  border-color: #9ca3af;
-  box-shadow: 0 6px 14px rgba(0,0,0,0.08);
-  background: #f9fafb;
-}
-
-.skill-card--disabled {
-  color: #6b7280;
-  cursor: default;
-}
-
-/* Mobile carousel behaviour */
-@media (max-width: 768px) {
-  .skills-strip {
-    position: relative;
-    margin-top: 4px;
-  }
-  .skills-strip::before,
-  .skills-strip::after {
-    content: '';
-    position: absolute;
-    top: 0; bottom: 0; width: 28px;
-    pointer-events: none;
-    z-index: 3;
-  }
-  .skills-strip::before {
-    left: 0;
-    background: linear-gradient(to right, #ffffff, rgba(255,255,255,0));
-  }
-  .skills-strip::after {
-    right: 0;
-    background: linear-gradient(to left, #ffffff, rgba(255,255,255,0));
-  }
-
-  .skills-strip .card-row {
-    display: flex;
-    gap: 12px;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    padding: 4px 32px 8px;
-    scroll-behavior: smooth;
-    -ms-overflow-style: none;
-    scrollbar-width: none;
-  }
-  .skills-strip .card-row::-webkit-scrollbar { display: none; }
-
-  .skills-strip .card-row > * {
-    flex: 0 0 calc(50% - 10px);
-    min-width: 0;
-  }
-
-  .skills-nav {
-    position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 26px; height: 26px;
-    border-radius: 999px;
-    border: 1px solid rgba(0,0,0,0.06);
-    background: #ffffff;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.16);
-    display: flex; align-items: center; justify-content: center;
-    font-size: 16px; color: #374151;
-    cursor: pointer; z-index: 4;
-  }
-  .skills-nav--left { left: 6px; }
-  .skills-nav--right { right: 6px; }
-}
-
-/* Desktop centering of category squares */
-@media (min-width: 769px) {
-  .skills-strip .card-row {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center; /* centre the squares */
-    gap: 16px;
-    padding: 4px 0 0;
-  }
-}
-</style>
-
 <main class="flex-1 w-full p-6 md:p-8 overflow-y-auto bg-[#E9F0E9]">
-  <div class="p-6 md:p-8 space-y-6 max-w-7xl mx-auto">
-    <!-- Header -->
-    <div class="flex items-center justify-between">
-      <div>
-        <h2 class="text-3xl font-bold text-[#005949]">Resource Hub</h2>
-        <p class="mt-1 text-sm text-[#6b7280]">
-          Your personalised strategies, skills, and articles from your professional.
-        </p>
-      </div>
-      <!-- <button
-        type="button"
-        onclick="confirmLogout()"
-        class="px-4 py-2 rounded-full bg-[#005949] text-white text-sm shadow hover:bg-[#00453f] transition"
-      >
-        Log out
-      </button> -->
-    </div>
+    <div class="p-6 md:p-8 space-y-6 max-w-7xl mx-auto">
+        <!-- Page title + Logout button -->
+        <div class="flex items-center justify-between">
+            <div>
+                <h2 class="text-3xl font-bold text-[#005949]">
+                    Resource Hub
+                </h2>
+                <p class="mt-1 text-sm text-[#6b7280]">
+                    Your personalised strategies, skills, and articles from your professional.
+                </p>
+            </div>
 
-    <!-- SINGLE-COLUMN STACK -->
-    <div class="grid grid-cols-1 gap-5 lg:gap-6 items-start">
-      <!-- Daily Strategy -->
-      <div class="bg-white rounded-2xl border border-[#f0e3cc] shadow-[0_10px_28px_rgba(0,0,0,0.07)] p-5 min-h-[150px]">
-        <div class="flex items-baseline justify-between mb-3">
-          <?php if ($currentStrategy): ?>
-            <p class="text-xs text-[#6b7280]">Use this exercise to calm down</p>
-          <?php endif; ?>
+            <!-- Small logout button that opens confirm dialog -->
+            <button
+                type="button"
+                onclick="confirmLogout()"
+                class="px-4 py-2 rounded-full bg-[#005949] text-white text-sm shadow hover:bg-[#00453f] transition"
+            >
+                Log out
+            </button>
         </div>
 
-        <?php if ($currentStrategy): ?>
-          <?php
-          [$sMediaExists, $sMediaUrlWeb] = build_media_paths($currentStrategy['media_url'] ?? null);
-          $strategyUrl = null;
-          if ($sMediaExists && $sMediaUrlWeb) {
-              $strategyUrl = $sMediaUrlWeb;
-          } else {
-              $rawStrategyContent = $currentStrategy['content'] ?? '';
-              if (preg_match('/https?:\/\/\S+/i', $rawStrategyContent, $m)) {
-                  $strategyUrl = $m[0];
-              }
-          }
-          $strategyHasLink = !empty($strategyUrl);
-          ?>
-          <div class="grid grid-cols-[auto_1fr_auto] gap-2 items-center">
-            <a href="?strategy_id=<?php echo (int)$prevId; ?>"
-               class="w-8 h-8 rounded-full border border-[#e2d7c1] bg-white flex items-center justify-center text-[15px] text-[#867a5a] hover:bg-[#f9f5eb]"
-               aria-label="Previous strategy">&#8249;</a>
+        <!-- 2-column layout: strategies/skills + articles -->
+        <div class="grid grid-cols-1 lg:grid-cols-[minmax(0,2.1fr)_minmax(0,1.5fr)] gap-5 lg:gap-6 items-start">
+            <!-- LEFT: Strategy + Skills -->
+            <div class="space-y-4">
+                <!-- Daily Strategy section -->
+                <div class="bg-white rounded-2xl border border-[#f0e3cc] shadow-[0_10px_28px_rgba(0,0,0,0.07)] p-5 min-h-[150px]">
+                    <div class="flex items-baseline justify-between mb-3">
+                        <h2 class="text-sm font-semibold text-[#231f20]">Daily Strategy</h2>
+                        <?php if ($currentStrategy): ?>
+                            <p class="text-xs text-[#6b7280]">Use this exercise today</p>
+                        <?php endif; ?>
+                    </div>
 
-            <div class="flex items-center justify-between gap-3">
-              <div>
-                <?php if (!empty($currentStrategy['subtitle'])): ?>
-                  <p class="text-[11px] uppercase tracking-[0.06em] text-[#F26647] mb-1">
-                    <?php echo htmlspecialchars($currentStrategy['subtitle']); ?>
-                  </p>
-                <?php endif; ?>
-                <p class="text-[18px] font-semibold text-[#111827]">
-                  <?php echo htmlspecialchars($currentStrategy['title'] ?? ''); ?>
-                </p>
-              </div>
+                    <?php if ($currentStrategy): ?>
+                        <?php
+                        // Build URL for strategy: prefer uploaded media, else URL in content
+                        [$sMediaExists, $sMediaUrlWeb] = build_media_paths($currentStrategy['media_url'] ?? null);
+                        $strategyUrl = null;
 
-              <?php if ($strategyHasLink): ?>
-                <a href="<?php echo htmlspecialchars($strategyUrl); ?>" target="_blank"
-                   class="w-11 h-11 rounded-full bg-[#005949] text-white flex items-center justify-center text-[21px] shadow-[0_7px_16px_rgba(0,0,0,0.18)] hover:bg-[#00453f]"
-                   aria-label="Open strategy">&#9654;</a>
-              <?php else: ?>
-                <button type="button"
-                        class="w-11 h-11 rounded-full bg-[#d4d7cf] text-white flex items-center justify-center text-[21px] cursor-default"
-                        aria-disabled="true">&#9654;</button>
-              <?php endif; ?>
-            </div>
+                        if ($sMediaExists && $sMediaUrlWeb) {
+                            $strategyUrl = $sMediaUrlWeb;
+                        } else {
+                            $rawStrategyContent = $currentStrategy['content'] ?? '';
+                            if (preg_match('/https?:\/\/\S+/i', $rawStrategyContent, $m)) {
+                                $strategyUrl = $m[0];
+                            }
+                        }
 
-            <a href="?strategy_id=<?php echo (int)$nextId; ?>"
-               class="w-8 h-8 rounded-full border border-[#e2d7c1] bg-white flex items-center justify-center text-[15px] text-[#867a5a] hover:bg-[#f9f5eb]"
-               aria-label="Next strategy">&#8250;</a>
-          </div>
-        <?php else: ?>
-          <p class="text-sm text-[#6b7280]">No strategies available yet.</p>
-        <?php endif; ?>
-      </div>
+                        $strategyHasLink = !empty($strategyUrl);
+                        ?>
+                        <div class="grid grid-cols-[auto_1fr_auto] gap-2 items-center">
+                            <a href="?strategy_id=<?php echo (int)$prevId; ?>"
+                               class="w-8 h-8 rounded-full border border-[#e2d7c1] bg-white flex items-center justify-center text-[15px] text-[#867a5a] cursor-pointer hover:bg-[#f9f5eb]"
+                               aria-label="Previous strategy">
+                                &#8249;
+                            </a>
 
-      <!-- Skills / Categories -->
-      <div class="bg-white rounded-2xl border border-[#f0e3cc] shadow-[0_10px_28px_rgba(0,0,0,0.07)] p-4">
-        <h2 class="text-sm font-semibold mb-2 text-[#231f20]">Categories</h2>
-        <?php if (!empty($skills)): ?>
-          <div class="skills-strip">
-            <button type="button" class="skills-nav skills-nav--left md:hidden" aria-label="Previous skills">&#8249;</button>
+                            <div class="flex items-center justify-between gap-3">
+                                <div>
+                                    <?php if (!empty($currentStrategy['subtitle'])): ?>
+                                        <p class="text-[11px] uppercase tracking-[0.06em] text-[#F26647] mb-1">
+                                            <?php echo htmlspecialchars($currentStrategy['subtitle']); ?>
+                                        </p>
+                                    <?php endif; ?>
+                                    <p class="text-[18px] font-semibold text-[#111827]">
+                                        <?php echo htmlspecialchars($currentStrategy['title'] ?? ''); ?>
+                                    </p>
+                                </div>
 
-            <div class="card-row">
-              <?php foreach ($skills as $skill): ?>
-                <?php
-                [$sMediaExists2, $sMediaUrlWeb2] = build_media_paths($skill['media_url'] ?? null);
-                $skillUrl = null;
-                if ($sMediaExists2 && $sMediaUrlWeb2) {
-                    $skillUrl = $sMediaUrlWeb2;
-                } else {
-                    $rawSkillContent = $skill['content'] ?? '';
-                    if (preg_match('/https?:\/\/\S+/i', $rawSkillContent, $m)) {
-                        $skillUrl = $m[0];
-                    }
-                }
-                $skillHasLink = !empty($skillUrl);
-                ?>
-                <?php if ($skillHasLink): ?>
-                  <a href="<?php echo htmlspecialchars($skillUrl); ?>" target="_blank"
-                     class="skill-card"
-                     title="Open skill resource">
-                    <?php echo htmlspecialchars($skill['title'] ?? ''); ?>
-                  </a>
-                <?php else: ?>
-                  <div class="skill-card skill-card--disabled">
-                    <?php echo htmlspecialchars($skill['title'] ?? ''); ?>
-                  </div>
-                <?php endif; ?>
-              <?php endforeach; ?>
-            </div>
+                                <?php if ($strategyHasLink): ?>
+                                    <a href="<?php echo htmlspecialchars($strategyUrl); ?>" target="_blank"
+                                       class="w-11 h-11 rounded-full bg-[#005949] text-white flex items-center justify-center text-[21px] shadow-[0_7px_16px_rgba(0,0,0,0.18)] hover:bg-[#00453f] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#005949]"
+                                       aria-label="Open strategy">
+                                        &#9654;
+                                    </a>
+                                <?php else: ?>
+                                    <button type="button"
+                                            class="w-11 h-11 rounded-full bg-[#d4d7cf] text-white flex items-center justify-center text-[21px] cursor-default"
+                                            aria-disabled="true">
+                                        &#9654;
+                                    </button>
+                                <?php endif; ?>
+                            </div>
 
-            <button type="button" class="skills-nav skills-nav--right md:hidden" aria-label="Next skills">&#8250;</button>
-          </div>
-        <?php else: ?>
-          <p class="text-sm text-[#6b7280]">No skills added yet.</p>
-        <?php endif; ?>
-      </div>
-
-      <!-- Articles & Guides -->
-      <div class="bg-white rounded-2xl border border-[#f0e3cc] shadow-[0_10px_28px_rgba(0,0,0,0.07)] p-4">
-        <h2 class="text-sm font-semibold mb-2 text-[#231f20]">Articles &amp; Guides</h2>
-        <?php if (!empty($articles)): ?>
-          <div class="flex flex-col gap-2">
-            <?php foreach ($articles as $article): ?>
-              <?php
-              [$aMediaExists, $aMediaUrlWeb] = build_media_paths($article['media_url'] ?? null);
-              $url = null;
-              if ($aMediaExists && $aMediaUrlWeb) {
-                  $url = $aMediaUrlWeb;
-              } else {
-                  $rawContent = $article['content'] ?? '';
-                  if (preg_match('/https?:\/\/\S+/i', $rawContent, $m)) {
-                      $url = $m[0];
-                  }
-              }
-              $hasLink = !empty($url);
-              ?>
-              <?php if ($hasLink): ?>
-                <a href="<?php echo htmlspecialchars($url); ?>" target="_blank"
-                   class="flex items-center gap-3 bg-white rounded-xl border border-[#f0e3cc] px-3 py-2 no-underline hover:bg-[#f9fafb]">
-                  <div class="w-8 h-8 rounded-full bg-[#e6f3ec] flex-shrink-0 relative">
-                    <div class="absolute inset-2 rounded-full border-2 border-[#c7e4d7]"></div>
-                  </div>
-                  <p class="m-0 text-[13px] text-[#111827] whitespace-nowrap overflow-hidden text-ellipsis">
-                    <?php echo htmlspecialchars($article['title'] ?? ''); ?>
-                  </p>
-                  <span class="ml-auto text-[16px] text-[#bcae8c] flex-shrink-0">&#8250;</span>
-                </a>
-              <?php else: ?>
-                <div class="flex items-center gap-3 bg-white rounded-xl border border-[#f0e3cc] px-3 py-2 opacity-65">
-                  <div class="w-8 h-8 rounded-full bg-[#e6f3ec] flex-shrink-0 relative">
-                    <div class="absolute inset-2 rounded-full border-2 border-[#c7e4d7]"></div>
-                  </div>
-                  <p class="m-0 text-[13px] text-[#6b7280] whitespace-nowrap overflow-hidden text-ellipsis">
-                    <?php echo htmlspecialchars($article['title'] ?? ''); ?>
-                  </p>
-                  <span class="ml-auto text-[16px] text-[#bcae8c] flex-shrink-0">&#8250;</span>
+                            <a href="?strategy_id=<?php echo (int)$nextId; ?>"
+                               class="w-8 h-8 rounded-full border border-[#e2d7c1] bg-white flex items-center justify-center text-[15px] text-[#867a5a] cursor-pointer hover:bg-[#f9f5eb]"
+                               aria-label="Next strategy">
+                                &#8250;
+                            </a>
+                        </div>
+                    <?php else: ?>
+                        <p class="text-sm text-[#6b7280]">No strategies available yet.</p>
+                    <?php endif; ?>
                 </div>
-              <?php endif; ?>
-            <?php endforeach; ?>
-          </div>
-        <?php else: ?>
-          <p class="text-sm text-[#6b7280]">No articles yet.</p>
-        <?php endif; ?>
-      </div>
+
+                <!-- Skills card (CLICKABLE if media/link exists) -->
+                <div class="bg-white rounded-2xl border border-[#f0e3cc] shadow-[0_10px_28px_rgba(0,0,0,0.07)] p-4">
+                    <h2 class="text-sm font-semibold mb-2 text-[#231f20]">Skills</h2>
+                    <?php if (!empty($skills)): ?>
+                        <div class="flex gap-2 overflow-x-auto pb-1">
+                            <?php foreach ($skills as $skill): ?>
+                                <?php
+                                // Try to build a link for this skill's media file
+                                [$sMediaExists, $sMediaUrlWeb] = build_media_paths($skill['media_url'] ?? null);
+                                $skillUrl = null;
+
+                                if ($sMediaExists && $sMediaUrlWeb) {
+                                    // Use uploaded file (PDF, audio, etc.)
+                                    $skillUrl = $sMediaUrlWeb;
+                                } else {
+                                    // Fallback: look for a URL inside the content text
+                                    $rawSkillContent = $skill['content'] ?? '';
+                                    if (preg_match('/https?:\/\/\S+/i', $rawSkillContent, $m)) {
+                                        $skillUrl = $m[0];
+                                    }
+                                }
+
+                                $skillHasLink = !empty($skillUrl);
+                                ?>
+                                <?php if ($skillHasLink): ?>
+                                    <a href="<?php echo htmlspecialchars($skillUrl); ?>" target="_blank"
+                                       class="flex-0 shrink-0 max-w-[210px] bg-white rounded-full border border-[#f0e3cc] px-4 py-2 text-[13px] no-underline hover:bg-[#f5f5f5] text-[#111827] break-words"
+                                       title="Open skill resource">
+                                        <?php echo htmlspecialchars($skill['title'] ?? ''); ?>
+                                    </a>
+                                <?php else: ?>
+                                    <div class="flex-0 shrink-0 max-w-[210px] bg-white rounded-full border border-[#f0e3cc] px-4 py-2 text-[13px] text-[#6b7280] break-words">
+                                        <?php echo htmlspecialchars($skill['title'] ?? ''); ?>
+                                    </div>
+                                <?php endif; ?>
+                            <?php endforeach; ?>
+                        </div>
+                    <?php else: ?>
+                        <p class="text-sm text-[#6b7280]">No skills added yet.</p>
+                    <?php endif; ?>
+                </div>
+            </div>
+
+            <!-- RIGHT: Articles -->
+            <div>
+                <div class="bg-white rounded-2xl border border-[#f0e3cc] shadow-[0_10px_28px_rgba(0,0,0,0.07)] p-4">
+                    <h2 class="text-sm font-semibold mb-2 text-[#231f20]">Articles &amp; Guides</h2>
+                    <?php if (!empty($articles)): ?>
+                        <div class="flex flex-col gap-2">
+                            <?php foreach ($articles as $article): ?>
+                                <?php
+                                [$aMediaExists, $aMediaUrlWeb] = build_media_paths($article['media_url'] ?? null);
+                                $url = null;
+                                if ($aMediaExists && $aMediaUrlWeb) {
+                                    $url = $aMediaUrlWeb;
+                                } else {
+                                    $rawContent = $article['content'] ?? '';
+                                    if (preg_match('/https?:\/\/\S+/i', $rawContent, $m)) {
+                                        $url = $m[0];
+                                    }
+                                }
+                                $hasLink = !empty($url);
+                                ?>
+                                <?php if ($hasLink): ?>
+                                    <a href="<?php echo htmlspecialchars($url); ?>" target="_blank"
+                                       class="flex items-center gap-3 bg-white rounded-xl border border-[#f0e3cc] px-3 py-2 no-underline hover:bg-[#f9fafb]">
+                                        <div class="w-8 h-8 rounded-full bg-[#e6f3ec] flex-shrink-0 relative">
+                                            <div class="absolute inset-2 rounded-full border-2 border-[#c7e4d7]"></div>
+                                        </div>
+                                        <p class="m-0 text-[13px] text-[#111827] whitespace-nowrap overflow-hidden text-ellipsis">
+                                            <?php echo htmlspecialchars($article['title'] ?? ''); ?>
+                                        </p>
+                                        <span class="ml-auto text-[16px] text-[#bcae8c] flex-shrink-0">&#8250;</span>
+                                    </a>
+                                <?php else: ?>
+                                    <div class="flex items-center gap-3 bg-white rounded-xl border border-[#f0e3cc] px-3 py-2 opacity-65">
+                                        <div class="w-8 h-8 rounded-full bg-[#e6f3ec] flex-shrink-0 relative">
+                                            <div class="absolute inset-2 rounded-full border-2 border-[#c7e4d7]"></div>
+                                        </div>
+                                        <p class="m-0 text-[13px] text-[#6b7280] whitespace-nowrap overflow-hidden text-ellipsis">
+                                            <?php echo htmlspecialchars($article['title'] ?? ''); ?>
+                                        </p>
+                                        <span class="ml-auto text-[16px] text-[#bcae8c] flex-shrink-0">&#8250;</span>
+                                    </div>
+                                <?php endif; ?>
+                            <?php endforeach; ?>
+                        </div>
+                    <?php else: ?>
+                        <p class="text-sm text-[#6b7280]">No articles yet.</p>
+                    <?php endif; ?>
+                </div>
+            </div>
+        </div>
     </div>
-  </div>
 </main>
 
-</div>
+</div> <!-- Closing DIV from header/components wrapper -->
 
 <?php
 if (file_exists(__DIR__ . '/../../components/modals.php')) {
@@ -459,31 +348,12 @@ if (file_exists(__DIR__ . '/../../components/modals.php')) {
 }
 ?>
 
+<!-- Small JS function for logout confirm -->
 <script>
 function confirmLogout() {
-  if (confirm('Are you sure you want to log out?')) {
-    window.location.href = '../auth/logout.php';
-  }
+    if (confirm('Are you sure you want to log out?')) {
+        window.location.href = '../auth/logout.php';
+    }
 }
-
-document.addEventListener('DOMContentLoaded', function () {
-  const row  = document.querySelector('.skills-strip .card-row');
-  if (!row) return;
-
-  const prev = document.querySelector('.skills-nav--left');
-  const next = document.querySelector('.skills-nav--right');
-
-  function getStep() {
-    const item = row.children[0];
-    return item ? item.offsetWidth + 12 : 160;
-  }
-
-  prev && prev.addEventListener('click', function () {
-    row.scrollBy({ left: -getStep(), behavior: 'smooth' });
-  });
-
-  next && next.addEventListener('click', function () {
-    row.scrollBy({ left: getStep(), behavior: 'smooth' });
-  });
-});
 </script>
+patient rh
