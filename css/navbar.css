@@ -1,4 +1,31 @@
-/* Correção visual para Material Icons */
-.material-icons {
-    font-size: 26px;
+/* Estilos para o sidebar */
+.sidebar-link.active {
+    background-color: #005949 !important;
+}
+
+.sidebar-link.active svg,
+.sidebar-link.active .link-text {
+    color: white !important;
+}
+
+.sidebar-link.active svg path {
+    fill: white !important;
+}
+
+/* Efeito de hover para todos os estados */
+.sidebar-link:hover:not(.active),
+.sidebar-link:focus:not(.active) {
+    background-color: #005949 !important;
+}
+
+.sidebar-link:hover:not(.active) svg,
+.sidebar-link:hover:not(.active) .link-text,
+.sidebar-link:focus:not(.active) svg,
+.sidebar-link:focus:not(.active) .link-text {
+    color: white !important;
+}
+
+.sidebar-link:hover:not(.active) svg path,
+.sidebar-link:focus:not(.active) svg path {
+    fill: white !important;
 }

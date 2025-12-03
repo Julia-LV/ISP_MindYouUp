@@ -53,8 +53,9 @@ $body_class = $body_class ?? 'h-full bg-gray-100'
         
         <!-- TOPBAR -->
         <header class="h-16 bg-[#FCFBF7] border-b sticky top-0 z-50 grid grid-cols-3 items-center px-4 shadow-sm">
-            <div class="flex items-center space-x-4">
-                 <!-- Optional: Add a Mobile Menu Button here if needed -->
+            <div class="flex items-center space-x-2">
+                 <!-- Logo da App -->
+                 <img src="../../assets/img/MYU logos/logo_TT.png" alt="Mind You Up Logo" class="h-12 w-auto">
             </div>
 
             <div class="text-center">
