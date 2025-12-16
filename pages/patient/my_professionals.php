@@ -9,13 +9,12 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] != 'Patient') {
 
 $user_id = $_SESSION['user_id'];
 
-// Fetch CONNECTED Professionals
-$sql = "SELECT link.Link_ID, link.Assigned_Date,
-               u.First_Name, u.Last_Name, u.Email, u.User_Image, p.Specialization
+// Fetch accepted Professionals
+$sql = "SELECT link.Link_ID, u.User_ID, u.First_Name, u.Last_Name, u.User_Image, link.Status, link.Assigned_Date
         FROM patient_professional_link link
         JOIN user_profile u ON link.Professional_ID = u.User_ID
-        LEFT JOIN professional_profile p ON u.User_ID = p.User_ID
-        WHERE link.Patient_ID = ?";
+        WHERE link.Patient_ID = ? 
+        AND link.Connection_Status = 'Accepted'";
 
 if (!$conn) {
     die("Database connection failed");

@@ -111,7 +111,7 @@
     function confirmAdd(formId, itemName) {
         formToSubmit = document.getElementById(formId);
         openConfirm(
-            'Add Connection?', 
+            'Send Request?', 
             'Do you want to add ' + itemName + ' to your list?', 
             'Yes, Add'
         );
