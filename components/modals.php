@@ -23,7 +23,7 @@
                 <button type="button" id="globalConfirmBtn" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-[#005949] text-base font-medium text-white hover:bg-[#004539] focus:outline-none sm:ml-3 sm:w-auto sm:text-sm">
                     Yes, Proceed
                 </button>
-                <button type="button" onclick="closeModals()" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+                <button type="button" id="globalCancelBtn" onclick="closeModals()" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
                     Cancel
                 </button>
             </div>
@@ -52,7 +52,8 @@
                     </div>
                 </div>
             </div>
-            <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse gap-2">
+
+            <div id="footer-type-log" class="bg-gray-50 px-4 py-3 sm:px-6 hidden sm:flex-row-reverse gap-2">
                 <a href="home_patient.php" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-[#005949] text-base font-medium text-white hover:bg-[#004539] focus:outline-none sm:ml-3 sm:w-auto sm:text-sm">
                     Home
                 </a>
@@ -60,22 +61,41 @@
                     Log Another
                 </button>
             </div>
+
+            <div id="footer-type-simple" class="bg-gray-50 px-4 py-3 sm:px-6 hidden sm:flex-row-reverse">
+                <button type="button" onclick="closeModals()" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-[#005949] text-base font-medium text-white hover:bg-[#004539] focus:outline-none sm:w-auto sm:text-sm">
+                    Okay
+                </button>
+            </div>
+
         </div>
     </div>
 </div>
 
 <script>
     // --- 1. GLOBAL VARIABLES & HELPERS ---
-    let formToSubmit = null; // Variable to remember which form to submit
+    let formToSubmit = null; 
 
     function closeModals() {
         document.getElementById('confirmModal').classList.add('hidden');
         document.getElementById('successModal').classList.add('hidden');
-        // Clean URL
+        
+        // Clean URL params cleanly
         const url = new URL(window.location);
         url.searchParams.delete('status');
         url.searchParams.delete('msg');
         window.history.replaceState({}, '', url);
+    }
+
+    // Helper to determine which buttons to show based on the page name
+    function getPageContext() {
+        const path = window.location.pathname;
+        // If we are on a logging page, return 'log'
+        if (path.includes('ticlog') || path.includes('diary') || path.includes('journal')) {
+            return 'log';
+        }
+        // Otherwise (patients, professionals, profile, etc.) return 'simple'
+        return 'simple';
     }
 
     function openConfirm(title, message, confirmBtnText, cancelBtnText) {
@@ -89,13 +109,34 @@
         document.getElementById('confirmModal').classList.remove('hidden');
     }
     
-    function openSuccess(title, message) {
+    // Updated openSuccess to be smart about buttons
+    function openSuccess(title, message, forcedType = null) {
         if(title) document.getElementById('success-modal-title').innerText = title;
         if(message) document.getElementById('success-modal-message').innerText = message;
+        
+        // Determine type: Use forcedType if provided, otherwise guess based on page URL
+        const type = forcedType || getPageContext();
+
+        const footerLog = document.getElementById('footer-type-log');
+        const footerSimple = document.getElementById('footer-type-simple');
+
+        if(type === 'log') {
+            footerLog.classList.remove('hidden');
+            footerLog.classList.add('sm:flex'); 
+            footerSimple.classList.add('hidden');
+            footerSimple.classList.remove('sm:flex');
+        } else {
+            // Default to Simple (Okay button)
+            footerSimple.classList.remove('hidden');
+            footerSimple.classList.add('sm:flex');
+            footerLog.classList.add('hidden');
+            footerLog.classList.remove('sm:flex');
+        }
+
         document.getElementById('successModal').classList.remove('hidden');
     }
 
-    // --- 2. ACTION FUNCTIONS (Called by your buttons) ---
+    // --- 2. ACTION FUNCTIONS ---
 
     // A. For Deleting
     function confirmDelete(formId, itemName) {
@@ -107,22 +148,21 @@
         );
     }
 
-    // B. For Adding (This was trapped before, now it is fixed!)
+    // B. For Adding / Requesting (UPDATED TEXT)
     function confirmAdd(formId, itemName) {
         formToSubmit = document.getElementById(formId);
         openConfirm(
             'Send Request?', 
-            'Do you want to add ' + itemName + ' to your list?', 
+            'Do you want to send a connection request to ' + itemName + '?', 
             'Yes, Add'
         );
     }
 
     // --- 3. EVENT LISTENERS ---
 
-    // Handle the "Yes" Button Click
     document.getElementById('globalConfirmBtn').addEventListener('click', function() {
         if(formToSubmit) {
-            formToSubmit.submit(); // Actually submit the PHP form
+            formToSubmit.submit(); 
         } else {
             closeModals(); 
         }
@@ -133,13 +173,14 @@
         const urlParams = new URLSearchParams(window.location.search);
         
         if(urlParams.get('status') === 'success') {
+            const msgCode = urlParams.get('msg');
             let msg = "Action completed successfully.";
             
-            // Customize messages
-            if(urlParams.get('msg') === 'deleted') msg = "The contact has been removed.";
-            if(urlParams.get('msg') === 'added') msg = "New contact added successfully!";
-            if(urlParams.get('msg') === 'saved') msg = "Profile saved successfully!"; // <--- ADDED THIS FOR EDIT PROFILE
+            if(msgCode === 'deleted') msg = "The contact has been removed.";
+            else if(msgCode === 'added') msg = "Request sent successfully!";
+            else if(msgCode === 'saved') msg = "Profile saved successfully!";
             
+            // We don't need to pass a type here; openSuccess will detect the page URL
             openSuccess('Success!', msg);
         }
     });

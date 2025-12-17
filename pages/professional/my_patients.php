@@ -46,10 +46,10 @@ function getStatusBadge($status) {
 
 <?php include('../../components/header_component.php'); ?>
 
-<div class="flex h-screen bg-[#E9F0E9] font-sans">
+<div class="flex min-h-screen bg-[#E9F0E9] font-sans">
     <?php include('../../includes/navbar.php'); ?>
 
-    <main class="flex-1 overflow-y-auto p-8">
+    <main class="flex-1 p-8">
         <div class="max-w-6xl mx-auto">
 
             <div class="flex items-center justify-between mb-8">
