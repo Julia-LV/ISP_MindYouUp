@@ -15,6 +15,39 @@ body{
   color:#0b2a24;
 }
 
+/* Privacy page styles */
+body {
+    background: #f7f7f7;
+}
+
+.page-container {
+    max-width: 1200px;
+    margin: 32px auto 48px;
+    padding: 0 16px;
+}
+
+.info-card, .doc-card {
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    padding: 24px;
+    margin-bottom: 16px;
+}
+
+.doc-card a {
+    display: inline-block;
+    margin-right: 8px;
+    margin-top: 8px;
+}
+
+.viewer {
+    width: 100%;
+    height: 80vh;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
 /* Container */
 .container{
   max-width:960px;
@@ -35,7 +68,6 @@ p.lead{margin:0 0 18px;color:#444}
 .card a{display:inline-block;margin-top:8px;padding:8px 12px;background:linear-gradient(180deg,var(--accent-green),#004b40);color:#fff;text-decoration:none;border-radius:6px}
 
 /* Viewer */
-.viewer{height:720px;border:1px solid #e6e9ef;border-radius:6px;overflow:hidden}
 .notice{font-size:13px;color:var(--muted);margin-top:12px}
 .fallback{padding:18px;text-align:center}
 

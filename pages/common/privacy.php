@@ -44,35 +44,8 @@ $selectedFileExists = $docKey && file_exists($docs[$docKey]);
     <title>Terms &amp; Privacy  MindYouUp</title>
     <!-- Bootstrap CSS for layout and navbar compatibility -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
-    <style>
-        body {
-            background: #f7f7f7;
-        }
-        .page-container {
-            max-width: 1200px;
-            margin: 32px auto 48px;
-            padding: 0 16px;
-        }
-        .info-card, .doc-card {
-            background: #fff;
-            border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-            padding: 24px;
-            margin-bottom: 16px;
-        }
-        .doc-card a {
-            display: inline-block;
-            margin-right: 8px;
-            margin-top: 8px;
-        }
-        .viewer {
-            width: 100%;
-            height: 80vh;
-            border: 1px solid #e5e7eb;
-            border-radius: 8px;
-            overflow: hidden;
-        }
-    </style>
+    <!-- Privacy page styles -->
+    <link href="../../CSS/privacy.css" rel="stylesheet">
 </head>
 <body>
     <?php include_once __DIR__ . '/../../includes/navbar.php'; ?>
