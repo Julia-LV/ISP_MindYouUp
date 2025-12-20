@@ -1,108 +1,114 @@
+<!DOCTYPE html>
 <?php
-// File: /c:/Users/rodri/OneDrive/Documents/GitHub/ISP_MindYouUp/pages/common/privacy.php
-// Terms & Conditions / Privacy Policy page with links and inline viewer for two PDF files.
+// File: /c:/Users/rodri/OneDrive/Documents/GitHub/ISP_MindYouUp/pages/common/privacy.p
+// Single-source Terms & Conditions and Privacy Policy download/view page.
 
 if (session_status() === PHP_SESSION_NONE) { session_start(); }
 require_once __DIR__ . '/../../config.php';
 
 $CURRENT_USER = null;
 if (!empty($_SESSION['user_id']) && isset($conn)) {
-  $uid = (int) $_SESSION['user_id'];
-  $stmt = mysqli_prepare($conn, "SELECT User_ID, First_Name, Last_Name, Email, Role FROM user_profile WHERE User_ID = ? LIMIT 1");
-  if ($stmt) {
-    mysqli_stmt_bind_param($stmt, 'i', $uid);
-    mysqli_stmt_execute($stmt);
-    $res = mysqli_stmt_get_result($stmt);
-    if ($res && $row = mysqli_fetch_assoc($res)) {
-      $CURRENT_USER = $row;
+    $uid = (int) $_SESSION['user_id'];
+    $stmt = mysqli_prepare($conn, "SELECT User_ID, First_Name, Last_Name, Email, Role FROM user_profile WHERE User_ID = ? LIMIT 1");
+    if ($stmt) {
+        mysqli_stmt_bind_param($stmt, 'i', $uid);
+        mysqli_stmt_execute($stmt);
+        $res = mysqli_stmt_get_result($stmt);
+        if ($res && $row = mysqli_fetch_assoc($res)) {
+            $CURRENT_USER = $row;
+        }
+        mysqli_stmt_close($stmt);
     }
-    mysqli_stmt_close($stmt);
-  }
 }
 
-// Configure PDF locations (relative to this PHP file or absolute paths)
+// Single PDF used for both Terms & Privacy, keep filename as provided
 $docs = [
-  'terms'   => __DIR__ . '/../../assets/privacy/Terms  Conditions_.pdf',
-  'privacy' => __DIR__ . '/../../assets/privacy/Terms  Conditions2.pdf',
+    'policy' => __DIR__ . '/../../Privacy_Policy.pdf',
 ];
 
-// Public URLs for download/view (relative to site root)
+// Public URL for client access (relative to this page)
 $publicUrls = [
-    'terms'   => '../../assets/privacy/Terms  Conditions_.pdf',
-    'privacy' => '../../assets/privacy/Terms  Conditions2.pdf',
+    'policy' => '../../Privacy_Policy.pdf',
 ];
 
 $docKey = isset($_GET['doc']) ? $_GET['doc'] : null;
-$available = array_keys($docs);
-$selectedFileExists = $docKey && isset($docs[$docKey]) && file_exists($docs[$docKey]);
+if (!isset($docs[$docKey])) {
+    $docKey = null;
+}
+$selectedFileExists = $docKey && file_exists($docs[$docKey]);
 ?>
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <title>Terms & Conditions — MindYouUp</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-
-  <!-- TailwindCSS CDN (needed for navbar utility classes) -->
-  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-
-  <!-- Bootstrap CSS -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
-
-  <!-- Page CSS (relative path) -->
-  <link href="../../CSS/privacy.css" rel="stylesheet">
+    <meta charset="UTF-8">
+    <title>Terms &amp; Privacy  MindYouUp</title>
+    <!-- Bootstrap CSS for layout and navbar compatibility -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
+    <style>
+        body {
+            background: #f7f7f7;
+        }
+        .page-container {
+            max-width: 1200px;
+            margin: 32px auto 48px;
+            padding: 0 16px;
+        }
+        .info-card, .doc-card {
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+            padding: 24px;
+            margin-bottom: 16px;
+        }
+        .doc-card a {
+            display: inline-block;
+            margin-right: 8px;
+            margin-top: 8px;
+        }
+        .viewer {
+            width: 100%;
+            height: 80vh;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+    </style>
 </head>
 <body>
-  <?php include_once __DIR__ . '/../../includes/navbar.php'; ?>
-  <?php include __DIR__ . '/../../components/header_component.php'; ?>
-  <div class="container">
-    <h1>Terms & Conditions and Privacy Policy</h1>
-    <p class="lead">Download or view the official documents below. If you need these files in another format, contact the site administrator.</p>
+    <?php include_once __DIR__ . '/../../includes/navbar.php'; ?>
+    <?php include __DIR__ . '/../../components/header_component.php'; ?>
 
-    <div class="list">
-      <div class="card">
-        <strong>Terms &amp; Conditions</strong>
-        <div class="notice">Last updated: <!-- you can update this date manually --> 2025-01-01</div>
-        <?php if (file_exists($docs['terms'])): ?>
-          <div>
-            <a href="<?php echo htmlspecialchars($publicUrls['terms']); ?>" target="_blank" rel="noopener">Open in new tab</a>
-            <a href="?doc=terms" style="background:#10a37f;margin-left:8px">View inline</a>
-            <a href="<?php echo htmlspecialchars($publicUrls['terms']); ?>" download style="background:#6c757d;margin-left:8px">Download</a>
-          </div>
-        <?php else: ?>
-          <div class="fallback">Terms PDF not found on server.</div>
-        <?php endif; ?>
-      </div>
+    <div class="page-container">
+        <div class="doc-card">
+            <h2 class="h4 mb-2">Terms &amp; Conditions and Privacy Policy</h2>
+            <div class="text-muted mb-2">Last updated: <!-- update manually if needed --> 2025-01-01</div>
+            <?php if (file_exists($docs['policy'])): ?>
+                <div>
+                    <a class="btn btn-primary btn-sm" href="<?php echo htmlspecialchars($publicUrls['policy']); ?>" target="_blank" rel="noopener">Open in new tab</a>
+                    <a class="btn btn-success btn-sm ms-2" href="?doc=policy">View inline</a>
+                    <a class="btn btn-secondary btn-sm ms-2" href="<?php echo htmlspecialchars($publicUrls['policy']); ?>" download>Download</a>
+                </div>
+            <?php else: ?>
+                <div class="text-danger">Policy PDF not found on server.</div>
+            <?php endif; ?>
+        </div>
 
-      <div class="card">
-        <strong>Privacy Policy</strong>
-        <div class="notice">Last updated: <!-- you can update this date manually --> 2025-01-01</div>
-        <?php if (file_exists($docs['privacy'])): ?>
-          <div>
-            <a href="<?php echo htmlspecialchars($publicUrls['privacy']); ?>" target="_blank" rel="noopener">Open in new tab</a>
-            <a href="?doc=privacy" style="background:#10a37f;margin-left:8px">View inline</a>
-            <a href="<?php echo htmlspecialchars($publicUrls['privacy']); ?>" download style="background:#6c757d;margin-left:8px">Download</a>
-          </div>
-        <?php else: ?>
-          <div class="fallback">Privacy PDF not found on server.</div>
+        <?php if ($selectedFileExists):
+            // Map to public URL for embedding (do not expose filesystem path to client)
+            $embedUrl = $publicUrls[$docKey];
+        ?>
+            <div class="doc-card">
+                <h2 class="h5 mb-3">Viewing: Terms &amp; Conditions and Privacy Policy</h2>
+                <div class="viewer">
+                    <iframe src="<?php echo htmlspecialchars($embedUrl); ?>" title="Document viewer" width="100%" height="100%" style="border:0"></iframe>
+                </div>
+                <p class="text-muted mt-2 mb-0">If your browser cannot display PDF inline, use the download button above.</p>
+            </div>
+        <?php elseif ($docKey): ?>
+            <div class="doc-card text-danger">Requested document not available.</div>
         <?php endif; ?>
-      </div>
     </div>
 
-    <?php if ($selectedFileExists): 
-        // Map to public URL for embedding (do not expose filesystem path to client)
-        $embedUrl = $publicUrls[$docKey];
-    ?>
-      <h2>Viewing: <?php echo $docKey === 'terms' ? 'Terms & Conditions' : 'Privacy Policy'; ?></h2>
-      <div class="viewer">
-        <iframe src="<?php echo htmlspecialchars($embedUrl); ?>" title="Document viewer" width="100%" height="100%" style="border:0"></iframe>
-      </div>
-      <p class="notice">If your browser cannot display PDF inline, use the download button above.</p>
-    <?php elseif ($docKey): ?>
-      <div class="fallback">Requested document not available.</div>
-    <?php endif; ?>
-
-  </div>
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
 </body>
 </html>
