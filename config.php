@@ -2,8 +2,8 @@
 $servername = "localhost";
 $username = "root";
 $password = "";
-$dbname = "tictracker_v6";
-$port = 3307;
+$dbname = "tictracker_v8";
+$port = 3306;
 
 
 $conn = mysqli_connect($servername, $username, $password, $dbname, $port);
