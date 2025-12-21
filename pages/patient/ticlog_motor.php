@@ -284,7 +284,7 @@ include '../../includes/navbar.php';
                 $id = 'stress';
                 $name = 'stress';
                 $min = 0;
-                $max = 5;
+                $max = 10;
                 $val = 0;
                 include '../../components/slider_card.php';
                 ?>
@@ -379,7 +379,7 @@ include '../../includes/navbar.php';
 </html>
 
 <script>
-    // 1. Data Source (From your textbook image)
+    // 1. Data Source 
     const ticData = {
         "Simple motor tics": ["Eye blinking", "Eye movements", "Nose movements", "Mouth movements", "Facial grimace", "Head jerks/movements", "Shoulder shrugs", "Arm movements", "Hand movements", "Abdominal tensing", "Leg/foot/toe movements"],
         "Complex motor tics": ["Eye movements", "Mouth movements", "Facial expressions", "Head gestures", "Shoulder movements", "Arm/Hand movements", "Writing tics", "Dystonic postures", "Bending/Gyrating", "Rotating", "Blocking", "Compulsive behaviors", "Copropraxia", "Self-abusive behavior"],
@@ -401,39 +401,23 @@ include '../../includes/navbar.php';
 
     // 2. Tab Switching Logic
     function switchTab(type) {
-        // 1. Set the hidden input value so PHP knows what to save
         document.getElementById('active_context').value = type;
-
-        // 2. Define our styling classes
-        // Note: These must match what is in diary_tabs.php
         const activeClass = 'active font-semibold text-[#005949] border-b-2 border-[#005949]';
         const inactiveClass = 'font-medium text-gray-500 hover:text-gray-700 border-b-2 border-transparent';
 
-        // 3. Get the Button Elements
-        // The component generates IDs based on the label: "Motor Tics" -> "tab-btn-motor"
         const btnMotor = document.getElementById('tab-btn-motor');
         const btnVocal = document.getElementById('tab-btn-vocal');
-
-        // 4. Get the Content Panes (The forms)
-        // Ensure your HTML divs still have these IDs: id="pane-motor" and id="pane-vocal"
         const paneMotor = document.getElementById('pane-motor');
         const paneVocal = document.getElementById('pane-vocal');
 
-        // 5. The Switching Logic
         if (type === 'motor') {
-            // Update Buttons
             btnMotor.className = "flex-1 py-3 text-center focus:outline-none transition-colors " + activeClass;
             btnVocal.className = "flex-1 py-3 text-center focus:outline-none transition-colors " + inactiveClass;
-
-            // Show/Hide Panes
             paneMotor.style.display = 'block';
             paneVocal.style.display = 'none';
         } else {
-            // Update Buttons
             btnVocal.className = "flex-1 py-3 text-center focus:outline-none transition-colors " + activeClass;
             btnMotor.className = "flex-1 py-3 text-center focus:outline-none transition-colors " + inactiveClass;
-
-            // Show/Hide Panes
             paneVocal.style.display = 'block';
             paneMotor.style.display = 'none';
         }
@@ -469,7 +453,7 @@ include '../../includes/navbar.php';
     setupDropdowns('motor_cat', 'motor_spec', true);
     setupDropdowns('vocal_cat', 'vocal_spec', false);
 
-    // 4. Update Slider Text (reusing logic from emotional diary)
+    // 4. Update Slider Text
     ['intensity', 'stress'].forEach(id => {
         const el = document.getElementById(id);
         const val = document.getElementById(id + '-value');
@@ -481,79 +465,55 @@ include '../../includes/navbar.php';
     // 5. Reporter Toggle
     function setReporter(role, btn) {
         document.getElementById('self_reported').value = role;
-
-        // RESET ALL BUTTONS
-        // We ensure we keep 'w-1/2' here so they stay 50% width
         document.querySelectorAll('.rep-btn').forEach(b => {
             b.className = 'rep-btn w-1/2 py-2 rounded text-gray-500 text-sm font-medium transition-all hover:text-gray-700';
         });
-
-        // SET ACTIVE BUTTON
-        // We also ensure 'w-1/2' is here
         btn.className = 'rep-btn w-1/2 py-2 rounded bg-white shadow-sm text-[#005949] text-sm font-bold transition-all';
     }
 
-    // 6. Form Submit: Populate hidden fields based on active tab
-    document.querySelector('form').addEventListener('submit', function(e) {
-        if (e.submitter && e.submitter.name === 'no_tics') return;
-
-        const context = document.getElementById('active_context').value;
-        const finalCat = document.getElementById('final_tic_category');
-        const finalSpec = document.getElementById('final_specific_tic');
-
-        if (context === 'motor') {
-            finalCat.value = document.getElementById('motor_cat').value;
-            finalSpec.value = document.getElementById('motor_spec').value;
-        } else {
-            finalCat.value = document.getElementById('vocal_cat').value;
-            finalSpec.value = document.getElementById('vocal_spec').value;
-            document.getElementById('muscle_select').value = ""; // Clear muscle for vocal
-        }
-    });
-
-    // --- 7. MODAL LOGIC (Using the Reusable Component) ---
-    
-
+    // 6. CONFIRM & SUBMIT LOGIC
     function askConfirm(type) {
         if (type === 'no_tics') {
-            // ERROR FIX: Grab the actual Element using getElementById, not just the string ID
-            formToSubmit = document.getElementById('form-no-tics'); 
-            
+            // Case A: No Tics
+            formToSubmit = document.getElementById('form-no-tics');
             openConfirm(
-                "Log Good Day?", 
-                "This will record that you had NO tics today. Are you sure?", 
+                "Log Good Day?",
+                "This will record that you had NO tics today. Are you sure?",
                 "Yes, Log it"
             );
         } else {
-            // Prepare the hidden inputs BEFORE validation
+            // Case B: Standard Entry
+            // 1. Populate Hidden Inputs
             const context = document.getElementById('active_context').value;
             const finalCat = document.getElementById('final_tic_category');
             const finalSpec = document.getElementById('final_specific_tic');
+            const muscleInput = document.getElementById('muscle_select');
 
-             if (context === 'motor') {
+            if (context === 'motor') {
                 finalCat.value = document.getElementById('motor_cat').value;
                 finalSpec.value = document.getElementById('motor_spec').value;
             } else {
                 finalCat.value = document.getElementById('vocal_cat').value;
                 finalSpec.value = document.getElementById('vocal_spec').value;
+                // Important: Clear muscle if saving a vocal tic to avoid confusion
+                muscleInput.value = "";
             }
 
-            // Validation Logic
+            // 2. Validate
             const cat = finalCat.value;
             const spec = finalSpec.value;
+            const duration = document.querySelector('select[name="duration"]').value;
 
-            if (!cat || !spec) {
-                // Using alert here is fine, or you could make an error modal
-                alert("Please select a Tic Type and Specific Tic before saving.");
+            if (!cat || !spec || !duration) {
+                alert("Please select Tic Type, Specific Tic, AND Duration before saving.");
                 return;
             }
 
-            // ERROR FIX: Grab the actual Main Form Element
+            // 3. Set Form Global and Open Modal
             formToSubmit = document.getElementById('form-main');
-
             openConfirm(
-                "Save Entry?", 
-                "Are you sure you want to log this tic?", 
+                "Save Entry?",
+                "Are you sure you want to log this tic?",
                 "Yes, Save"
             );
         }
@@ -561,10 +521,10 @@ include '../../includes/navbar.php';
 </script>
 
 <?php if (!empty($message) && $message_type === 'success'): ?>
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Use the helper from modals.php
-        openSuccess("Entry Recorded!", "Your tic entry has been successfully saved to your log.");
-    });
-</script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Pass the PHP message to the JS function so you can see the Log ID
+            openSuccess("Entry Recorded!", "<?php echo $message; ?>");
+        });
+    </script>
 <?php endif; ?>
