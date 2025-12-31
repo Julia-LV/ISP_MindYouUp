@@ -2,7 +2,7 @@
 /*
  * home_patient.php
  * Patient Dashboard
- * Updated: Recent Activity Headings (Motor/Vocal Tic Entry vs Emotional Diary Entry)
+ * Updated: Affected Areas (Cumulative) & Daily Rhythm (Today Only)
  */
 
 session_start();
@@ -141,18 +141,45 @@ if ($conn) {
         $anxiety_levels[] = $res['a'] ? round($res['a'], 1) : 0;
         $stmt->close();
     }
-    // Muscle/Hourly
-    $muscle_labels = []; $muscle_data = [];
-    $sql = "SELECT Muscle_Group, COUNT(*) as count FROM tic_log WHERE Patient_ID = ? AND Muscle_Group != '' GROUP BY Muscle_Group ORDER BY count DESC LIMIT 5";
-    $stmt = $conn->prepare($sql); $stmt->bind_param("i", $patient_id); $stmt->execute(); $result = $stmt->get_result();
-    while ($row = $result->fetch_assoc()) { $muscle_labels[] = $row['Muscle_Group']; $muscle_data[] = $row['count']; } $stmt->close();
+    
+    // --- UPDATED AFFECTED AREAS LOGIC (CUMULATIVE) ---
+    $muscle_labels = []; 
+    $muscle_data = [];
+    // No date restriction: fetches lifetime counts for this patient
+    $sql = "SELECT Muscle_Group, COUNT(*) as count 
+            FROM tic_log 
+            WHERE Patient_ID = ? AND Muscle_Group != '' AND Muscle_Group IS NOT NULL 
+            GROUP BY Muscle_Group 
+            ORDER BY count DESC 
+            LIMIT 5";
+    $stmt = $conn->prepare($sql); 
+    $stmt->bind_param("i", $patient_id); 
+    $stmt->execute(); 
+    $result = $stmt->get_result();
+    while ($row = $result->fetch_assoc()) { 
+        $muscle_labels[] = $row['Muscle_Group']; 
+        $muscle_data[] = $row['count']; 
+    } 
+    $stmt->close();
 
-    $hourly_activity = array_fill(0, 24, 0);
-    $sql = "SELECT HOUR(Created_At) as tic_hour, COUNT(*) as count FROM tic_log WHERE Patient_ID = ? AND Created_At >= DATE_SUB(NOW(), INTERVAL 7 DAY) GROUP BY HOUR(Created_At)";
-    $stmt = $conn->prepare($sql); $stmt->bind_param("i", $patient_id); $stmt->execute(); $result = $stmt->get_result();
-    while ($row = $result->fetch_assoc()) { $hourly_activity[$row['tic_hour']] = $row['count']; } $stmt->close();
+    // --- UPDATED DAILY RHYTHM LOGIC (TODAY ONLY) ---
+    $hourly_activity = array_fill(0, 24, 0); // Init 0-23 hours with 0
+    // Strictly filters for CURDATE()
+    $sql = "SELECT HOUR(Created_At) as tic_hour, COUNT(*) as count 
+            FROM tic_log 
+            WHERE Patient_ID = ? AND DATE(Created_At) = CURDATE() 
+            GROUP BY HOUR(Created_At)";
+    $stmt = $conn->prepare($sql); 
+    $stmt->bind_param("i", $patient_id); 
+    $stmt->execute(); 
+    $result = $stmt->get_result();
+    while ($row = $result->fetch_assoc()) { 
+        $hourly_activity[$row['tic_hour']] = $row['count']; 
+    } 
+    $stmt->close();
+
 } else {
-    // Fallback
+    // Fallback Mock Data
     $dates = [['M','D'],['T','D'],['W','D'],['T','D'],['F','D'],['S','D'],['S','D']];
     $tic_counts = [0,0,0,0,0,0,0];
     $muscle_labels = ['Eyes', 'Neck']; $muscle_data = [10, 5];
@@ -160,24 +187,21 @@ if ($conn) {
 }
 
 // --------------------------------------------------------
-// RECENT ACTIVITY LOGIC (UPDATED)
+// RECENT ACTIVITY LOGIC
 // --------------------------------------------------------
 $recent_activities = [];
 if ($conn) {
     $temp = [];
 
-    // 1. Get Recent Tics (Fetching 'Type' for the header)
+    // 1. Get Recent Tics
     $sql_t = "SELECT 'tic' as entry_type, Type, Type_Description, Intensity, Created_At as time FROM tic_log WHERE Patient_ID = ? ORDER BY Created_At DESC LIMIT 5";
     if ($stmt = $conn->prepare($sql_t)) {
         $stmt->bind_param("i", $patient_id);
         $stmt->execute();
         $res = $stmt->get_result();
         while ($r = $res->fetch_assoc()) {
-            // Determine Header: "Motor Tic Entry" or "Vocal Tic Entry"
-            $ticType = isset($r['Type']) ? $r['Type'] : 'Motor'; // Default to Motor if null
+            $ticType = isset($r['Type']) ? $r['Type'] : 'Motor';
             $r['display_title'] = ($ticType === 'Vocal') ? "Vocal Tic Entry" : "Motor Tic Entry";
-            
-            // Description: The actual tic name + intensity
             $r['display_desc'] = $r['Type_Description'] . " (Intensity: " . $r['Intensity'] . "/10)";
             $r['icon'] = 'activity';
             $r['bg_class'] = 'bg-teal-50 text-[#005949]';
@@ -193,11 +217,8 @@ if ($conn) {
         $stmt->execute();
         $res = $stmt->get_result();
         while ($r = $res->fetch_assoc()) {
-            // Determine Header
             $r['display_title'] = "Emotional Diary Entry";
-            
-            // Description: Emotion + Levels
-            $r['display_desc'] = "Stress: " . $r['Stress'] . " | Anxiety: " . $r['Anxiety'];
+            $r['display_desc'] = "Emotion: " . $r['Emotion'] . " | Stress: " . $r['Stress'] . " | Anxiety: " . $r['Anxiety'];
             $r['icon'] = 'smile';
             $r['bg_class'] = 'bg-orange-50 text-orange-500';
             $temp[] = $r;
@@ -205,11 +226,7 @@ if ($conn) {
         $stmt->close();
     }
 
-    // Sort combined list by time
-    usort($temp, function ($a, $b) {
-        return strtotime($b['time']) - strtotime($a['time']);
-    });
-
+    usort($temp, function ($a, $b) { return strtotime($b['time']) - strtotime($a['time']); });
     $recent_activities = array_slice($temp, 0, 5);
 }
 
@@ -286,22 +303,22 @@ include '../../includes/navbar.php';
                 </div>
                 <div class="relative h-64 w-full"><canvas id="correlationChart"></canvas></div>
                 <div class="mt-4 flex items-center justify-center gap-4 text-xs text-gray-500">
-                    <div class="flex items-center"><span class="w-3 h-1 bg-orange-400 mr-2"></span>Stress</div>
-                    <div class="flex items-center"><span class="w-3 h-3 bg-[#2dd4bf] mr-2 rounded-sm"></span>Avg Intensity</div>
+                    <div class="flex items-center"><span class="w-3 h-1 bg-orange-400 mr-2"></span>Stress (0-10)</div>
+                    <div class="flex items-center"><span class="w-3 h-3 bg-[#2dd4bf] mr-2 rounded-sm"></span>Avg Intensity (0-10)</div>
                 </div>
             </div> 
         </div> 
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
             <div class="bg-white p-6 rounded-lg shadow-sm">
-                <h3 class="text-sm font-bold text-gray-500 uppercase tracking-wider mb-4">Affected Areas</h3>
+                <h3 class="text-sm font-bold text-gray-500 uppercase tracking-wider mb-4">Affected Areas (Cumulative)</h3>
                 <div class="relative h-60 w-full flex justify-center"><canvas id="musclePieChart"></canvas></div>
             </div>
 
             <div class="bg-white p-6 rounded-lg shadow-sm">
-                <h3 class="text-sm font-bold text-gray-500 uppercase tracking-wider mb-4">Daily Rhythm</h3>
+                <h3 class="text-sm font-bold text-gray-500 uppercase tracking-wider mb-4">Daily Rhythm (Today)</h3>
                 <div class="relative h-60 w-full"><canvas id="hourlyAreaChart"></canvas></div>
-                <div class="mt-2 text-xs text-gray-400 text-center">Shows tic activity by time of day.</div>
+                <div class="mt-2 text-xs text-gray-400 text-center">Shows tic activity by hour for today.</div>
             </div>
 
             <div class="bg-white p-6 rounded-lg shadow-sm">
@@ -375,7 +392,7 @@ include '../../includes/navbar.php';
     const initialSleep = <?php echo json_encode($sleep_quality); ?>;
     const initialAnxiety = <?php echo json_encode($anxiety_levels); ?>;
     
-    // Static Charts
+    // Dynamic Charts Data
     const muscleLabels = <?php echo json_encode($muscle_labels); ?>;
     const muscleData = <?php echo json_encode($muscle_data); ?>;
     const hourlyData = <?php echo json_encode(array_values($hourly_activity)); ?>;
@@ -432,8 +449,47 @@ include '../../includes/navbar.php';
         }
     });
 
-    new Chart(document.getElementById('musclePieChart'), { type: 'pie', data: { labels: muscleLabels, datasets: [{ data: muscleData, backgroundColor: ['#005949', '#F282A9', '#F26647', '#fcd34d', '#94a3b8'], borderWidth: 1 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 10 } } } } } });
-    new Chart(document.getElementById('hourlyAreaChart'), { type: 'line', data: { labels: hourlyLabels, datasets: [{ label: 'Activity', data: hourlyData, borderColor: '#2dd4bf', backgroundColor: 'rgba(45, 212, 191, 0.2)', borderWidth: 2, tension: 0.4, fill: true, pointRadius: 0 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false }, ticks: { maxTicksLimit: 6 } }, y: { display: false } } } });
+    new Chart(document.getElementById('musclePieChart'), { 
+        type: 'pie', 
+        data: { 
+            labels: muscleLabels, 
+            datasets: [{ 
+                data: muscleData, 
+                backgroundColor: ['#005949', '#F282A9', '#F26647', '#fcd34d', '#94a3b8'], 
+                borderWidth: 1 
+            }] 
+        }, 
+        options: { 
+            responsive: true, 
+            maintainAspectRatio: false, 
+            plugins: { 
+                legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 10 } } } 
+            } 
+        } 
+    });
+
+    new Chart(document.getElementById('hourlyAreaChart'), { 
+        type: 'line', 
+        data: { 
+            labels: hourlyLabels, 
+            datasets: [{ 
+                label: 'Today\'s Activity', 
+                data: hourlyData, 
+                borderColor: '#2dd4bf', 
+                backgroundColor: 'rgba(45, 212, 191, 0.2)', 
+                borderWidth: 2, 
+                tension: 0.4, 
+                fill: true, 
+                pointRadius: 0 
+            }] 
+        }, 
+        options: { 
+            responsive: true, 
+            maintainAspectRatio: false, 
+            plugins: { legend: { display: false } }, 
+            scales: { x: { grid: { display: false }, ticks: { maxTicksLimit: 6 } }, y: { display: false, beginAtZero: true } } 
+        } 
+    });
 
 
     // =========================================================
