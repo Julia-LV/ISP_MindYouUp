@@ -141,7 +141,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
         <?php
         $tabs = [
             'Entry'   => 'new_emotional_diary.php',
-            'Visuals' => 'visuals_page.php'
+            'Visuals' => 'emotional_diary_visuals.php'
         ];
         $active_tab = 'Entry';
         $is_js = false; // Tell component to use <a> tags

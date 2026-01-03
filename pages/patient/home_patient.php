@@ -9,6 +9,9 @@ session_start();
 $config_path = '../../config.php';
 if (file_exists($config_path)) { require_once $config_path; } else { $conn = null; }
 
+// Set timezone to Europe/Lisbon to match local time
+date_default_timezone_set('Europe/Lisbon');
+
 // --- SECURITY CHECK ---
 if (!isset($_SESSION["loggedin"]) || $_SESSION["loggedin"] !== true || $_SESSION["role"] != "Patient") {
     // header("Location: ../auth/login.php"); exit;
@@ -295,7 +298,7 @@ include '../../includes/navbar.php';
 
             <div class="bg-white p-6 rounded-lg shadow-sm">
                 <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-sm font-bold text-gray-500 uppercase tracking-wider">Stress vs. Intensity</h3>
+                    <h3 class="text-sm font-bold text-gray-500 uppercase tracking-wider">Stress vs. Tic Intensity</h3>
                     <div class="flex items-center gap-1">
                         <button id="btnPrevStress" class="p-1 hover:bg-gray-100 rounded text-gray-500"><i data-lucide="chevron-left" class="w-5 h-5"></i></button>
                         <button id="btnNextStress" class="p-1 hover:bg-gray-100 rounded text-gray-500 disabled:opacity-30"><i data-lucide="chevron-right" class="w-5 h-5"></i></button>
@@ -303,8 +306,8 @@ include '../../includes/navbar.php';
                 </div>
                 <div class="relative h-64 w-full"><canvas id="correlationChart"></canvas></div>
                 <div class="mt-4 flex items-center justify-center gap-4 text-xs text-gray-500">
-                    <div class="flex items-center"><span class="w-3 h-1 bg-orange-400 mr-2"></span>Stress (0-10)</div>
-                    <div class="flex items-center"><span class="w-3 h-3 bg-[#2dd4bf] mr-2 rounded-sm"></span>Avg Intensity (0-10)</div>
+                    <div class="flex items-center"><span class="w-3 h-1 bg-orange-400 mr-2"></span>Stress</div>
+                    <div class="flex items-center"><span class="w-3 h-3 bg-[#2dd4bf] mr-2 rounded-sm"></span>Avg Tic Intensity</div>
                 </div>
             </div> 
         </div> 
@@ -358,7 +361,8 @@ include '../../includes/navbar.php';
                                     </p>
                                 </div>
                                 <span class="text-xs text-gray-400 font-medium">
-                                    <?php echo date('H:i', strtotime($act['time'])); ?>
+                                    <div class="date-display" data-timestamp="<?php echo strtotime($act['time']); ?>"></div>
+                                    <div class="time-display" data-timestamp="<?php echo strtotime($act['time']); ?>"></div>
                                 </span>
                             </div>
                         <?php endforeach; ?>
@@ -586,6 +590,19 @@ include '../../includes/navbar.php';
             sleepChart.update();
         }
         if (offSleep === 0) btnNextSleep.disabled = true;
+    });
+
+    // Format timestamps to local date and time
+    document.querySelectorAll('.date-display').forEach(el => {
+        const timestamp = parseInt(el.getAttribute('data-timestamp')) * 1000;
+        const date = new Date(timestamp);
+        el.textContent = date.toLocaleDateString('en-US', { day: '2-digit', month: 'short' });
+    });
+
+    document.querySelectorAll('.time-display').forEach(el => {
+        const timestamp = parseInt(el.getAttribute('data-timestamp')) * 1000;
+        const date = new Date(timestamp);
+        el.textContent = date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
     });
 
 </script>
