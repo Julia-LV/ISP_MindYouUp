@@ -15,12 +15,69 @@ if (file_exists($config_path)) {
     $conn = null;
 }
 
+// Set timezone to Europe/Lisbon to match local time
+date_default_timezone_set('Europe/Lisbon');
+
 // --- SECURITY CHECK ---
 if (!isset($_SESSION["loggedin"]) || $_SESSION["loggedin"] !== true || $_SESSION["role"] !== "Professional") {
     // header("Location: ../auth/login.php"); exit;
 }
 
 $doctor_id = $_SESSION["user_id"] ?? 999; 
+
+// =================================================================================
+// 1. AJAX HANDLER
+// =================================================================================
+if (isset($_GET['ajax_fetch']) && isset($_GET['offset']) && isset($_GET['patient_id'])) {
+    header('Content-Type: application/json');
+    
+    $offset = intval($_GET['offset']); 
+    $patient_id = intval($_GET['patient_id']);
+    $today_str = date('Y-m-d');
+    
+    $resp_labels = [];
+    $resp_severity = [];
+    $resp_stress = [];
+
+    if ($conn) {
+        for ($i = 6; $i >= 0; $i--) {
+            $days_ago = $offset + $i;
+            $timestamp = strtotime("-$days_ago days");
+            $date_db = date('Y-m-d', $timestamp);
+            
+            $day_name = date('D', $timestamp); 
+            $day_date = date('d M', $timestamp);
+            $second_line = ($date_db === $today_str) ? "Today" : $day_date;
+            $resp_labels[] = [$day_name, $second_line];
+
+            $stmt = $conn->prepare("SELECT MAX(Intensity) as i FROM tic_log WHERE Patient_ID = ? AND DATE(Created_At) = ?");
+            $stmt->bind_param("is", $patient_id, $date_db);
+            $stmt->execute();
+            $resp_severity[] = $stmt->get_result()->fetch_assoc()['i'] ?? 0;
+            $stmt->close();
+
+            $stmt = $conn->prepare("SELECT AVG(Stress) as s FROM emotional_diary WHERE Patient_ID = ? AND DATE(Occurrence) = ?");
+            $stmt->bind_param("is", $patient_id, $date_db);
+            $stmt->execute();
+            $resp_stress[] = $stmt->get_result()->fetch_assoc()['s'] ?? 0;
+            $stmt->close();
+        }
+    } else {
+        // Mock Data
+        for ($i = 6; $i >= 0; $i--) {
+            $resp_labels[] = ['Mon', 'Date'];
+            $resp_severity[] = 0;
+            $resp_stress[] = 0;
+        }
+    }
+
+    echo json_encode([
+        'labels' => $resp_labels,
+        'severity' => $resp_severity,
+        'stress' => $resp_stress
+    ]);
+    exit;
+} 
 
 // --- 1. FETCH PATIENT LIST ---
 $patients = [];
@@ -76,26 +133,32 @@ if ($conn && $selected_patient_id) {
 $dates = [];
 $tic_severity = [];
 $stress_levels = [];
+$today_str = date('Y-m-d');
 if ($conn && $selected_patient_id) {
     for ($i = 6; $i >= 0; $i--) {
-        $date = date('Y-m-d', strtotime("-$i days"));
-        $dates[] = date('D', strtotime("-$i days"));
+        $timestamp = strtotime("-$i days");
+        $date_db = date('Y-m-d', $timestamp);
+        
+        $day_name = date('D', $timestamp); 
+        $day_date = date('d M', $timestamp);
+        $second_line = ($date_db === $today_str) ? "Today" : $day_date;
+        $dates[] = [$day_name, $second_line];
 
         $stmt = $conn->prepare("SELECT MAX(Intensity) as i FROM tic_log WHERE Patient_ID = ? AND DATE(Created_At) = ?");
-        $stmt->bind_param("is", $selected_patient_id, $date);
+        $stmt->bind_param("is", $selected_patient_id, $date_db);
         $stmt->execute();
         $tic_severity[] = $stmt->get_result()->fetch_assoc()['i'] ?? 0;
         $stmt->close();
 
         $stmt = $conn->prepare("SELECT AVG(Stress) as s FROM emotional_diary WHERE Patient_ID = ? AND DATE(Occurrence) = ?");
-        $stmt->bind_param("is", $selected_patient_id, $date);
+        $stmt->bind_param("is", $selected_patient_id, $date_db);
         $stmt->execute();
         $stress_levels[] = $stmt->get_result()->fetch_assoc()['s'] ?? 0;
         $stmt->close();
     }
 } else {
     // Mock Data
-    $dates = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    $dates = [['M','D'],['T','D'],['W','D'],['T','D'],['F','D'],['S','D'],['S','D']];
     $tic_severity = [4, 5, 8, 3, 4, 7, 2];
     $stress_levels = [3, 4, 8, 2, 3, 6, 2];
 }
@@ -132,7 +195,7 @@ if ($conn && $selected_patient_id) {
     $stmt->close();
 }
 
-$page_title = "Doctor Dashboard";
+$page_title = "Professional Dashboard";
 include '../../components/header_component.php'; 
 include '../../includes/navbar.php'; 
 ?>
@@ -240,13 +303,17 @@ include '../../includes/navbar.php';
                 <div class="lg:col-span-2 bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
                     <div class="flex justify-between items-center mb-4">
                         <h3 class="font-bold text-gray-800">Trigger Analysis: Stress vs. Severity</h3>
-                        <div class="flex gap-3 text-xs">
-                            <span class="flex items-center text-gray-500"><span class="w-2 h-2 rounded-full bg-orange-400 mr-1"></span> Stress</span>
-                            <span class="flex items-center text-gray-500"><span class="w-2 h-2 rounded-full bg-[#005949] mr-1"></span> Tic Intensity</span>
+                        <div class="flex items-center gap-1">
+                            <button id="btnPrevMain" class="p-1 hover:bg-gray-100 rounded text-gray-500"><i data-lucide="chevron-left" class="w-5 h-5"></i></button>
+                            <button id="btnNextMain" class="p-1 hover:bg-gray-100 rounded text-gray-500 disabled:opacity-30"><i data-lucide="chevron-right" class="w-5 h-5"></i></button>
                         </div>
                     </div>
                     <div class="h-72 w-full">
                         <canvas id="doctorComboChart"></canvas>
+                    </div>
+                    <div class="mt-4 flex items-center justify-center gap-4 text-xs text-gray-500">
+                        <div class="flex items-center"><span class="w-3 h-1 bg-orange-400 mr-2"></span>Stress (0-10)</div>
+                        <div class="flex items-center"><span class="w-3 h-3 bg-[#005949] mr-2 rounded-sm"></span>Max Intensity (0-10)</div>
                     </div>
                 </div>
 
@@ -337,21 +404,22 @@ include '../../includes/navbar.php';
     lucide.createIcons();
 
     // Chart Data
-    const labels = <?php echo json_encode($dates); ?>;
-    const severityData = <?php echo json_encode($tic_severity); ?>;
-    const stressData = <?php echo json_encode($stress_levels); ?>;
+    const initialLabels = <?php echo json_encode($dates); ?>;
+    const initialSeverity = <?php echo json_encode($tic_severity); ?>;
+    const initialStress = <?php echo json_encode($stress_levels); ?>;
     const motorCount = <?php echo $motor_count; ?>;
     const vocalCount = <?php echo $vocal_count; ?>;
+    const selectedPatientId = <?php echo $selected_patient_id; ?>;
 
     // Initialize Charts
     const ctxCombo = document.getElementById('doctorComboChart').getContext('2d');
-    new Chart(ctxCombo, {
+    const comboChart = new Chart(ctxCombo, {
         type: 'bar',
         data: {
-            labels: labels,
+            labels: initialLabels,
             datasets: [
-                { type: 'line', label: 'Avg Stress', data: stressData, borderColor: '#fb923c', borderWidth: 2, borderDash: [5, 5], pointRadius: 4, tension: 0.3, yAxisID: 'y' },
-                { type: 'bar', label: 'Max Intensity', data: severityData, backgroundColor: '#005949', borderRadius: 4, barThickness: 24, yAxisID: 'y' }
+                { type: 'line', label: 'Avg Stress', data: initialStress, borderColor: '#fb923c', borderWidth: 2, borderDash: [5, 5], pointRadius: 4, tension: 0.3, yAxisID: 'y' },
+                { type: 'bar', label: 'Max Intensity', data: initialSeverity, backgroundColor: '#005949', borderRadius: 4, barThickness: 24, yAxisID: 'y' }
             ]
         },
         options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false }, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false } }, y: { min: 0, max: 10, grid: { borderDash: [4, 4] } } } }
@@ -365,6 +433,42 @@ include '../../includes/navbar.php';
             datasets: [{ data: [motorCount, vocalCount], backgroundColor: ['#005949', '#3b82f6'], borderWidth: 0, hoverOffset: 4 }]
         },
         options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, cutout: '75%' }
+    });
+
+    // --- NAVIGATION LOGIC ---
+    let offsetMain = 0;
+
+    const btnPrevMain = document.getElementById('btnPrevMain');
+    const btnNextMain = document.getElementById('btnNextMain');
+    btnNextMain.disabled = true;
+
+    async function fetchMainData(offset) {
+        try {
+            const url = `home_professional.php?ajax_fetch=1&offset=${offset}&patient_id=${selectedPatientId}`;
+            const response = await fetch(url);
+            const data = await response.json();
+            
+            comboChart.data.labels = data.labels;
+            comboChart.data.datasets[0].data = data.stress;
+            comboChart.data.datasets[1].data = data.severity;
+            comboChart.update();
+        } catch (error) {
+            console.error("Error fetching chart data:", error);
+        }
+    }
+
+    btnPrevMain.addEventListener('click', async () => {
+        offsetMain += 7;
+        await fetchMainData(offsetMain);
+        btnNextMain.disabled = false;
+    });
+
+    btnNextMain.addEventListener('click', async () => {
+        if (offsetMain >= 7) {
+            offsetMain -= 7;
+            await fetchMainData(offsetMain);
+        }
+        if (offsetMain === 0) btnNextMain.disabled = true;
     });
 
     // --- PDF EXPORT FUNCTION ---
