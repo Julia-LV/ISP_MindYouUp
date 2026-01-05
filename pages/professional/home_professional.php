@@ -2,7 +2,7 @@
 /*
  * home_professional.php
  * * Doctor/Professional Dashboard
- * * Features: Independent Analytics + Recent Tables + View All Modals + Dynamic Stats
+ * * Features: Independent Analytics + Recent Tables (Fixed Widths) + View All Modals
  */
 
 session_start();
@@ -183,24 +183,19 @@ $avg_stress_30d = 0;
 $adherence_percentage = 0;
 
 if ($conn && $selected_patient_id) {
-    // A. Tic Count Current 30 Days
     $stmt = $conn->prepare("SELECT COUNT(*) as c FROM tic_log WHERE Patient_ID = ? AND Created_At >= DATE_SUB(NOW(), INTERVAL 30 DAY)");
     $stmt->bind_param("i", $selected_patient_id); $stmt->execute();
     $total_tics_30d = $stmt->get_result()->fetch_assoc()['c']; $stmt->close();
 
-    // B. Tic Count Previous 30 Days (for Comparison)
     $stmt = $conn->prepare("SELECT COUNT(*) as c FROM tic_log WHERE Patient_ID = ? AND Created_At >= DATE_SUB(NOW(), INTERVAL 60 DAY) AND Created_At < DATE_SUB(NOW(), INTERVAL 30 DAY)");
     $stmt->bind_param("i", $selected_patient_id); $stmt->execute();
     $total_tics_prev_30d = $stmt->get_result()->fetch_assoc()['c']; $stmt->close();
 
-    // C. Avg Stress
     $stmt = $conn->prepare("SELECT AVG(Stress) as s FROM emotional_diary WHERE Patient_ID = ? AND Occurrence >= DATE_SUB(NOW(), INTERVAL 30 DAY)");
     $stmt->bind_param("i", $selected_patient_id); $stmt->execute();
     $res = $stmt->get_result()->fetch_assoc();
     $avg_stress_30d = $res['s'] ? round($res['s'], 1) : 0; $stmt->close();
 
-    // D. Adherence (Active Logging Days / 30)
-    // We count unique dates where either a tic OR an emotion was logged in the last 30 days
     $sql_adherence = "
         SELECT COUNT(DISTINCT log_date) as active_days FROM (
             SELECT DATE(Created_At) as log_date FROM tic_log WHERE Patient_ID = ? AND Created_At >= DATE_SUB(NOW(), INTERVAL 30 DAY)
@@ -216,16 +211,15 @@ if ($conn && $selected_patient_id) {
     $stmt->close();
 }
 
-// --- CALCULATE TIC TREND PERCENTAGE ---
 $trend_percent = 0;
-$trend_direction = 'neutral'; // neutral, up, down
+$trend_direction = 'neutral';
 if ($total_tics_prev_30d > 0) {
     $diff = $total_tics_30d - $total_tics_prev_30d;
     $trend_percent = round(abs($diff / $total_tics_prev_30d) * 100);
-    if ($diff > 0) $trend_direction = 'up'; // Bad (Increased)
-    elseif ($diff < 0) $trend_direction = 'down'; // Good (Decreased)
+    if ($diff > 0) $trend_direction = 'up'; 
+    elseif ($diff < 0) $trend_direction = 'down'; 
 } elseif ($total_tics_30d > 0) {
-    $trend_percent = 100; $trend_direction = 'up'; // From 0 to something is an increase
+    $trend_percent = 100; $trend_direction = 'up';
 }
 
 // Graph 1: Dates & Stress/Severity
@@ -261,7 +255,7 @@ if ($conn && $selected_patient_id) {
     $stmt->close();
 }
 
-// Recent Logs (LIMIT 5)
+// Recent Logs
 $recent_logs = []; $recent_emotions = [];
 if ($conn && $selected_patient_id) {
     $stmt = $conn->prepare("SELECT Created_At, Type, Type_Description, Intensity, Describe_Text FROM tic_log WHERE Patient_ID = ? ORDER BY Created_At DESC LIMIT 5");
@@ -386,12 +380,24 @@ include '../../includes/navbar.php';
                     </div>
                     <div class="mt-4 grid grid-cols-2 gap-2 text-center text-xs">
                         <div class="bg-teal-50 p-2 rounded text-[#005949] font-semibold">Motor: <?php echo $motor_count; ?></div>
-                        <div class="bg-blue-50 p-2 rounded text-blue-600 font-semibold">Vocal: <?php echo $vocal_count; ?></div>
+                        <div class="bg-[#FDE8EF] p-2 rounded text-[#F282A9] font-semibold">Vocal: <?php echo $vocal_count; ?></div>
                     </div>
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 page-break-inside-avoid">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 page-break-inside-avoid">
+                
+                <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm lg:col-span-2">
+                    <div class="flex justify-between items-center mb-4">
+                        <div><h3 class="font-bold text-gray-800">Symptom Cluster Analysis</h3><p class="text-xs text-gray-400">Daily Breakdown</p></div>
+                        <div class="flex items-center gap-2">
+                            <button onclick="changeOffset('multi', 7)" class="p-1 hover:bg-gray-100 rounded text-gray-500"><i data-lucide="chevron-left" class="w-4 h-4"></i></button>
+                            <button onclick="changeOffset('multi', -7)" class="p-1 hover:bg-gray-100 rounded text-gray-500"><i data-lucide="chevron-right" class="w-4 h-4"></i></button>
+                        </div>
+                    </div>
+                    <div class="h-64 relative flex justify-center"><canvas id="chart-multi"></canvas></div>
+                </div>
+
                 <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
                     <div class="flex justify-between items-center mb-4">
                         <div><h3 class="font-bold text-gray-800">Sleep & Frequency</h3><p class="text-xs text-gray-400">Sleep Score vs Count</p></div>
@@ -402,19 +408,10 @@ include '../../includes/navbar.php';
                     </div>
                     <div class="h-48 relative"><canvas id="chart-sleep"></canvas></div>
                 </div>
-                <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm lg:col-span-2">
-                    <div class="flex justify-between items-center mb-4">
-                        <div><h3 class="font-bold text-gray-800">Symptom Cluster Analysis</h3><p class="text-xs text-gray-400">Daily Breakdown (Auto-Scaling)</p></div>
-                        <div class="flex items-center gap-2">
-                            <button onclick="changeOffset('multi', 7)" class="p-1 hover:bg-gray-100 rounded text-gray-500"><i data-lucide="chevron-left" class="w-4 h-4"></i></button>
-                            <button onclick="changeOffset('multi', -7)" class="p-1 hover:bg-gray-100 rounded text-gray-500"><i data-lucide="chevron-right" class="w-4 h-4"></i></button>
-                        </div>
-                    </div>
-                    <div class="h-48 relative flex justify-center"><canvas id="chart-multi"></canvas></div>
-                </div>
+
                 <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
                     <div class="flex justify-between items-center mb-4">
-                        <div><h3 class="font-bold text-gray-800">24-Hour Rhythm</h3><p class="text-xs text-gray-400">Activity by Hour</p></div>
+                        <div><h3 class="font-bold text-gray-800">Hourly Rythm of the week</h3><p class="text-xs text-gray-400">Activity by Hour</p></div>
                         <div class="flex items-center gap-2">
                             <button onclick="changeOffset('hourly', 7)" class="p-1 hover:bg-gray-100 rounded text-gray-500"><i data-lucide="chevron-left" class="w-4 h-4"></i></button>
                             <span id="range-hourly" class="text-xs font-medium text-gray-400 w-24 text-center">...</span>
@@ -423,9 +420,10 @@ include '../../includes/navbar.php';
                     </div>
                     <div class="h-48 relative"><canvas id="chart-hourly"></canvas></div>
                 </div>
+
                 <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
                     <div class="flex justify-between items-center mb-4">
-                        <div><h3 class="font-bold text-gray-800">Mood Profile</h3><p class="text-xs text-gray-400">Top 5 Reported</p></div>
+                        <div><h3 class="font-bold text-gray-800">Mood Profile</h3><p class="text-xs text-gray-400">Top Reported in the week</p></div>
                         <div class="flex items-center gap-2">
                             <button onclick="changeOffset('moods', 7)" class="p-1 hover:bg-gray-100 rounded text-gray-500"><i data-lucide="chevron-left" class="w-4 h-4"></i></button>
                             <span id="range-moods" class="text-xs font-medium text-gray-400 w-24 text-center">...</span>
@@ -434,6 +432,7 @@ include '../../includes/navbar.php';
                     </div>
                     <div class="h-48 relative"><canvas id="chart-moods"></canvas></div>
                 </div>
+
                 <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
                     <div class="flex justify-between items-center mb-4">
                         <div><h3 class="font-bold text-gray-800">Somatic Burden</h3><p class="text-xs text-gray-400">Affected Muscles</p></div>
@@ -454,12 +453,12 @@ include '../../includes/navbar.php';
                         <button onclick="openModal('modal-tics')" class="text-xs font-semibold text-[#005949] hover:underline">View All</button>
                     </div>
                     <div class="overflow-x-auto flex-1">
-                        <table class="w-full text-sm text-left">
+                        <table class="w-full text-sm text-left table-fixed">
                             <thead class="bg-gray-50 text-gray-500 font-medium border-b border-gray-200">
                                 <tr>
-                                    <th class="px-6 py-3">Date</th>
-                                    <th class="px-6 py-3">Tic</th>
-                                    <th class="px-6 py-3">Intensity</th>
+                                    <th class="px-6 py-3 w-[25%]">Date</th>
+                                    <th class="px-6 py-3 w-[45%]">Tic</th>
+                                    <th class="px-6 py-3 w-[30%] text-center">Intensity</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-gray-100">
@@ -468,10 +467,10 @@ include '../../includes/navbar.php';
                                         <tr class="hover:bg-gray-50">
                                             <td class="px-6 py-3 text-gray-600 whitespace-nowrap"><?php echo date('M d, H:i', strtotime($log['Created_At'])); ?></td>
                                             <td class="px-6 py-3">
-                                                <div class="font-medium text-gray-800"><?php echo htmlspecialchars($log['Type_Description']); ?></div>
-                                                <div class="text-xs text-gray-400"><?php echo htmlspecialchars($log['Type']); ?></div>
+                                                <div class="font-medium text-gray-800 truncate" title="<?php echo htmlspecialchars($log['Type_Description']); ?>"><?php echo htmlspecialchars($log['Type_Description']); ?></div>
+                                                <div class="text-xs text-gray-400 truncate"><?php echo htmlspecialchars($log['Type']); ?></div>
                                             </td>
-                                            <td class="px-6 py-3"><span class="inline-block px-2 py-0.5 rounded text-xs font-bold <?php echo ($log['Intensity'] > 7) ? 'bg-red-100 text-red-600' : 'bg-gray-100 text-gray-600'; ?>"><?php echo $log['Intensity']; ?></span></td>
+                                            <td class="px-6 py-3 text-center"><span class="inline-block px-2 py-0.5 rounded text-xs font-bold <?php echo ($log['Intensity'] > 7) ? 'bg-red-100 text-red-600' : 'bg-gray-100 text-gray-600'; ?>"><?php echo $log['Intensity']; ?></span></td>
                                         </tr>
                                     <?php endforeach; ?>
                                 <?php else: ?>
@@ -487,12 +486,12 @@ include '../../includes/navbar.php';
                         <button onclick="openModal('modal-emotions')" class="text-xs font-semibold text-[#005949] hover:underline">View All</button>
                     </div>
                     <div class="overflow-x-auto flex-1">
-                        <table class="w-full text-sm text-left">
+                        <table class="w-full text-sm text-left table-fixed">
                             <thead class="bg-gray-50 text-gray-500 font-medium border-b border-gray-200">
                                 <tr>
-                                    <th class="px-6 py-3">Date</th>
-                                    <th class="px-6 py-3">Emotion</th>
-                                    <th class="px-6 py-3">Levels (S/A/Sl)</th>
+                                    <th class="px-6 py-3 w-[25%]">Date</th>
+                                    <th class="px-6 py-3 w-[45%]">Emotion</th>
+                                    <th class="px-6 py-3 w-[30%] text-center">Levels (S/A/Sl)</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-gray-100">
@@ -500,8 +499,10 @@ include '../../includes/navbar.php';
                                     <?php foreach($recent_emotions as $emo): ?>
                                         <tr class="hover:bg-gray-50">
                                             <td class="px-6 py-3 text-gray-600 whitespace-nowrap"><?php echo date('M d, H:i', strtotime($emo['Occurrence'])); ?></td>
-                                            <td class="px-6 py-3"><span class="px-2 py-1 rounded text-xs font-semibold bg-indigo-50 text-indigo-600"><?php echo ucfirst($emo['Emotion']); ?></span></td>
-                                            <td class="px-6 py-3 text-xs text-gray-500"><span class="font-bold text-orange-500" title="Stress">St:<?php echo $emo['Stress']; ?></span> • <span class="font-bold text-blue-500" title="Anxiety">An:<?php echo $emo['Anxiety']; ?></span> • <span class="font-bold text-purple-500" title="Sleep">Sl:<?php echo $emo['Sleep']; ?></span></td>
+                                            <td class="px-6 py-3">
+                                                <div class="truncate max-w-full"><span class="px-2 py-1 rounded text-xs font-semibold bg-[#F7EBF0] text-[#F282A9]"><?php echo ucfirst($emo['Emotion']); ?></span></div>
+                                            </td>
+                                            <td class="px-6 py-3 text-xs text-gray-500 text-center"><span class="font-bold text-orange-500" title="Stress">St:<?php echo $emo['Stress']; ?></span> • <span class="font-bold text-blue-500" title="Anxiety">An:<?php echo $emo['Anxiety']; ?></span> • <span class="font-bold text-[#F282A9]" title="Sleep">Sl:<?php echo $emo['Sleep']; ?></span></td>
                                         </tr>
                                     <?php endforeach; ?>
                                 <?php else: ?>
@@ -570,7 +571,7 @@ include '../../includes/navbar.php';
     });
 
     const ctxDoughnut = document.getElementById('typeDoughnutChart').getContext('2d');
-    new Chart(ctxDoughnut, { type: 'doughnut', data: { labels: ['Motor', 'Vocal'], datasets: [{ data: [motorCount, vocalCount], backgroundColor: ['#005949', '#3b82f6'], borderWidth: 0, hoverOffset: 4 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, cutout: '75%' } });
+    new Chart(ctxDoughnut, { type: 'doughnut', data: { labels: ['Motor', 'Vocal'], datasets: [{ data: [motorCount, vocalCount], backgroundColor: ['#005949', '#F8BED3'], borderWidth: 0, hoverOffset: 4 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, cutout: '75%' } });
 
     const chartSleep = new Chart(document.getElementById('chart-sleep'), { type: 'line', data: { labels: [], datasets: [] }, options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, suggestedMax: 10 } } } });
     const chartMulti = new Chart(document.getElementById('chart-multi'), { type: 'bar', data: { labels: [], datasets: [] }, options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false }, scales: { y: { beginAtZero: true } }, plugins: { legend: { position: 'top', labels: { boxWidth: 10, font: {size: 10} } } } } });
@@ -588,10 +589,10 @@ include '../../includes/navbar.php';
             const data = await res.json();
             if(rangeEl && data.range) rangeEl.textContent = data.range;
             if (type === 'main') { comboChart.data.labels = data.labels; comboChart.data.datasets[0].data = data.stress; comboChart.data.datasets[1].data = data.severity; comboChart.update(); }
-            else if (type === 'sleep') { chartSleep.data.labels = data.labels; chartSleep.data.datasets = [ { label: 'Sleep Quality', data: data.data.sleep, borderColor: '#8B5CF6', backgroundColor: '#8B5CF6', tension: 0.4 }, { label: 'Tic Count', data: data.data.frequency, borderColor: '#10B981', borderDash: [5,5], tension: 0.4 } ]; chartSleep.update(); }
-            else if (type === 'multi') { chartMulti.data.labels = data.labels; chartMulti.data.datasets = [ { label: 'Stress', data: data.data.stress, backgroundColor: '#fb923c' }, { label: 'Anxiety', data: data.data.anxiety, backgroundColor: '#60a5fa' }, { label: 'Sleep', data: data.data.sleep, backgroundColor: '#a78bfa' }, { label: 'Intensity', data: data.data.intensity, backgroundColor: '#f87171' }, { label: 'Tic Count', data: data.data.frequency, backgroundColor: '#34d399' } ]; chartMulti.update(); }
+            else if (type === 'sleep') { chartSleep.data.labels = data.labels; chartSleep.data.datasets = [ { label: 'Sleep Quality', data: data.data.sleep, borderColor: '#F282A9', backgroundColor: '#F282A9', tension: 0.4 }, { label: 'Tic Count', data: data.data.frequency, borderColor: '#005949', borderDash: [5,5], tension: 0.4 } ]; chartSleep.update(); }
+            else if (type === 'multi') { chartMulti.data.labels = data.labels; chartMulti.data.datasets = [ { label: 'Stress', data: data.data.stress, backgroundColor: '#fb923c' }, { label: 'Anxiety', data: data.data.anxiety, backgroundColor: '#60a5fa' }, { label: 'Sleep', data: data.data.sleep, backgroundColor: '#F282A9' }, { label: 'Intensity', data: data.data.intensity, backgroundColor: '#FFEBB3' }, { label: 'Tic Count', data: data.data.frequency, backgroundColor: '#005949' } ]; chartMulti.update(); }
             else if (type === 'hourly') { chartHourly.data.datasets = [{ label: 'Tics', data: data.data, fill: true, backgroundColor: 'rgba(59, 130, 246, 0.2)', borderColor: '#3B82F6', tension: 0.4 }]; chartHourly.update(); }
-            else if (type === 'moods') { chartMoods.data.labels = data.data.labels; chartMoods.data.datasets = [{ data: data.data.values, backgroundColor: ['#FCA5A5', '#FCD34D', '#6EE7B7', '#93C5FD', '#C4B5FD'], borderWidth: 1 }]; chartMoods.update(); }
+            else if (type === 'moods') { chartMoods.data.labels = data.data.labels; chartMoods.data.datasets = [{ data: data.data.values, backgroundColor: ['#F282A9', '#FFEBB3', '#005949', '#fb923c', '#C4B5FD'], borderWidth: 1 }]; chartMoods.update(); }
             else if (type === 'muscles') { chartMuscles.data.labels = data.data.labels; chartMuscles.data.datasets = [{ data: data.data.values, backgroundColor: ['#005949', '#26A69A', '#4DB6AC', '#80CBC4', '#B2DFDB', '#E0F2F1'] }]; chartMuscles.update(); }
         } catch (e) { console.error(`Error loading ${type}:`, e); }
     }
