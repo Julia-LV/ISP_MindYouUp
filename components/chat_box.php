@@ -18,6 +18,15 @@ if (!empty($raw_image)) {
 }
 ?>
 
+<style>
+    /* This removes the scrollbar from the browser window */
+    body {
+        margin: 0;
+        padding: 0;
+        overflow: hidden !important;
+    }
+</style>
+
 <div class="w-full bg-white rounded-lg shadow-lg overflow-hidden flex flex-col h-[600px] border border-gray-200">
     <div class="<?= $header_bg ?> p-4 flex justify-between items-center text-white shadow-md z-10">
         <div class="flex items-center gap-3">
@@ -35,7 +44,7 @@ if (!empty($raw_image)) {
                 <h3 class="font-bold text-lg leading-tight"><?= htmlspecialchars($target_name) ?></h3>
                 <div class="flex items-center gap-1 opacity-80">
                     <span class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
-                    <span class="text-xs">Online</span>
+                    <span class="text-xs">Secure Connection</span>
                 </div>
             </div>
         </div>
@@ -118,7 +127,12 @@ if (!empty($raw_image)) {
                     if (msg.File_Type?.startsWith('image/')) {
                         media = `<img src="${path}" class="rounded-lg max-w-[250px] max-h-[200px] w-auto h-auto object-cover mb-2 cursor-pointer" onclick="window.open('${path}')">`;
                     } else {
-                        media = `<a href="${path}" target="_blank" class="text-blue-600 underline text-xs block mb-2">📎 Attachment</a>`;
+                        media = `<a href="${path}" target="_blank" class="flex items-center gap-2 bg-black/5 p-2 rounded-md mb-2 no-underline border border-black/5 hover:bg-black/10 transition-colors">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+                                    </svg>
+                                <span class="text-[11px] font-bold text-blue-700 truncate w-32">${msg.File_Path.split('_').pop()}</span>
+                                </a>`;
                     }
                 }
 
