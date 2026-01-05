@@ -15,10 +15,9 @@ if (isset($_SESSION['role']) && $_SESSION['role'] != 'Patient') {
 $user_id = $_SESSION['user_id'];
 
 // 2. Fetch Data 
-// UPDATED SQL: We removed 'p.Patient_Status' and added a subquery for 'Latest_Status'
-$sql = "SELECT u.First_Name, u.Last_Name, u.Email, u.User_Image, u.Age,
+// CHANGED: Fetch Date_Birth instead of Age
+$sql = "SELECT u.First_Name, u.Last_Name, u.Email, u.User_Image, u.Birthday,
                p.Treatment_Type,
-               -- Subquery: Go find the most recent status from the link table
                (SELECT Status FROM patient_professional_link 
                 WHERE Patient_ID = u.User_ID 
                 ORDER BY Link_ID DESC LIMIT 1) AS Latest_Status
@@ -31,11 +30,23 @@ $stmt->bind_param("i", $user_id);
 $stmt->execute();
 $profile = $stmt->get_result()->fetch_assoc();
 
+// --- AGE CALCULATION HELPER ---
+function calculateAge($dob) {
+    if (empty($dob)) return 'N/A';
+    try {
+        $birthDate = new DateTime($dob);
+        $now = new DateTime();
+        $interval = $now->diff($birthDate);
+        return $interval->y;
+    } catch (Exception $e) {
+        return 'N/A';
+    }
+}
+
 function displayVal($val) {
     return !empty($val) ? htmlspecialchars($val) : '<span class="text-gray-400 italic">Not Set</span>';
 }
 
-// Helper for Status Colors (Visual Upgrade)
 function getStatusColor($status) {
     switch($status) {
         case 'Pending': return 'text-yellow-600 bg-yellow-50 border-yellow-200';
@@ -100,7 +111,7 @@ include('../../components/header_component.php');
                             <div class="grid grid-cols-3 px-6 py-4 bg-gray-50 border-b border-gray-50">
                                 <div class="font-medium text-gray-500 col-span-1">Age</div>
                                 <div class="font-semibold text-gray-800 col-span-2">
-                                    <?= displayVal($profile['Age']) ?> Years
+                                    <?= calculateAge($profile['Birthday']) ?> Years
                                 </div>
                             </div>
 

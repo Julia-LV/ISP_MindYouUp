@@ -11,12 +11,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $fname = $_POST['first_name'];
     $lname = $_POST['last_name'];
     $email = $_POST['email'];
-    $age   = $_POST['age'];
+    $dob   = $_POST['dob']; // Changed from age to dob
     $spec  = $_POST['specialization']; 
 
     // Update General
-    $stmt = $conn->prepare("UPDATE user_profile SET First_Name=?, Last_Name=?, Email=?, Age=? WHERE User_ID=?");
-    $stmt->bind_param("sssii", $fname, $lname, $email, $age, $user_id);
+    // CHANGED: 'Age' -> 'Date_Birth', bind_param 'i' -> 's'
+    $stmt = $conn->prepare("UPDATE user_profile SET First_Name=?, Last_Name=?, Email=?, Birthday=? WHERE User_ID=?");
+    $stmt->bind_param("ssssi", $fname, $lname, $email, $dob, $user_id);
     $stmt->execute();
 
     // Update Specialization
@@ -46,7 +47,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 }
 
 // Fetch Data
-$sql = "SELECT u.First_Name, u.Last_Name, u.Email, u.Age, u.User_Image, p.Specialization 
+// CHANGED: Select Date_Birth instead of Age
+$sql = "SELECT u.First_Name, u.Last_Name, u.Email, u.Birthday, u.User_Image, p.Specialization 
         FROM user_profile u LEFT JOIN professional_profile p ON u.User_ID = p.User_ID WHERE u.User_ID = ?";
 $stmt = $conn->prepare($sql);
 $stmt->bind_param("i", $user_id);
@@ -93,8 +95,8 @@ include('../../components/header_component.php');
                             <input type="email" name="email" value="<?= htmlspecialchars($profile['Email'] ?? '') ?>" required class="w-full rounded-lg border-gray-300 border p-2.5">
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Age</label>
-                            <input type="number" name="age" value="<?= htmlspecialchars($profile['Age'] ?? '') ?>" class="w-full rounded-lg border-gray-300 border p-2.5">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Date of Birth</label>
+                            <input type="date" name="dob" value="<?= htmlspecialchars($profile['Birthday'] ?? '') ?>" class="w-full rounded-lg border-gray-300 border p-2.5">
                         </div>
                     </div>
 
