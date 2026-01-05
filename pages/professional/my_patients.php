@@ -106,7 +106,7 @@ function getStatusBadge($status) {
                             <p class="text-gray-400 text-xs mb-6">Added <?= date('M Y', strtotime($patient['Assigned_Date'])) ?></p>
 
                             <div class="w-full flex gap-2">
-                                <a href="mailto:<?= $patient['Email'] ?>" class="flex-1 py-2.5 rounded-xl border border-gray-200 text-gray-600 text-sm font-medium hover:bg-gray-50 transition">Message</a>
+                                <a href="chat.php?link_id=<?= $patient['Link_ID'] ?>" class="flex-1 py-2.5 rounded-xl border border-gray-200 text-gray-600 text-sm font-medium hover:bg-gray-50 transition">Message</a>
                                 <form action="update_status_handler.php" method="POST" class="flex-1">
                                     <input type="hidden" name="link_id" value="<?= $patient['Link_ID'] ?>">
                                     <select name="status" onchange="this.form.submit()" class="w-full py-2.5 px-2 rounded-xl bg-indigo-50 text-indigo-700 text-sm font-semibold border-none cursor-pointer hover:bg-indigo-100 focus:ring-0 text-center appearance-none">

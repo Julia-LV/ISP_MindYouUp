@@ -7,7 +7,11 @@ session_start();
 
 // 1. Config & Security
 $config_path = '../../config.php';
-if (file_exists($config_path)) { require_once $config_path; } else { include('../../config.php'); }
+if (file_exists($config_path)) {
+    require_once $config_path;
+} else {
+    include('../../config.php');
+}
 
 if (!isset($_SESSION['user_id']) || $_SESSION['role'] != 'Patient') {
     header("Location: ../auth/login.php");
@@ -27,7 +31,7 @@ if (!$conn) {
     die("Error: Database connection failed.");
 }
 
-$sql = "SELECT link.Link_ID, u.First_Name, u.Last_Name 
+$sql = "SELECT link.Link_ID, link.Professional_ID, u.First_Name, u.Last_Name, u.User_Image 
         FROM patient_professional_link link
         JOIN user_profile u ON link.Professional_ID = u.User_ID
         WHERE link.Link_ID = ? AND link.Patient_ID = ?";
@@ -41,7 +45,9 @@ if ($res->num_rows === 0) {
 }
 
 $row = $res->fetch_assoc();
+$doc_id = $row['Professional_ID'];
 $doc_name = "Dr. " . $row['First_Name'] . " " . $row['Last_Name'];
+$doc_image = $row['User_Image'];
 
 // 4. Load Layout
 include('../../components/header_component.php');
@@ -54,14 +60,18 @@ include('../../components/header_component.php');
     <!-- Main Content -->
     <main class="flex-1 flex flex-col h-full relative">
         <!-- Pass variables to the component -->
-        <?php 
-            // The component expects these variables:
-            $chat_link_id = $link_id; 
-            $chat_user_type = 'Patient'; 
-            $chat_theme_color = 'emerald'; 
-            
-            // This assumes chat_box.php is in the components folder
-            include('../../components/chat_box.php'); 
+        <?php
+        // The component expects these variables:
+        $chat_link_id = $link_id;
+        $chat_user_type = 'Patient';
+        $chat_theme_color = 'emerald';
+        $chat_my_id = $user_id;
+        $chat_target_id = $doc_id;
+        $chat_target_name = $doc_name;
+        $chat_target_image = $doc_image;
+
+        // This assumes chat_box.php is in the components folder
+        include('../../components/chat_box.php');
         ?>
     </main>
 </div>

@@ -48,24 +48,25 @@ if ($method === 'GET' && $action === 'fetch') {
 if ($method === 'POST' && $action === 'send') {
     $input = json_decode(file_get_contents('php://input'), true);
     
-    $link_id = $input['link_id'] ?? 0;
+    $link_id     = $input['link_id'] ?? 0;
     $sender_type = $input['sender_type'] ?? '';
-    $message = trim($input['message'] ?? '');
+    $message     = trim($input['message'] ?? '');
+    $sender_id   = $input['sender_id'] ?? null;   // New
+    $receiver_id = $input['receiver_id'] ?? null; // New
     
     if ($link_id && $message) {
         try {
-            // FIX: Use NULL for Sender/Receiver instead of 0
+            // UPDATED: No more NULLs!
             $stmt = $pdo->prepare("
                 INSERT INTO chat_log (Link_ID, Sender_Type, Chat_Text, Chat_Time, Sender, Receiver) 
-                VALUES (?, ?, ?, NOW(), NULL, NULL)
+                VALUES (?, ?, ?, NOW(), ?, ?)
             ");
-            $stmt->execute([$link_id, $sender_type, $message]);
+            $stmt->execute([$link_id, $sender_type, $message, $sender_id, $receiver_id]);
             echo json_encode(['success' => true]);
         } catch (Exception $e) {
-            echo json_encode(['success' => false, 'error' => $e->getMessage()]);
+            http_response_code(500);
+            echo json_encode(['error' => $e->getMessage()]);
         }
-    } else {
-        echo json_encode(['success' => false, 'error' => 'Empty message']);
     }
     exit;
 }
