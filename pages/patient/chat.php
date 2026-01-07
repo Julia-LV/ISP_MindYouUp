@@ -38,6 +38,7 @@ $target_id = $row['Professional_ID'];
 $target_name = "Dr. " . $row['First_Name'] . " " . $row['Last_Name'];
 $chat_target_image = $row['User_Image'];
 
+$page_title = "Chat";
 include('../../components/header_component.php');
 ?>
 

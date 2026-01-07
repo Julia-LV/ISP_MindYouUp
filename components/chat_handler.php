@@ -12,7 +12,7 @@ if (file_exists($configPath)) { require_once $configPath; }
 if (!isset($pdo)) {
     // Force 127.0.0.1 for Windows XAMPP
     $db_host = isset($host) && $host != 'localhost' ? $host : '127.0.0.1';
-    $db_name = isset($db) ? $db : 'tictracker_v6';
+    $db_name = isset($db) ? $db : 'tictracker_v9';
     $db_user = isset($user) ? $user : 'root';
     $db_pass = isset($pass) ? $pass : '';
     $db_port = isset($port) ? $port : '3307'; 

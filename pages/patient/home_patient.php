@@ -116,6 +116,53 @@ $stress_icon = 'smile'; $stress_color_class = 'text-green-500 bg-green-50 border
 if ($avg_stress > 3 && $avg_stress <= 7) { $stress_icon = 'meh'; $stress_color_class = 'text-orange-500 bg-orange-50 border-orange-400'; } 
 elseif ($avg_stress > 7) { $stress_icon = 'frown'; $stress_color_class = 'text-red-500 bg-red-50 border-red-400'; }
 
+// --- MEDICATION FETCHING LOGIC ---
+$med_name_display = "All caught up!";
+$med_time_display = "";
+$med_count = 0;
+$has_more = false;
+
+if ($conn) {
+    // Select meds for this user that haven't been marked as taken today
+    // Order by time so the earliest/overdue one shows up first
+    $sql_med = "SELECT Name, Reminder_DateTime 
+                FROM medications 
+                WHERE User_ID = ? AND Taken_Today = 0 
+                ORDER BY Reminder_DateTime ASC";
+    
+    if ($stmt_m = $conn->prepare($sql_med)) {
+        $stmt_m->bind_param("i", $patient_id);
+        $stmt_m->execute();
+        $res_m = $stmt_m->get_result();
+        
+        $pending_meds = [];
+        while ($row = $res_m->fetch_assoc()) {
+            $pending_meds[] = $row;
+        }
+        $stmt_m->close();
+
+        $med_count = count($pending_meds);
+
+        if ($med_count > 0) {
+            // Grab the first medication in the list
+            $first_med = $pending_meds[0];
+            $med_name_display = htmlspecialchars($first_med['Name']);
+            
+            // Format the time (e.g., 08:00 PM) if a time is set
+            if (!empty($first_med['Reminder_DateTime'])) {
+                $med_time_display = date('h:i A', strtotime($first_med['Reminder_DateTime']));
+            } else {
+                $med_time_display = "Today";
+            }
+
+            // If there is more than 1 pending med, trigger the 'more' flag
+            if ($med_count > 1) {
+                $has_more = true;
+            }
+        }
+    }
+}
+
 // Initial Arrays (Current Week)
 $dates = []; $tic_counts = []; $tic_intensities = [];
 $stress_levels = []; $sleep_quality = []; $anxiety_levels = [];
@@ -276,10 +323,29 @@ include '../../includes/navbar.php';
             <div class="bg-white p-6 rounded-lg shadow-sm border-l-4 border-blue-400 flex items-center justify-between">
                 <div>
                     <p class="text-sm text-gray-500 font-medium">Next Medication</p>
-                    <h3 class="text-lg font-bold text-gray-800 mt-2">Guanfacine</h3>
-                    <p class="text-xs text-blue-600 font-bold mt-1">08:00 PM</p>
+                    
+                    <?php if ($med_count > 0): ?>
+                        <h3 class="text-lg font-bold text-gray-800 mt-2">
+                            <?php echo $med_name_display; ?>
+                            <?php if ($has_more): ?>
+                                <span class="text-sm font-normal text-gray-500"> 
+                                    & <a href="medication_tracking.php" class="text-blue-600 hover:underline hover:text-blue-800">more</a>
+                                </span>
+                            <?php endif; ?>
+                        </h3>
+                        
+                        <p class="text-xs text-blue-600 font-bold mt-1">
+                            <?php echo $med_time_display; ?>
+                        </p>
+                    <?php else: ?>
+                        <h3 class="text-lg font-bold text-gray-800 mt-2">All caught up!</h3>
+                        <p class="text-xs text-gray-400 mt-1">No pending meds</p>
+                    <?php endif; ?>
                 </div>
-                <div class="bg-blue-50 p-3 rounded-xl text-blue-500"><i data-lucide="pill" class="w-8 h-8"></i></div>
+                
+                <a href="medication_tracking.php" class="bg-blue-50 p-3 rounded-xl text-blue-500 hover:bg-blue-100 transition">
+                    <i data-lucide="pill" class="w-8 h-8"></i>
+                </a>
             </div>
         </div>
 

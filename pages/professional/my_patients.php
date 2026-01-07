@@ -10,6 +10,19 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] != 'Professional') {
 
 $user_id = $_SESSION['user_id'];
 
+// --- AGE CALCULATION HELPER ---
+function calculateAge($dob) {
+    if (empty($dob)) return 'N/A';
+    try {
+        $birthDate = new DateTime($dob);
+        $now = new DateTime();
+        $interval = $now->diff($birthDate);
+        return $interval->y;
+    } catch (Exception $e) {
+        return 'N/A';
+    }
+}
+
 // 2. Fetch Pending REQUESTS (For the Modal)
 $req_sql = "SELECT link.Link_ID, u.First_Name, u.Last_Name, u.User_Image, link.Assigned_Date
             FROM patient_professional_link link
@@ -22,7 +35,8 @@ $requests = $req_stmt->get_result();
 $requestCount = $requests->num_rows; // Count them for the badge
 
 // 3. Fetch Active Patients (Main Grid)
-$sql = "SELECT link.Link_ID, u.User_ID, u.First_Name, u.Last_Name, u.User_Image, u.Email, u.Age, link.Status as Medical_Status, link.Assigned_Date
+// CHANGED: Select Date_Birth instead of Age
+$sql = "SELECT link.Link_ID, u.User_ID, u.First_Name, u.Last_Name, u.User_Image, u.Email, u.Birthday, link.Status as Medical_Status, link.Assigned_Date
         FROM patient_professional_link link
         JOIN user_profile u ON link.Patient_ID = u.User_ID
         WHERE link.Professional_ID = ? AND link.Connection_Status = 'Accepted'";
@@ -102,7 +116,11 @@ function getStatusBadge($status) {
                                 <img src="<?= htmlspecialchars($patient['User_Image'] ?? '../../assets/default_user.png') ?>" class="w-20 h-20 rounded-full object-cover mb-4 border-4 border-green-50 mx-auto">
                             </div>
                             <h3 class="font-bold text-gray-800 text-lg"><?= htmlspecialchars($patient['First_Name'] . ' ' . $patient['Last_Name']) ?></h3>
-                            <p class="text-gray-500 text-sm mb-1"><?= !empty($patient['Age']) ? $patient['Age'] . ' Years Old' : 'Age Not Set' ?></p>
+                            
+                            <p class="text-gray-500 text-sm mb-1">
+                                <?= calculateAge($patient['Birthday']) ?> Years Old
+                            </p>
+                            
                             <p class="text-gray-400 text-xs mb-6">Added <?= date('M Y', strtotime($patient['Assigned_Date'])) ?></p>
 
                             <div class="w-full flex gap-2">
