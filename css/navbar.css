@@ -1,4 +1,4 @@
-/* Estilos para o sidebar */
+/* Style for the sidebar */
 .sidebar-link.active {
     background-color: #005949 !important;
 }
@@ -12,7 +12,7 @@
     fill: white !important;
 }
 
-/* Efeito de hover para todos os estados */
+/* Hover effect for all states */
 .sidebar-link:hover:not(.active),
 .sidebar-link:focus:not(.active) {
     background-color: #005949 !important;
