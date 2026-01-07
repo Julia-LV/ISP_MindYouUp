@@ -2,11 +2,13 @@
 session_start();
 require_once __DIR__ . '/../../config.php';
 
+
 /* ---------- AUTH GUARD only logged-in patients ---------- */
 if (empty($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
     header("Location: ../auth/login.php");
     exit;
 }
+
 
 $role = $_SESSION['role'] ?? '';
 if (strtolower($role) !== 'patient') {
@@ -14,12 +16,18 @@ if (strtolower($role) !== 'patient') {
     exit;
 }
 
+
 $currentPatientId = $_SESSION['user_id'] ?? 0;
+
 
 /* ---------- FIND LINKED PROFESSIONAL FOR THIS PATIENT ---------- */
 $currentProfessionalId = 0;
 if ($currentPatientId) {
-    $sql = "SELECT Professional_ID FROM patient_profile WHERE User_ID = ?";
+    $sql = "SELECT Professional_ID 
+            FROM patient_professional_link 
+            WHERE Patient_ID = ?
+            ORDER BY Assigned_Date DESC 
+            LIMIT 1";
     if ($stmt = $conn->prepare($sql)) {
         $stmt->bind_param('i', $currentPatientId);
         $stmt->execute();
@@ -30,6 +38,7 @@ if ($currentPatientId) {
         $stmt->close();
     }
 }
+
 
 /* ---------- HELPERS ---------- */
 function build_media_paths(?string $stored): array {
@@ -55,6 +64,7 @@ function build_media_paths(?string $stored): array {
     return [$exists, $web, $fs];
 }
 
+
 /* ---------- FETCH STRATEGIES (ONLY FROM THIS PROFESSIONAL) ---------- */
 $strategies = [];
 if ($currentPatientId && $currentProfessionalId) {
@@ -75,6 +85,7 @@ if ($currentPatientId && $currentProfessionalId) {
         $stmt->close();
     }
 }
+
 
 /* ---------- FETCH SKILLS (ONLY FROM THIS PROFESSIONAL) ---------- */
 $skills = [];
@@ -97,6 +108,7 @@ if ($currentPatientId && $currentProfessionalId) {
     }
 }
 
+
 /* ---------- FETCH ARTICLES (ONLY FROM THIS PROFESSIONAL) ---------- */
 $articles = [];
 if ($currentPatientId && $currentProfessionalId) {
@@ -117,6 +129,7 @@ if ($currentPatientId && $currentProfessionalId) {
         $stmt->close();
     }
 }
+
 
 /* ---------- STRATEGY NAVIGATION ---------- */
 $currentStrategy = null;
@@ -157,6 +170,7 @@ if (!empty($strategies)) {
     [$mediaExists, $mediaUrlWeb] = build_media_paths($currentStrategy['media_url'] ?? null);
 }
 
+
 /* ---------- PAGE SETUP ---------- */
 $page_title = 'Resource Hub';
 $body_class = 'h-full bg-gray-100';
@@ -165,6 +179,7 @@ $no_layout  = false;
 include __DIR__ . '/../../components/header_component.php';
 include __DIR__ . '/../../includes/navbar.php';
 ?>
+
 
 <style>
 /* old pills (if still used) */
@@ -176,6 +191,7 @@ include __DIR__ . '/../../includes/navbar.php';
   hyphens: auto;
   line-height: 1.3;
 }
+
 
 /* Square category cards */
 .skill-card {
@@ -207,6 +223,7 @@ include __DIR__ . '/../../includes/navbar.php';
   color: #6b7280;
   cursor: default;
 }
+
 
 /* Mobile carousel behaviour */
 @media (max-width: 768px) {
@@ -265,6 +282,7 @@ include __DIR__ . '/../../includes/navbar.php';
   .skills-nav--right { right: 6px; }
 }
 
+
 /* Desktop centering of category squares */
 @media (min-width: 769px) {
   .skills-strip .card-row {
@@ -277,6 +295,7 @@ include __DIR__ . '/../../includes/navbar.php';
 }
 </style>
 
+
 <main class="flex-1 w-full p-6 md:p-8 overflow-y-auto bg-[#E9F0E9]">
   <div class="p-6 md:p-8 space-y-6 max-w-7xl mx-auto">
     <!-- Header -->
@@ -287,13 +306,13 @@ include __DIR__ . '/../../includes/navbar.php';
           Your personalised strategies, skills, and articles from your professional.
         </p>
       </div>
-      <!-- <button
+      <button
         type="button"
         onclick="confirmLogout()"
         class="px-4 py-2 rounded-full bg-[#005949] text-white text-sm shadow hover:bg-[#00453f] transition"
       >
         Log out
-      </button> -->
+      </button>
     </div>
 
     <!-- SINGLE-COLUMN STACK -->
@@ -451,13 +470,16 @@ include __DIR__ . '/../../includes/navbar.php';
   </div>
 </main>
 
+
 </div>
+
 
 <?php
 if (file_exists(__DIR__ . '/../../components/modals.php')) {
     include __DIR__ . '/../../components/modals.php';
 }
 ?>
+
 
 <script>
 function confirmLogout() {

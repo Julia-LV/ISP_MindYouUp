@@ -18,6 +18,21 @@ $dataDir = __DIR__ . '/../../data';
 if (!is_dir($dataDir)) @mkdir($dataDir, 0755, true);
 $notesFile = $dataDir . '/professional_notes_' . (int)$userId . '.json';
 
+$CURRENT_USER = null;
+if (!empty($_SESSION['user_id']) && isset($conn)) {
+    $uid = (int) $_SESSION['user_id'];
+    $stmtUsr = mysqli_prepare($conn, "SELECT User_ID, First_Name, Last_Name, Email, Role FROM user_profile WHERE User_ID = ? LIMIT 1");
+    if ($stmtUsr) {
+        mysqli_stmt_bind_param($stmtUsr, 'i', $uid);
+        mysqli_stmt_execute($stmtUsr);
+        $resUsr = mysqli_stmt_get_result($stmtUsr);
+        if ($resUsr && $rowu = mysqli_fetch_assoc($resUsr)) {
+            $CURRENT_USER = $rowu;
+        }
+        mysqli_stmt_close($stmtUsr);
+    }
+}
+
 $notes = [];
 if (file_exists($notesFile)) {
     $raw = file_get_contents($notesFile);
@@ -121,6 +136,32 @@ if (!empty($_GET['edit'])) {
             Action completed.
         </div><?php endif; ?>
 
+<<<<<<< Updated upstream
+<?php if (!empty($_GET['ok'])): ?>
+    <div class="success-toast">Note saved successfully!</div>
+<?php endif; ?>
+
+<div class="main-content">
+    <div class="notes-wrapper">
+        <div class="notes-header">
+            <h1>Notes</h1>
+            <?php if (!empty($CURRENT_USER)): ?>
+                <div class="user-card" style="margin-top:8px; display:flex; gap:10px; align-items:center;">
+                    <div class="user-avatar" style="width:36px;height:36px;border-radius:8px;background:#f0f0f0;display:flex;align-items:center;justify-content:center;font-weight:600;color:#444"><?= htmlspecialchars(substr($CURRENT_USER['First_Name'] ?? '',0,1)) ?></div>
+                    <div class="user-info" style="font-size:0.92rem;">
+                        <div style="font-weight:600"><?= htmlspecialchars(($CURRENT_USER['First_Name'] ?? '') . ' ' . ($CURRENT_USER['Last_Name'] ?? '')) ?></div>
+                        <div style="font-size:0.82rem;color:#666"><?= htmlspecialchars($CURRENT_USER['Role'] ?? '') ?> &nbsp;|&nbsp; <?= htmlspecialchars($CURRENT_USER['Email'] ?? '') ?></div>
+                    </div>
+                </div>
+            <?php endif; ?>
+        </div>
+        
+        <div class="notes-container">
+            <?php if (empty($notes)): ?>
+                <div class="empty-state">
+                    <p>No notes yet.</p>
+                    <p style="font-size:0.95rem;">Tap the + button to create your first note.</p>
+=======
         <div class="grid">
             <div>
                 <div class="card">
@@ -143,6 +184,7 @@ if (!empty($_GET['edit'])) {
                             <button class="btn" type="submit"><?php echo $editNote ? 'Update note' : 'Save note' ?></button>
                         </div>
                     </form>
+>>>>>>> Stashed changes
                 </div>
 
                 <div style="margin-top:18px">

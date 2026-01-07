@@ -45,18 +45,19 @@ $skills = array(
     'pmr_training'           => 'Progressive Muscle Relaxation Training',
 );
 
-// Helper to turn key into label
-function skill_label(?string $key, array $skills): string
-{
-    if ($key === null || $key === '') {
-        return '';
+// Helper to turn key into label (guarded to avoid redeclare)
+if (!function_exists('skill_label')) {
+    function skill_label(?string $key, array $skills): string
+    {
+        if ($key === null || $key === '') {
+            return '';
+        }
+        return $skills[$key] ?? $key;
     }
-    return $skills[$key] ?? $key;
 }
 
 /*
-   Upload base folder (filesystem), e.g.
-   C:\xampp\htdocs\ISP_MindYouUp\uploads\
+   Upload base folder (filesystem)
 */
 $uploadBase = __DIR__ . '/../../uploads/';
 if (!is_dir($uploadBase)) {
@@ -149,9 +150,9 @@ function delete_resource(mysqli $conn, int $id, array &$errors, string &$success
 $linkedPatients = array();
 if ($currentProfessionalId) {
     $sql = "SELECT up.User_ID, up.First_Name, up.Last_Name
-            FROM patient_profile pp
-            JOIN user_profile up ON up.User_ID = pp.User_ID
-            WHERE pp.Professional_ID = ?
+            FROM patient_professional_link ppl
+            JOIN user_profile up ON up.User_ID = ppl.Patient_ID
+            WHERE ppl.Professional_ID = ?
               AND LOWER(up.Role) = 'patient'
             ORDER BY up.User_ID DESC, up.Last_Name, up.First_Name";
     if ($stmt = $conn->prepare($sql)) {
@@ -174,7 +175,7 @@ function current_page_url_without_query(): string {
     return $clean ?: 'resourcehub_professional.php';
 }
 
-// DELETE via ?delete=ID  (still supported if you keep delete links on other pages)
+// DELETE via ?delete=ID
 if (isset($_GET['delete'])) {
     $deleteId = (int)$_GET['delete'];
     delete_resource($conn, $deleteId, $errors, $success);
@@ -237,46 +238,94 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $thumb_url = null;
 
     if (empty($errors)) {
-        $stmt = mysqli_prepare(
-            $conn,
-            "INSERT INTO resource_hub (item_type, title, subtitle, content, media_url, image_url, thumb_url, sort_order)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
-        );
-        mysqli_stmt_bind_param(
-            $stmt,
-            'sssssssi',
-            $item_type, $title, $subtitle, $content, $media_url, $image_url, $thumb_url, $sort_order
-        );
-        if (mysqli_stmt_execute($stmt)) {
-            $newResourceId = mysqli_insert_id($conn);
 
-            if ($currentProfessionalId && $newResourceId && !empty($selectedSharePatients)) {
-                $ins = $conn->prepare(
-                    "INSERT INTO patient_resources (patient_id, resource_id, sent_by, skill_key, sent_at)
-                     VALUES (?, ?, ?, ?, NOW())"
-                );
-                $pidVar       = 0;
-                $resourceVar  = $newResourceId;
-                $sentByVar    = $currentProfessionalId;
-                $skillKeyVar  = $skill_key !== '' ? $skill_key : '';
-                $ins->bind_param('iiis', $pidVar, $resourceVar, $sentByVar, $skillKeyVar);
-
-                foreach ($selectedSharePatients as $pid) {
-                    $pid = (int)$pid;
-                    if ($pid <= 0) continue;
-                    $pidVar = $pid;
-                    $ins->execute();
-                }
-                $ins->close();
+        // ---------- 1) Try to reuse an existing resource (ignore media_url) ----------
+        $existingId = 0;
+        $sqlFind = "SELECT rh.id
+                    FROM resource_hub rh
+                    JOIN patient_resources pr ON pr.resource_id = rh.id
+                    WHERE pr.sent_by = ?
+                      AND rh.item_type = ?
+                      AND rh.title = ?
+                      AND IFNULL(pr.skill_key,'') = IFNULL(?, '')
+                    ORDER BY rh.id DESC
+                    LIMIT 1";
+        if ($stmtFind = $conn->prepare($sqlFind)) {
+            $stmtFind->bind_param(
+                'isss',
+                $currentProfessionalId,
+                $item_type,
+                $title,
+                $skill_key
+            );
+            $stmtFind->execute();
+            $resFind = $stmtFind->get_result();
+            if ($rowF = $resFind->fetch_assoc()) {
+                $existingId = (int)$rowF['id'];
             }
+            $stmtFind->close();
+        }
 
+        if ($existingId > 0) {
+            // Reuse existing row
+            $newResourceId = $existingId;
+        } else {
+            // ---------- 2) Create a new resource ----------
+            $stmt = mysqli_prepare(
+                $conn,
+                "INSERT INTO resource_hub (item_type, title, subtitle, content, media_url, image_url, thumb_url, sort_order)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
+            );
+            mysqli_stmt_bind_param(
+                $stmt,
+                'sssssssi',
+                $item_type, $title, $subtitle, $content, $media_url, $image_url, $thumb_url, $sort_order
+            );
+            if (mysqli_stmt_execute($stmt)) {
+                $newResourceId = mysqli_insert_id($conn);
+            } else {
+                $errors[] = 'Database error: ' . mysqli_error($conn);
+                $newResourceId = 0;
+            }
+            mysqli_stmt_close($stmt);
+        }
+
+        // ---------- 3) Insert patient links (avoid duplicates) ----------
+        if ($currentProfessionalId && $newResourceId && !empty($selectedSharePatients) && empty($errors)) {
+            $ins = $conn->prepare(
+                "INSERT INTO patient_resources (patient_id, resource_id, sent_by, skill_key, sent_at)
+                 SELECT ?, ?, ?, ?, NOW()
+                 FROM DUAL
+                 WHERE NOT EXISTS (
+                     SELECT 1 FROM patient_resources
+                     WHERE patient_id = ? AND resource_id = ? AND sent_by = ?
+                 )"
+            );
+            $skillKeyVar = $skill_key !== '' ? $skill_key : '';
+
+            foreach ($selectedSharePatients as $pid) {
+                $pid = (int)$pid;
+                if ($pid <= 0) continue;
+                $ins->bind_param(
+                    'iiisiii',
+                    $pid,
+                    $newResourceId,
+                    $currentProfessionalId,
+                    $skillKeyVar,
+                    $pid,
+                    $newResourceId,
+                    $currentProfessionalId
+                );
+                $ins->execute();
+            }
+            $ins->close();
+        }
+
+        if (empty($errors)) {
             $_SESSION['flash_success'] = 'Resource saved successfully.';
             header('Location: ' . current_page_url_without_query());
             exit;
-        } else {
-            $errors[] = 'Database error: ' . mysqli_error($conn);
         }
-        mysqli_stmt_close($stmt);
     }
 }
 ?>
@@ -291,61 +340,67 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         * { box-sizing: border-box; }
         body { margin:0; font-family: system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; background:var(--light-green); color:var(--preto); }
         a { text-decoration:none; color:inherit; }
-        .shell { min-height:100vh; padding:28px 20px 36px; }
-        .shell-inner { max-width:1100px; margin:0 auto; }
-        .top-bar { display:flex; justify-content:space-between; align-items:center; margin-bottom:18px; }
-        .top-title { font-size:26px; font-weight:700; color:var(--verde); }
-        .top-subtitle { font-size:13px; color:#6b7280; margin-top:4px; }
+
+        .shell { min-height:100vh; padding:32px 24px 40px; }
+        .shell-inner { max-width:1200px; margin:0 auto; }
+
+        .top-bar { display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; }
+        .top-title { font-size:28px; font-weight:700; color:var(--verde); }
+        .top-subtitle { font-size:14px; color:#6b7280; margin-top:4px; }
         .top-left { display:flex; flex-direction:column; }
+
         .top-actions { display:flex; align-items:center; gap:10px; }
 
-        .btn-logout,
-        .btn-back {
-            padding:8px 18px;
+        .btn-logout {
+            padding:10px 20px;
             border-radius:999px;
-            font-size:13px;
+            font-size:14px;
             font-weight:600;
             cursor:pointer;
-        }
-        .btn-logout {
             border:1px solid var(--verde);
             background:#fff;
             color:var(--verde);
         }
         .btn-logout:hover { background:#e6f3ec; }
 
-        .btn-back {
-            border:1px solid var(--verde);
-            background:var(--verde);
-            color:#ffffff;
-        }
-        .btn-back:hover { background:#00453F; }
-
         .flash-errors,.flash-success { padding:10px 12px; border-radius:12px; margin-bottom:14px; font-size:13px; }
         .flash-errors { background:#FEE2E2; border-left:4px solid #DC2626; }
         .flash-success { background:#DCFCE7; border-left:4px solid #16A34A; }
 
-        /* full‑width single column */
-        .layout { display:block; }
+        .card { background:#fff; border-radius:var(--radius-lg); border:1px solid var(--border-soft); padding:22px 20px 24px; box-shadow:0 10px 28px rgba(0,0,0,0.07); }
 
-        .card { background:#fff; border-radius:var(--radius-lg); border:1px solid var(--border-soft); padding:20px 22px 22px; box-shadow:0 10px 28px rgba(0,0,0,0.07); }
-        .card-header { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:12px; }
-        .card-title { font-size:18px; font-weight:600; color:var(--preto); }
+        form label { display:block; margin-top:12px; font-size:14px; font-weight:500; color:#374151; }
 
-        form label { display:block; margin-top:10px; font-size:13px; font-weight:500; color:#374151; }
-        input[type="text"], textarea, select { width:100%; margin-top:4px; padding:8px 10px; border-radius:12px; border:1px solid #D1D5DB; background:#F9FAFB; font-size:13px; font-family:inherit; }
-        textarea { min-height:90px; resize:vertical; }
-        input[type="file"] { margin-top:6px; font-size:12px; }
-        .hint { font-size:11px; color:#6b7280; margin-top:2px; }
+        input[type="text"], textarea, select {
+            width:100%;
+            margin-top:6px;
+            padding:10px 11px;
+            border-radius:12px;
+            border:1px solid #D1D5DB;
+            background:#F9FAFB;
+            font-size:14px;
+            font-family:inherit;
+        }
+        textarea { min-height:100px; resize:vertical; }
+        input[type="file"] { margin-top:6px; font-size:13px; }
+        .hint { font-size:12px; color:#6b7280; margin-top:4px; }
 
-        .btn-primary { margin-top:16px; padding:10px 22px; border-radius:999px; border:none; cursor:pointer; background:var(--verde); color:#fff; font-size:14px; font-weight:600; box-shadow:0 7px 16px rgba(0,0,0,0.15); }
+        .btn-primary {
+            padding:11px 24px;
+            border-radius:999px;
+            border:none;
+            cursor:pointer;
+            background:var(--verde);
+            color:#fff;
+            font-size:15px;
+            font-weight:600;
+            box-shadow:0 7px 16px rgba(0,0,0,0.15);
+        }
         .btn-primary:hover { background:#00453F; }
 
         .btn-secondary-link {
             display:inline-flex;
-            margin-top:16px;
-            margin-left:10px;
-            padding:10px 22px;
+            padding:11px 24px;
             border-radius:999px;
             border:1px solid var(--verde);
             background:#ffffff;
@@ -354,16 +409,111 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             font-weight:600;
             text-decoration:none;
         }
-        .btn-secondary-link:hover {
-            background:#e6f3ec;
+        .btn-secondary-link:hover { background:#e6f3ec; }
+
+        /* NEW light‑orange library button */
+        .btn-library-link {
+            display:inline-flex;
+            padding:11px 24px;
+            border-radius:999px;
+            border:1px solid var(--coral);
+            background:#FFF7E1;
+            color:#F26647;
+            font-size:14px;
+            font-weight:600;
+            text-decoration:none;
+            box-shadow:0 7px 16px rgba(0,0,0,0.06);
+        }
+        .btn-library-link:hover {
+            background:#FFE9C2;
         }
 
-        .share-header { display:flex; justify-content:space-between; align-items:center; margin-top:12px; margin-bottom:4px; font-size:13px; }
+        /* Row for the three actions so spacing is even */
+        .actions-row {
+            display:flex;
+            gap:15px;
+            align-items:center;
+            margin-top:24px;
+            flex-wrap:wrap;
+        }
 
-        .share-list { max-height:200px; overflow:auto; border-radius:var(--radius-md); border:1px solid #E5E7EB; background:#F9FAFB; padding:6px 8px; margin-top:4px; }
-        .share-row { display:flex; align-items:center; justify-content:space-between; padding:4px 2px; font-size:13px; }
+        .share-header { display:flex; justify-content:space-between; align-items:center; margin-top:14px; margin-bottom:4px; font-size:14px; }
+
+        /* Search + list wrapper has fixed height to avoid growing page */
+        .share-wrapper {
+            margin-top:4px;
+        }
+
+        .share-search {
+            margin-bottom:8px;
+        }
+
+        .share-search input {
+            width:100%;
+            padding:8px 10px;
+            border-radius:999px;
+            border:1px solid #D1D5DB;
+            background:#F9FAFB;
+            font-size:13px;
+        }
+
+        .share-list {
+            max-height:220px;             /* fixed height, internal scroll */
+            overflow:auto;
+            border-radius:var(--radius-md);
+            border:1px solid #E5E7EB;
+            background:#F9FAFB;
+            padding:6px 8px;
+        }
+        .share-row { display:flex; align-items:center; justify-content:space-between; padding:6px 4px; font-size:14px; }
         .share-row + .share-row { border-top:1px solid #E5E7EB; }
-        .share-name { color:#374151; }
+        .share-name { color:#374151; margin-right:8px; flex:1; }
+        .patient-checkbox { flex-shrink:0; }
+
+        .select-wrapper {
+            position:relative;
+            display:inline-block;
+            width:100%;
+        }
+        .select-wrapper select {
+            appearance:none;
+            -webkit-appearance:none;
+            -moz-appearance:none;
+            width:100%;
+            margin-top:6px;
+            padding:10px 36px 10px 11px;
+            border-radius:12px;
+            border:1px solid #D1D5DB;
+            background:#F9FAFB;
+            font-size:14px;
+            font-family:inherit;
+            cursor:pointer;
+        }
+        .select-arrow {
+            position:absolute;
+            right:12px;
+            top:50%;
+            transform:translateY(-50%);
+            pointer-events:none;
+            font-size:14px;
+            color:#6b7280;
+        }
+
+        @media (max-width: 768px) {
+            .shell { padding:20px 14px 28px; }
+            .card { padding:18px 16px 22px; }
+            .top-bar { flex-direction:column; align-items:flex-start; gap:12px; }
+            .top-actions { align-self:stretch; justify-content:flex-end; }
+            .top-title { font-size:24px; }
+            form label { font-size:13px; }
+            input[type="text"], textarea, select { font-size:13px; }
+            .share-row { flex-wrap:nowrap; }
+            .share-name { font-size:13px; }
+            .select-wrapper select {
+                font-size:13px;
+                padding:9px 32px 9px 10px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -376,9 +526,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <div class="top-subtitle">Create strategies, categories, and articles to share with your patients.</div>
             </div>
             <div class="top-actions">
-                <!-- <a href="../auth/logout.php">
+                <a href="../auth/logout.php">
                     <button type="button" class="btn-logout">Log out</button>
-                </a> -->
+                </a>
             </div>
         </header>
 
@@ -392,86 +542,131 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <div class="flash-success"><?php echo htmlspecialchars($success); ?></div>
         <?php endif; ?>
 
-        <div class="layout">
-            <!-- FULL‑WIDTH: create / edit resource -->
-            <section class="card">
-                <div class="card-header"><h2 class="card-title">New resource</h2></div>
-
-                <form method="post" enctype="multipart/form-data">
-                    <label>
-                        Type
+        <section class="card">
+            <form method="post" enctype="multipart/form-data">
+                <label>
+                    Type
+                    <div class="select-wrapper">
                         <select name="item_type" id="item_type" required>
                             <option value="strategy">Daily Strategy</option>
                             <option value="skill">Category</option>
                             <option value="article">Article / Guide</option>
                         </select>
-                    </label>
-
-                    <label>
-                        Title
-                        <input type="text" name="title">
-                    </label>
-
-                    <label>
-                        Subtitle (optional)
-                        <input type="text" name="subtitle" placeholder="e.g. Daily Strategy">
-                    </label>
-
-                    <label>
-                        Content / Description (optional)
-                        <textarea name="content"></textarea>
-                        <div class="hint">You can also paste a URL here (e.g. YouTube link) if you are not uploading a file.</div>
-                    </label>
-
-                    <label>
-                        File (any type: PDF, video, audio, image)
-                        <input type="file" name="media_file">
-                        <div class="hint">Patients will open this file directly from the Resource Hub.</div>
-                    </label>
-
-                    <label>
-                        Category (for Categories tab)
-                        <select name="skill_key" id="skill_key">
-                            <option value="">Not linked to a specific category</option>
-                            <?php foreach ($skills as $key => $label): ?>
-                                <option value="<?php echo htmlspecialchars($key); ?>"><?php echo htmlspecialchars($label); ?></option>
-                            <?php endforeach; ?>
-                        </select>
-                        <div class="hint">Required when Type is “Category”. If you leave Title empty, it will automatically use this Category name.</div>
-                    </label>
-
-                    <!-- Share to patients -->
-                    <div class="share-header">
-                        <span>Share to</span>
+                        <span class="select-arrow">▾</span>
                     </div>
+                </label>
 
-                    <?php if (empty($linkedPatients)): ?>
-                        <p class="hint">You have no linked patients yet, so this resource will not be shared automatically.</p>
-                    <?php else: ?>
-                        <div class="share-list">
+                <label id="category-label">
+                    Category
+                    <select name="skill_key" id="skill_key">
+                        <option value="">Not linked to a specific category</option>
+                        <?php foreach ($skills as $key => $label): ?>
+                            <option value="<?php echo htmlspecialchars($key); ?>"><?php echo htmlspecialchars($label); ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                    <div class="hint">Required when Type is “Category”. If you leave Title empty, it will automatically use this Category name.</div>
+                </label>
+
+                <label>
+                    Title
+                    <input type="text" name="title">
+                </label>
+
+                <label>
+                    Subtitle (optional)
+                    <input type="text" name="subtitle" placeholder="e.g. Daily Strategy">
+                </label>
+
+                <label>
+                    Content / Description (optional)
+                    <textarea name="content"></textarea>
+                    <div class="hint">You can also paste a URL here (e.g. YouTube link) if you are not uploading a file.</div>
+                </label>
+
+                <label>
+                    File (any type: PDF, video, audio, image)
+                    <input type="file" name="media_file">
+                    <div class="hint">Patients will open this file directly from the Resource Hub.</div>
+                </label>
+
+                <div class="share-header">
+                    <span>Share to</span>
+                </div>
+
+                <?php if (empty($linkedPatients)): ?>
+                    <p class="hint">You have no linked patients yet, so this resource will not be shared automatically.</p>
+                <?php else: ?>
+                    <div class="share-wrapper">
+                        <div class="share-search">
+                            <input type="text"
+                                   id="patientSearch"
+                                   placeholder="Search patients by name">
+                        </div>
+                        <div class="share-list" id="shareList">
                             <?php foreach ($linkedPatients as $p): ?>
                                 <?php $pid = (int)$p['User_ID']; ?>
-                                <div class="share-row">
+                                <div class="share-row" data-name="<?php echo htmlspecialchars(strtolower($p['First_Name'] . ' ' . $p['Last_Name'])); ?>">
                                     <span class="share-name">
                                         <?php echo htmlspecialchars($p['First_Name'] . ' ' . $p['Last_Name']); ?>
-                                        (#<?php echo $pid; ?>)
                                     </span>
                                     <input type="checkbox" class="patient-checkbox" name="share_patients[]" value="<?php echo $pid; ?>">
                                 </div>
                             <?php endforeach; ?>
                         </div>
-                    <?php endif; ?>
+                    </div>
+                <?php endif; ?>
 
+                <div class="actions-row">
                     <button type="submit" class="btn-primary">Save resource</button>
 
-                    <!-- Green link button to a separate existing-resources page -->
                     <a href="resourcehub_existing.php" class="btn-secondary-link">
                         View existing resources
                     </a>
-                </form>
-            </section>
-        </div>
+
+                    <a href="resourcehub_library.php" class="btn-library-link">
+                        View resource library
+                    </a>
+                </div>
+            </form>
+        </section>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    var typeSelect     = document.getElementById('item_type');
+    var categoryLabel  = document.getElementById('category-label');
+    var categorySelect = document.getElementById('skill_key');
+
+    if (typeSelect && categoryLabel && categorySelect) {
+        function updateCategoryVisibility() {
+            if (typeSelect.value === 'skill') {
+                categoryLabel.style.display = '';
+            } else {
+                categoryLabel.style.display = 'none';
+                categorySelect.value = '';
+            }
+        }
+        updateCategoryVisibility();
+        typeSelect.addEventListener('change', updateCategoryVisibility);
+    }
+
+    // Patient search filter
+    var searchInput = document.getElementById('patientSearch');
+    var rowsParent  = document.getElementById('shareList');
+
+    if (searchInput && rowsParent) {
+        var rows = Array.prototype.slice.call(rowsParent.getElementsByClassName('share-row'));
+
+        searchInput.addEventListener('input', function () {
+            var term = this.value.toLowerCase().trim();
+            rows.forEach(function (row) {
+                var name = row.getAttribute('data-name') || '';
+                row.style.display = (term === '' || name.indexOf(term) !== -1) ? '' : 'none';
+            });
+        });
+    }
+});
+</script>
 </body>
 </html>
