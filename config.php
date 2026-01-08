@@ -2,7 +2,7 @@
 $servername = "localhost";
 $username = "root";
 $password = "";
-$dbname = "tictracker_v7";
+$dbname = "tictracker_v9";
 
 $conn = mysqli_connect($servername, $username, $password, $dbname);
 
