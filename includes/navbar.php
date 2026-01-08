@@ -8,12 +8,14 @@ $user_role = isset($_SESSION['role']) ? strtolower($_SESSION['role']) : 'patient
 $base_path = ($user_role === 'professional') ? "../../pages/professional/" : "../../pages/patient/";
 ?>
 
+<div id="sidebar-overlay" class="fixed inset-0 bg-black/50 z-[90] hidden transition-opacity duration-300"></div>
+
 <nav id="sidebar"
      class="fixed top-0 left-0 h-full bg-[#FCFBF7] shadow-inner
             transform transition-all duration-300 z-[100]
             flex flex-col justify-between
             -translate-x-full md:translate-x-0
-            w-20">
+            w-64 w-20">
 
     <div class="w-full">
         <div id="toggleButton" class="h-16 flex items-center gap-4 px-4 py-6 border-b border-gray-300 cursor-pointer">  
@@ -38,7 +40,7 @@ $base_path = ($user_role === 'professional') ? "../../pages/professional/" : "..
 
                 <?php if ($user_role === 'patient'): ?>
                     <li>
-                        <a href="../../pages/patient/ticlog_motor.php" class="sidebar-link flex items-center gap-4 py-2 px-4 rounded-lg transition hover:bg-[#005949] group">
+                        <a href="ticlog_motor.php" class="sidebar-link flex items-center gap-4 py-2 px-4 rounded-lg transition hover:bg-[#005949] group">
                             <svg class="w-6 h-6 text-gray-700 group-hover:text-white" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
                                 <path class="group-hover:fill-white" fill="#005949" d="M256 512a256 256 0 1 0 0-512 256 256 0 1 0 0 512zM232 344l0-64-64 0c-13.3 0-24-10.7-24-24s10.7-24 24-24l64 0 0-64c0-13.3 10.7-24 24-24s24 10.7 24 24l0 64 64 0c13.3 0 24 10.7 24 24s-10.7 24-24 24l-64 0 0 64c0 13.3-10.7 24-24 24s-24-10.7-24-24z"/>
                             </svg>
@@ -46,7 +48,7 @@ $base_path = ($user_role === 'professional') ? "../../pages/professional/" : "..
                         </a>
                     </li>
                     <li>
-                        <a href="../../pages/patient/new_emotional_diary.php" class="sidebar-link flex items-center gap-4 py-2 px-4 rounded-lg transition hover:bg-[#005949] group">
+                        <a href="new_emotional_diary.php" class="sidebar-link flex items-center gap-4 py-2 px-4 rounded-lg transition hover:bg-[#005949] group">
                             <svg class="w-6 h-6 text-gray-700 group-hover:text-white" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path class="group-hover:fill-white" fill="#005949" d="M464 256a208 208 0 1 0 -416 0 208 208 0 1 0 416 0zM0 256a256 256 0 1 1 512 0 256 256 0 1 1 -512 0zm177.3 63.4C192.3 335 218.4 352 256 352s63.7-17 78.7-32.6c9.2-9.6 24.4-9.9 33.9-.7s9.9 24.4 .7 33.9c-22.1 23-60 47.4-113.3 47.4s-91.2-24.4-113.3-47.4c-9.2-9.6-8.9-24.8 .7-33.9s24.8-8.9 33.9 .7zM144 208a32 32 0 1 1 64 0 32 32 0 1 1 -64 0zm192-32a32 32 0 1 1 0 64 32 32 0 1 1 0-64z"/></svg>
                             <span class="link-text text-green-800 font-medium hidden group-hover:text-white">Emotional Diary</span>
                         </a>
