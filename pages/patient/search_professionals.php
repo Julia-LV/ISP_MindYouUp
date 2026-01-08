@@ -61,12 +61,12 @@ include('../../components/header_component.php');
                         
                         <?php if ($connStatus === 'Accepted'): ?>
                             <span class="text-green-600 font-medium text-sm px-4 py-2 bg-green-50 rounded-lg">
-                                Connected ✓
+                                Connected
                             </span>
 
                         <?php elseif ($connStatus === 'Pending'): ?>
                             <button disabled class="bg-gray-100 text-gray-500 px-5 py-2.5 rounded-lg text-sm font-medium cursor-not-allowed">
-                                Request Sent ⏳
+                                Request Sent
                             </button>
 
                         <?php else: ?>
@@ -74,8 +74,8 @@ include('../../components/header_component.php');
                                 <input type="hidden" name="doctor_id" value="<?= $doc['User_ID'] ?>">
                                 <button type="button" 
                                         onclick="confirmAdd('<?= $formId ?>', '<?= $name ?>')" 
-                                        class="bg-indigo-600 text-white px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-indigo-700 transition shadow-md">
-                                    Request Connection +
+                                        class="bg-[#F0856C] text-white px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-[#F26647] transition shadow-md">
+                                    Request Connection
                                 </button>
                             </form>
                         <?php endif; ?>

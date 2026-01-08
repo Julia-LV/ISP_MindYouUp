@@ -10,7 +10,8 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] != 'Professional') {
 $user_id = $_SESSION['user_id'];
 
 // Fetch Data
-$sql = "SELECT u.First_Name, u.Last_Name, u.Email, u.User_Image, u.Age,
+// CHANGED: Select Date_Birth instead of Age
+$sql = "SELECT u.First_Name, u.Last_Name, u.Email, u.User_Image, u.Birthday,
                p.Specialization 
         FROM user_profile u 
         LEFT JOIN professional_profile p ON u.User_ID = p.User_ID 
@@ -20,6 +21,19 @@ $stmt = $conn->prepare($sql);
 $stmt->bind_param("i", $user_id);
 $stmt->execute();
 $profile = $stmt->get_result()->fetch_assoc();
+
+// --- AGE CALCULATION HELPER ---
+function calculateAge($dob) {
+    if (empty($dob)) return 'N/A';
+    try {
+        $birthDate = new DateTime($dob);
+        $now = new DateTime();
+        $interval = $now->diff($birthDate);
+        return $interval->y;
+    } catch (Exception $e) {
+        return 'N/A';
+    }
+}
 
 function displayVal($val) {
     return !empty($val) ? htmlspecialchars($val) : '<span class="text-gray-400 italic">Not Set</span>';
@@ -81,7 +95,7 @@ include('../../components/header_component.php');
                             <div class="grid grid-cols-3 px-6 py-4 bg-gray-50 border-b border-gray-50">
                                 <div class="font-medium text-gray-500 col-span-1">Age</div>
                                 <div class="font-semibold text-gray-800 col-span-2">
-                                    <?= displayVal($profile['Age']) ?> Years Old
+                                    <?= calculateAge($profile['Birthday']) ?> Years Old
                                 </div>
                             </div>
 
@@ -114,5 +128,3 @@ include('../../components/header_component.php');
         </div>
     </main>
 </div>
-</body>
-</html>

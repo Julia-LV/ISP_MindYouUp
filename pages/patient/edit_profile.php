@@ -12,11 +12,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $fname = $_POST['first_name'];
     $lname = $_POST['last_name'];
     $email = $_POST['email'];
-    $age   = $_POST['age'];
+    $dob   = $_POST['dob']; // Changed from age to dob
 
     // 1. General Update
-    $stmt = $conn->prepare("UPDATE user_profile SET First_Name=?, Last_Name=?, Email=?, Age=? WHERE User_ID=?");
-    $stmt->bind_param("sssii", $fname, $lname, $email, $age, $user_id);
+    // CHANGED: 'Age' -> 'Date_Birth', bound parameter type 'i' (int) -> 's' (string)
+    $stmt = $conn->prepare("UPDATE user_profile SET First_Name=?, Last_Name=?, Email=?, Birthday=? WHERE User_ID=?");
+    $stmt->bind_param("ssssi", $fname, $lname, $email, $dob, $user_id);
     $stmt->execute();
 
     // 2. Treatment Type (Only if selected)
@@ -30,13 +31,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     }
 
     // 3. IMAGE HANDLING
-    // A. Check if "Remove Photo" was clicked
     if (isset($_POST['remove_photo'])) {
         $stmt = $conn->prepare("UPDATE user_profile SET User_Image = NULL WHERE User_ID=?");
         $stmt->bind_param("i", $user_id);
         $stmt->execute();
     }
-    // B. If a new file is uploaded, it overrides the removal
     if (isset($_FILES['profile_pic']) && $_FILES['profile_pic']['error'] == 0) {
         $file_name = time() . "_" . basename($_FILES["profile_pic"]["name"]);
         $target = "../../uploads/" . $file_name;
@@ -52,7 +51,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 }
 
 // Fetch Data
-$sql = "SELECT u.First_Name, u.Last_Name, u.Email, u.Age, u.User_Image, p.Treatment_Type 
+// CHANGED: Selected Birthday instead of Age
+$sql = "SELECT u.First_Name, u.Last_Name, u.Email, u.Birthday, u.User_Image, p.Treatment_Type 
         FROM user_profile u LEFT JOIN patient_profile p ON u.User_ID = p.User_ID WHERE u.User_ID = ?";
 $stmt = $conn->prepare($sql);
 $stmt->bind_param("i", $user_id);
@@ -99,8 +99,8 @@ include('../../components/header_component.php');
                             <input type="email" name="email" value="<?= htmlspecialchars($profile['Email'] ?? '') ?>" required class="w-full rounded-lg border-gray-300 border p-2.5">
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Age</label>
-                            <input type="number" name="age" value="<?= htmlspecialchars($profile['Age'] ?? '') ?>" class="w-full rounded-lg border-gray-300 border p-2.5">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Date of Birth</label>
+                            <input type="date" name="dob" value="<?= htmlspecialchars($profile['Date_Birth'] ?? '') ?>" class="w-full rounded-lg border-gray-300 border p-2.5">
                         </div>
                     </div>
 

@@ -1,28 +1,19 @@
-<!-- 
-  VAS Mood Selector Component (Adapted to Card Style)
-  - Matches "diary_mood_card.php" container styling
-  - Prevents overflow with compact layout
-  - Input name="emotion" (1-10)
--->
 <div class="bg-white p-6 rounded-lg shadow-sm w-full">
     
-    <!-- Header: Title & Score Badge -->
+    <input type="hidden" name="emotion" id="vas-hidden-input">
+
     <div class="flex justify-between items-center mb-6">
         <label class="block text-lg font-semibold text-gray-900">How are you feeling?</label>
         
-        <!-- Dynamic Score Badge -->
         <div id="vas-score-badge" class="px-3 py-1 rounded-full text-sm font-bold text-white bg-gray-400 transition-colors duration-300">
             <span id="vas-score-display">5</span>/10
         </div>
     </div>
 
-    <!-- Content: Icon, Text, Slider -->
     <div class="space-y-6">
         
-        <!-- Icon & Description Wrapper -->
         <div class="flex flex-col items-center justify-center space-y-3">
             
-            <!-- Icon (Color changes via JS) -->
             <div id="vas-icon-container" class="p-3 rounded-full bg-gray-50 text-gray-400 transition-all duration-300 transform">
                 <svg id="vas-mood-icon" xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
                     <circle cx="12" cy="12" r="10"></circle>
@@ -30,19 +21,15 @@
                 </svg>
             </div>
             
-            <!-- Description Text -->
             <p id="vas-mood-text" class="text-center text-sm font-medium text-gray-600 h-5 transition-colors duration-300">
                 Neutral
             </p>
         </div>
 
-        <!-- Slider Section -->
         <div class="w-full px-1">
             <div class="relative w-full flex items-center h-8">
-                <!-- Input Slider -->
                 <input 
                     type="range" 
-                    name="emotion" 
                     id="vas-mood-slider" 
                     min="1" 
                     max="10" 
@@ -51,13 +38,11 @@
                     style="z-index: 20;"
                     class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer focus:outline-none relative bg-transparent"
                 >
-                <!-- Background Track for aesthetics -->
                 <div class="absolute top-1/2 left-0 w-full h-2 -mt-1 bg-gray-100 rounded-lg overflow-hidden pointer-events-none">
                     <div id="vas-track-fill" class="h-full w-1/2 bg-gray-300 transition-all duration-150"></div>
                 </div>
             </div>
 
-            <!-- Labels -->
             <div class="flex justify-between text-xs text-gray-400 mt-2 font-medium">
                 <span>1. Calm</span>
                 <span>5. Neutral</span>
@@ -67,7 +52,6 @@
     </div>
 </div>
 
-<!-- Internal Styles for Webkit Slider Thumb -->
 <style>
     /* Custom Thumb Styling */
     #vas-mood-slider::-webkit-slider-thumb {
@@ -76,9 +60,9 @@
         width: 28px;
         border-radius: 50%;
         background: #ffffff;
-        border: 4px solid currentColor; /* Inherits text color from JS */
+        border: 4px solid currentColor;
         cursor: pointer;
-        margin-top: -10px; /* Center thumb on track */
+        margin-top: -10px;
         box-shadow: 0 4px 6px rgba(0,0,0,0.2);
         transition: transform 0.1s, border-color 0.3s;
         position: relative;
@@ -87,13 +71,10 @@
     #vas-mood-slider::-webkit-slider-thumb:hover {
         transform: scale(1.1);
     }
-    /* Remove default track styling to use our custom div */
     #vas-mood-slider::-webkit-slider-runnable-track {
         background: transparent; 
         height: 8px;
     }
-    
-    /* Animation for Icon pop */
     .scale-pop { animation: pop 0.3s ease-out; }
     @keyframes pop {
         0% { transform: scale(1); }
@@ -102,7 +83,6 @@
     }
 </style>
 
-<!-- Logic -->
 <script>
 (function() {
     const moodData = [
@@ -119,6 +99,8 @@
     ];
 
     const slider = document.getElementById('vas-mood-slider');
+    const hiddenInput = document.getElementById('vas-hidden-input'); // The input that gets submitted
+    
     const scoreDisplay = document.getElementById('vas-score-display');
     const moodText = document.getElementById('vas-mood-text');
     const iconContainer = document.getElementById('vas-icon-container');
@@ -130,32 +112,35 @@
         const index = val - 1;
         const data = moodData[index];
 
-        // Update Text & Score
+        // 1. UPDATE HIDDEN INPUT FOR DATABASE
+        // We strip the number prefix (e.g., "1. ") so only text is saved
+        // If data.text is "1. Confident...", this splits it and takes the second part.
+        // If you want to keep the number in the text, just use: hiddenInput.value = data.text;
+        const cleanText = data.text.split('. ')[1] || data.text;
+        hiddenInput.value = cleanText;
+
+        // 2. VISUAL UPDATES
         scoreDisplay.innerText = val;
         moodText.innerText = data.text;
         
-        // Update Colors
+        // Colors
         moodText.className = `text-center text-sm font-medium h-5 transition-colors duration-300 ${data.color}`;
         scoreBadge.className = `px-3 py-1 rounded-full text-sm font-bold text-white transition-colors duration-300 ${data.bg}`;
         
-        // Update Icon
-        // Remove old color class from previous state if needed, but relying on text-color inheritance is safer:
-        iconContainer.style.color = ""; // Reset inline
+        // Icon
+        iconContainer.style.color = ""; 
         iconContainer.className = `p-3 rounded-full bg-opacity-10 transition-all duration-300 transform ${data.color.replace('text-', 'bg-')} ${data.color}`; 
-        
         moodIcon.innerHTML = data.icon;
 
-        // Update Slider Thumb Color (hack via inline style)
-        // We need the hex code or computed color for the border
-        // To keep it simple, we apply the text color class to the slider, and the CSS uses currentColor
+        // Slider Thumb Color
         slider.className = `w-full h-2 rounded-lg appearance-none cursor-pointer focus:outline-none z-10 relative bg-transparent ${data.color}`;
         
-        // Update Track Fill Width & Color
+        // Track Fill
         trackFill.className = `h-full transition-all duration-150 ${data.bg}`;
         const percentage = ((val - 1) / 9) * 100;
         trackFill.style.width = `${percentage}%`;
 
-        // Pop Animation
+        // Animation
         iconContainer.classList.remove('scale-pop');
         void iconContainer.offsetWidth; 
         iconContainer.classList.add('scale-pop');
@@ -163,7 +148,7 @@
 
     if(slider) {
         slider.addEventListener('input', (e) => updateVAS(e.target.value));
-        // Init
+        // Initialize on load
         updateVAS(slider.value);
     }
 })();

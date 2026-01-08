@@ -9,6 +9,9 @@ session_start();
 $config_path = '../../config.php';
 if (file_exists($config_path)) { require_once $config_path; } else { $conn = null; }
 
+// Set timezone to Europe/Lisbon to match local time
+date_default_timezone_set('Europe/Lisbon');
+
 // --- SECURITY CHECK ---
 if (!isset($_SESSION["loggedin"]) || $_SESSION["loggedin"] !== true || $_SESSION["role"] != "Patient") {
     // header("Location: ../auth/login.php"); exit;
@@ -112,6 +115,53 @@ if ($conn) {
 $stress_icon = 'smile'; $stress_color_class = 'text-green-500 bg-green-50 border-green-400'; 
 if ($avg_stress > 3 && $avg_stress <= 7) { $stress_icon = 'meh'; $stress_color_class = 'text-orange-500 bg-orange-50 border-orange-400'; } 
 elseif ($avg_stress > 7) { $stress_icon = 'frown'; $stress_color_class = 'text-red-500 bg-red-50 border-red-400'; }
+
+// --- MEDICATION FETCHING LOGIC ---
+$med_name_display = "All caught up!";
+$med_time_display = "";
+$med_count = 0;
+$has_more = false;
+
+if ($conn) {
+    // Select meds for this user that haven't been marked as taken today
+    // Order by time so the earliest/overdue one shows up first
+    $sql_med = "SELECT Name, Reminder_DateTime 
+                FROM medications 
+                WHERE User_ID = ? AND Taken_Today = 0 
+                ORDER BY Reminder_DateTime ASC";
+    
+    if ($stmt_m = $conn->prepare($sql_med)) {
+        $stmt_m->bind_param("i", $patient_id);
+        $stmt_m->execute();
+        $res_m = $stmt_m->get_result();
+        
+        $pending_meds = [];
+        while ($row = $res_m->fetch_assoc()) {
+            $pending_meds[] = $row;
+        }
+        $stmt_m->close();
+
+        $med_count = count($pending_meds);
+
+        if ($med_count > 0) {
+            // Grab the first medication in the list
+            $first_med = $pending_meds[0];
+            $med_name_display = htmlspecialchars($first_med['Name']);
+            
+            // Format the time (e.g., 08:00 PM) if a time is set
+            if (!empty($first_med['Reminder_DateTime'])) {
+                $med_time_display = date('h:i A', strtotime($first_med['Reminder_DateTime']));
+            } else {
+                $med_time_display = "Today";
+            }
+
+            // If there is more than 1 pending med, trigger the 'more' flag
+            if ($med_count > 1) {
+                $has_more = true;
+            }
+        }
+    }
+}
 
 // Initial Arrays (Current Week)
 $dates = []; $tic_counts = []; $tic_intensities = [];
@@ -273,10 +323,29 @@ include '../../includes/navbar.php';
             <div class="bg-white p-6 rounded-lg shadow-sm border-l-4 border-blue-400 flex items-center justify-between">
                 <div>
                     <p class="text-sm text-gray-500 font-medium">Next Medication</p>
-                    <h3 class="text-lg font-bold text-gray-800 mt-2">Guanfacine</h3>
-                    <p class="text-xs text-blue-600 font-bold mt-1">08:00 PM</p>
+                    
+                    <?php if ($med_count > 0): ?>
+                        <h3 class="text-lg font-bold text-gray-800 mt-2">
+                            <?php echo $med_name_display; ?>
+                            <?php if ($has_more): ?>
+                                <span class="text-sm font-normal text-gray-500"> 
+                                    & <a href="medication_tracking.php" class="text-blue-600 hover:underline hover:text-blue-800">more</a>
+                                </span>
+                            <?php endif; ?>
+                        </h3>
+                        
+                        <p class="text-xs text-blue-600 font-bold mt-1">
+                            <?php echo $med_time_display; ?>
+                        </p>
+                    <?php else: ?>
+                        <h3 class="text-lg font-bold text-gray-800 mt-2">All caught up!</h3>
+                        <p class="text-xs text-gray-400 mt-1">No pending meds</p>
+                    <?php endif; ?>
                 </div>
-                <div class="bg-blue-50 p-3 rounded-xl text-blue-500"><i data-lucide="pill" class="w-8 h-8"></i></div>
+                
+                <a href="medication_tracking.php" class="bg-blue-50 p-3 rounded-xl text-blue-500 hover:bg-blue-100 transition">
+                    <i data-lucide="pill" class="w-8 h-8"></i>
+                </a>
             </div>
         </div>
 
@@ -295,7 +364,7 @@ include '../../includes/navbar.php';
 
             <div class="bg-white p-6 rounded-lg shadow-sm">
                 <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-sm font-bold text-gray-500 uppercase tracking-wider">Stress vs. Intensity</h3>
+                    <h3 class="text-sm font-bold text-gray-500 uppercase tracking-wider">Stress vs. Tic Intensity</h3>
                     <div class="flex items-center gap-1">
                         <button id="btnPrevStress" class="p-1 hover:bg-gray-100 rounded text-gray-500"><i data-lucide="chevron-left" class="w-5 h-5"></i></button>
                         <button id="btnNextStress" class="p-1 hover:bg-gray-100 rounded text-gray-500 disabled:opacity-30"><i data-lucide="chevron-right" class="w-5 h-5"></i></button>
@@ -303,8 +372,8 @@ include '../../includes/navbar.php';
                 </div>
                 <div class="relative h-64 w-full"><canvas id="correlationChart"></canvas></div>
                 <div class="mt-4 flex items-center justify-center gap-4 text-xs text-gray-500">
-                    <div class="flex items-center"><span class="w-3 h-1 bg-orange-400 mr-2"></span>Stress (0-10)</div>
-                    <div class="flex items-center"><span class="w-3 h-3 bg-[#2dd4bf] mr-2 rounded-sm"></span>Avg Intensity (0-10)</div>
+                    <div class="flex items-center"><span class="w-3 h-1 bg-orange-400 mr-2"></span>Stress</div>
+                    <div class="flex items-center"><span class="w-3 h-3 bg-[#2dd4bf] mr-2 rounded-sm"></span>Avg Tic Intensity</div>
                 </div>
             </div> 
         </div> 
@@ -358,7 +427,8 @@ include '../../includes/navbar.php';
                                     </p>
                                 </div>
                                 <span class="text-xs text-gray-400 font-medium">
-                                    <?php echo date('H:i', strtotime($act['time'])); ?>
+                                    <div class="date-display" data-timestamp="<?php echo strtotime($act['time']); ?>"></div>
+                                    <div class="time-display" data-timestamp="<?php echo strtotime($act['time']); ?>"></div>
                                 </span>
                             </div>
                         <?php endforeach; ?>
@@ -586,6 +656,19 @@ include '../../includes/navbar.php';
             sleepChart.update();
         }
         if (offSleep === 0) btnNextSleep.disabled = true;
+    });
+
+    // Format timestamps to local date and time
+    document.querySelectorAll('.date-display').forEach(el => {
+        const timestamp = parseInt(el.getAttribute('data-timestamp')) * 1000;
+        const date = new Date(timestamp);
+        el.textContent = date.toLocaleDateString('en-US', { day: '2-digit', month: 'short' });
+    });
+
+    document.querySelectorAll('.time-display').forEach(el => {
+        const timestamp = parseInt(el.getAttribute('data-timestamp')) * 1000;
+        const date = new Date(timestamp);
+        el.textContent = date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
     });
 
 </script>

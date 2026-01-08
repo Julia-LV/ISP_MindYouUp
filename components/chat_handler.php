@@ -12,7 +12,7 @@ if (file_exists($configPath)) { require_once $configPath; }
 if (!isset($pdo)) {
     // Force 127.0.0.1 for Windows XAMPP
     $db_host = isset($host) && $host != 'localhost' ? $host : '127.0.0.1';
-    $db_name = isset($db) ? $db : 'tictracker_v6';
+    $db_name = isset($db) ? $db : 'tictracker_v9';
     $db_user = isset($user) ? $user : 'root';
     $db_pass = isset($pass) ? $pass : '';
     $db_port = isset($port) ? $port : '3307'; 
@@ -31,41 +31,44 @@ if (!isset($pdo)) {
 $method = $_SERVER['REQUEST_METHOD'];
 $action = $_GET['action'] ?? '';
 
-// 3. FETCH
 if ($method === 'GET' && $action === 'fetch') {
     $link_id = intval($_GET['link_id'] ?? 0);
-    try {
-        $stmt = $pdo->prepare("SELECT * FROM chat_log WHERE Link_ID = ? ORDER BY Chat_Time ASC");
-        $stmt->execute([$link_id]);
-        echo json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
-    } catch (Exception $e) {
-        echo json_encode(['error' => $e->getMessage()]);
-    }
+    $stmt = $pdo->prepare("SELECT * FROM chat_log WHERE Link_ID = ? ORDER BY Chat_Time ASC");
+    $stmt->execute([$link_id]);
+    echo json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
     exit;
 }
 
-// 4. SEND
 if ($method === 'POST' && $action === 'send') {
-    $input = json_decode(file_get_contents('php://input'), true);
+    // We use $_POST because we are sending FormData now
+    $link_id     = $_POST['link_id'] ?? 0;
+    $sender_type = $_POST['sender_type'] ?? '';
+    $message     = $_POST['message'] ?? '';
+    $sender_id   = $_POST['sender_id'] ?? null;
+    $receiver_id = $_POST['receiver_id'] ?? null;
     
-    $link_id = $input['link_id'] ?? 0;
-    $sender_type = $input['sender_type'] ?? '';
-    $message = trim($input['message'] ?? '');
-    
-    if ($link_id && $message) {
-        try {
-            // FIX: Use NULL for Sender/Receiver instead of 0
-            $stmt = $pdo->prepare("
-                INSERT INTO chat_log (Link_ID, Sender_Type, Chat_Text, Chat_Time, Sender, Receiver) 
-                VALUES (?, ?, ?, NOW(), NULL, NULL)
-            ");
-            $stmt->execute([$link_id, $sender_type, $message]);
-            echo json_encode(['success' => true]);
-        } catch (Exception $e) {
-            echo json_encode(['success' => false, 'error' => $e->getMessage()]);
+    $file_path = null;
+    $file_type = null;
+
+    // Handle File Upload
+    if (isset($_FILES['chat_file']) && $_FILES['chat_file']['error'] === 0) {
+        $upload_dir = '../uploads_chat/';
+        if (!is_dir($upload_dir)) mkdir($upload_dir, 0777, true);
+        
+        $file_ext = pathinfo($_FILES['chat_file']['name'], PATHINFO_EXTENSION);
+        $file_name = time() . '_' . uniqid() . '.' . $file_ext;
+        $target_file = $upload_dir . $file_name;
+
+        if (move_uploaded_file($_FILES['chat_file']['tmp_name'], $target_file)) {
+            $file_path = $file_name;
+            $file_type = $_FILES['chat_file']['type'];
         }
-    } else {
-        echo json_encode(['success' => false, 'error' => 'Empty message']);
+    }
+
+    if ($link_id && ($message || $file_path)) {
+        $stmt = $pdo->prepare("INSERT INTO chat_log (Link_ID, Sender_Type, Chat_Text, Chat_Time, Sender, Receiver, File_Path, File_Type) VALUES (?, ?, ?, NOW(), ?, ?, ?, ?)");
+        $stmt->execute([$link_id, $sender_type, $message, $sender_id, $receiver_id, $file_path, $file_type]);
+        echo json_encode(['success' => true]);
     }
     exit;
 }

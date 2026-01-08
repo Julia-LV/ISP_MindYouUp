@@ -1,62 +1,80 @@
-<!-- 
-  COMPONENT: Chat Box
-  FILEPATH: components/chat_box.php
-  DEPENDENCY: Tailwind CSS
--->
-
 <?php
-// Default Theme Colors (Emerald for Patient)
-$theme_color = $chat_theme_color ?? 'emerald';
-$header_bg = 'bg-[#005949]';
-$msg_me_bg = 'bg-[#E7FFDB]'; // WhatsApp-ish green for self
+/* components/chat_box.php */
+$header_bg = ($chat_user_type === 'Professional') ? 'bg-[#F0856C]' : 'bg-[#005949]';
+$target_name = $chat_target_name ?? 'Conversation';
+
+// 1. SMART PATH LOGIC
+$raw_image = trim($chat_target_image ?? '');
+$img_path = null;
+
+if (!empty($raw_image)) {
+    // If the database string already starts with '../', use it as is
+    if (strpos($raw_image, '../') === 0) {
+        $img_path = $raw_image;
+    } else {
+        // Otherwise, point to your 'uploads' folder
+        $img_path = "../../uploads/" . $raw_image;
+    }
+}
 ?>
 
+<style>
+    /* This removes the scrollbar from the browser window */
+    body {
+        margin: 0;
+        padding: 0;
+        overflow: hidden !important;
+    }
+</style>
+
 <div class="w-full bg-white rounded-lg shadow-lg overflow-hidden flex flex-col h-[600px] border border-gray-200">
-    
-    <!-- Chat Header -->
-    <div class="<?php echo $header_bg; ?> p-4 flex justify-between items-center text-white shadow-md z-10">
+    <div class="<?= $header_bg ?> p-4 flex justify-between items-center text-white shadow-md z-10">
         <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center font-bold text-white">
-                DR
+            <div class="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center overflow-hidden border border-white/30">
+                <?php if ($img_path): ?>
+                    <img src="<?= $img_path ?>"
+                        class="w-full h-full object-cover"
+                        onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                    <span class="font-bold text-lg hidden"><?= strtoupper(substr($target_name, 0, 1)) ?></span>
+                <?php else: ?>
+                    <span class="font-bold text-lg"><?= strtoupper(substr($target_name, 0, 1)) ?></span>
+                <?php endif; ?>
             </div>
             <div>
-                <h3 class="font-bold text-lg leading-tight">Conversation</h3>
+                <h3 class="font-bold text-lg leading-tight"><?= htmlspecialchars($target_name) ?></h3>
                 <div class="flex items-center gap-1 opacity-80">
                     <span class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
                     <span class="text-xs">Secure Connection</span>
                 </div>
             </div>
         </div>
-        <span class="text-xs bg-black/20 px-2 py-1 rounded">Patient View</span>
     </div>
 
-    <!-- Messages Area -->
-    <div id="chat-ui-container" class="flex-1 overflow-y-auto p-4 space-y-3 bg-[#E5DDD5]">
-        <!-- JS will inject messages here -->
-        <div class="flex justify-center mt-10">
-             <span class="bg-white/80 px-4 py-1 rounded-full text-xs text-gray-500 shadow-sm">
-                Loading messages...
-             </span>
+    <div id="chat-ui-container" class="flex-1 overflow-y-auto p-4 space-y-3 bg-[#E5DDD5]"></div>
+
+    <div id="attachment-preview" class="hidden p-3 bg-gray-100 border-t border-gray-200 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+            <div id="preview-thumbnail" class="w-12 h-12 bg-gray-300 rounded-lg overflow-hidden flex items-center justify-center text-[10px] text-gray-600 font-bold uppercase"></div>
+            <div class="text-sm">
+                <p id="preview-filename" class="font-medium text-gray-700 truncate max-w-[200px]"></p>
+                <p class="text-xs text-gray-500">Ready to send...</p>
+            </div>
         </div>
+        <button type="button" id="cancel-attachment" class="text-red-500 p-2">✕</button>
     </div>
 
-    <!-- Input Area -->
     <div class="p-3 bg-[#F0F2F5] border-t border-gray-200">
-        <form id="chat-ui-form" class="flex items-center gap-2">
-            <input 
-                type="text" 
-                id="chat-ui-input" 
-                class="flex-1 border-none rounded-full px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#005949] shadow-sm text-gray-700"
-                placeholder="Type a message..." 
-                autocomplete="off"
-            >
-            <button 
-                type="submit" 
-                class="<?php echo $header_bg; ?> hover:opacity-90 text-white p-3 rounded-full transition-all shadow-md flex-shrink-0"
-            >
-                <!-- Send Icon -->
+        <form id="chat-ui-form" class="flex items-center gap-2" enctype="multipart/form-data">
+            <input type="file" id="chat-file-input" class="hidden" accept="image/*,video/*,.pdf">
+            <button type="button" onclick="document.getElementById('chat-file-input').click()" class="p-2 text-gray-500 hover:bg-gray-200 rounded-full">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="m18.375 12.739-7.693 7.693a4.5 4.5 0 0 1-6.364-6.364l10.94-10.94A3 3 0 1 1 19.5 7.372L8.552 18.32m.009-.01-.01.01m5.699-9.941-7.81 7.81a1.5 1.5 0 0 0 2.112 2.13" />
+                </svg>
+            </button>
+            <input type="text" id="chat-ui-input" class="flex-1 border-none rounded-full px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#005949] shadow-sm" placeholder="Type a message..." autocomplete="off">
+            <button type="submit" class="<?= $header_bg ?> text-white p-3 rounded-full shadow-md">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5">
-                    <path d="M3.478 2.405a.75.75 0 00-.926.94l2.432 7.905H13.5a.75.75 0 010 1.5H4.984l-2.432 7.905a.75.75 0 00.926.94 60.519 60.519 0 0018.445-8.986.75.75 0 000-1.218A60.517 60.517 0 003.478 2.405z" />
+                    <path d="M3.478 2.405a.75.75 0 0 0-.926.94l2.432 7.905H13.5a.75.75 0 0 1 0 1.5H4.984l-2.432 7.905a.75.75 0 0 0 .926.94 60.519 60.519 0 0 0 18.445-8.986.75.75 0 0 0 0-1.218A60.517 60.517 0 0 0 3.478 2.405z" />
                 </svg>
             </button>
         </form>
@@ -64,93 +82,107 @@ $msg_me_bg = 'bg-[#E7FFDB]'; // WhatsApp-ish green for self
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    // 1. Configuration
-    const linkId = <?php echo json_encode($chat_link_id); ?>;
-    const myType = 'Patient';
-    
-    // CRITICAL: Point to the 'common' folder handler
-    const API_URL = '../../components/chat_handler.php'; 
+    document.addEventListener('DOMContentLoaded', function() {
+        const linkId = <?= json_encode($chat_link_id) ?>;
+        const myType = <?= json_encode($chat_user_type) ?>;
+        const myId = <?= json_encode($chat_my_id) ?>;
+        const targetId = <?= json_encode($chat_target_id) ?>;
 
-    const container = document.getElementById('chat-ui-container');
-    const form = document.getElementById('chat-ui-form');
-    const input = document.getElementById('chat-ui-input');
-    
-    // 2. Helper Functions
-    const scrollToBottom = () => {
-        container.scrollTop = container.scrollHeight;
-    };
+        const container = document.getElementById('chat-ui-container');
+        const fileInput = document.getElementById('chat-file-input');
+        const previewArea = document.getElementById('attachment-preview');
 
-    const render = (messages) => {
-        if(messages.length === 0) {
-            container.innerHTML = '<div class="text-center text-gray-500 text-sm mt-4">No messages yet. Say hello!</div>';
-            return;
-        }
+        let isInitialLoad = true;
 
-        const html = messages.map(msg => {
-            const isMe = msg.Sender_Type === myType;
-            
-            // Layout classes
-            const align = isMe ? 'items-end' : 'items-start';
-            const bubble = isMe ? 'bg-[#E7FFDB] rounded-tr-none' : 'bg-white rounded-tl-none';
-            
-            // Format time
-            const time = new Date(msg.Chat_Time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-
-            return `
-                <div class="flex flex-col ${align} w-full">
-                    <div class="${bubble} px-3 py-2 rounded-lg shadow-sm max-w-[80%] text-sm text-gray-800 relative">
-                        <span>${msg.Chat_Text}</span>
-                        <span class="text-[10px] text-gray-400 float-right mt-2 ml-3">${time}</span>
-                    </div>
-                </div>
-            `;
-        }).join('');
-
-        // Only update DOM if changed to prevent jitter
-        if(container.innerHTML !== html) {
-            container.innerHTML = html;
-            scrollToBottom(); 
-        }
-    };
-
-    // 3. Fetch Logic
-    const fetchMessages = async () => {
-        if(!linkId) return;
-        try {
-            const res = await fetch(`${API_URL}?action=fetch&link_id=${linkId}`);
-            if(!res.ok) throw new Error("API Path Wrong");
-            const data = await res.json();
-            render(data);
-        } catch (err) {
-            console.error('Chat Error:', err);
-            container.innerHTML = '<div class="text-red-500 text-center text-xs p-2">Connection Error. Check console.</div>';
-        }
-    };
-
-    // 4. Send Logic
-    form.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const text = input.value.trim();
-        if(!text) return;
-
-        input.value = ''; // Clear immediately
-        
-        await fetch(`${API_URL}?action=send`, {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({
-                link_id: linkId,
-                sender_type: myType,
-                message: text
-            })
+        // File Preview Logic (WhatsApp Style)
+        fileInput.addEventListener('change', function() {
+            if (this.files && this.files[0]) {
+                const file = this.files[0];
+                document.getElementById('preview-filename').textContent = file.name;
+                previewArea.classList.remove('hidden');
+                if (file.type.startsWith('image/')) {
+                    const reader = new FileReader();
+                    reader.onload = e => document.getElementById('preview-thumbnail').innerHTML = `<img src="${e.target.result}" class="w-full h-full object-cover">`;
+                    reader.readAsDataURL(file);
+                } else {
+                    document.getElementById('preview-thumbnail').textContent = file.name.split('.').pop();
+                }
+            }
         });
-        
-        fetchMessages(); // Refresh immediately
-    });
 
-    // 5. Start
-    fetchMessages();
-    setInterval(fetchMessages, 3000);
-});
+        document.getElementById('cancel-attachment').addEventListener('click', () => {
+            fileInput.value = "";
+            previewArea.classList.add('hidden');
+        });
+
+        // Render Function
+        const render = (messages) => {
+            const html = messages.map(msg => {
+                const isMe = msg.Sender_Type === myType;
+                const bubble = isMe ? 'bg-[#E7FFDB] rounded-tr-none ml-auto' : 'bg-white rounded-tl-none mr-auto';
+
+                let media = '';
+                if (msg.File_Path) {
+                    const path = '../../uploads_chat/' + msg.File_Path;
+                    if (msg.File_Type?.startsWith('image/')) {
+                        media = `<img src="${path}" class="rounded-lg max-w-[250px] max-h-[200px] w-auto h-auto object-cover mb-2 cursor-pointer" onclick="window.open('${path}')">`;
+                    } else {
+                        media = `<a href="${path}" target="_blank" class="flex items-center gap-2 bg-black/5 p-2 rounded-md mb-2 no-underline border border-black/5 hover:bg-black/10 transition-colors">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+                                    </svg>
+                                <span class="text-[11px] font-bold text-blue-700 truncate w-32">${msg.File_Path.split('_').pop()}</span>
+                                </a>`;
+                    }
+                }
+
+                return `<div class="flex flex-col w-full">
+                <div class="${bubble} px-3 py-2 rounded-lg shadow-sm max-w-[85%] w-fit text-sm text-gray-800">
+                    ${media}
+                    <span>${msg.Chat_Text || ''}</span>
+                </div>
+            </div>`;
+            }).join('');
+
+            if (container.innerHTML !== html) {
+                const isAtBottom = container.scrollHeight - container.scrollTop <= container.clientHeight + 100;
+                container.innerHTML = html;
+                if (isAtBottom || isInitialLoad) {
+                    container.scrollTop = container.scrollHeight;
+                    isInitialLoad = false;
+                }
+            }
+        };
+
+        // Send Logic
+        document.getElementById('chat-ui-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const input = document.getElementById('chat-ui-input');
+            const formData = new FormData();
+            formData.append('link_id', linkId);
+            formData.append('sender_type', myType);
+            formData.append('message', input.value.trim());
+            formData.append('sender_id', myId);
+            formData.append('receiver_id', targetId);
+            if (fileInput.files[0]) formData.append('chat_file', fileInput.files[0]);
+
+            input.value = '';
+            fileInput.value = '';
+            previewArea.classList.add('hidden');
+
+            await fetch('../../components/chat_handler.php?action=send', {
+                method: 'POST',
+                body: formData
+            });
+            fetchMessages();
+        });
+
+        const fetchMessages = async () => {
+            const res = await fetch(`../../components/chat_handler.php?action=fetch&link_id=${linkId}`);
+            render(await res.json());
+        };
+
+        setInterval(fetchMessages, 3000);
+        fetchMessages();
+    });
 </script>

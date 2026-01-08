@@ -5,8 +5,22 @@ include('../../config.php');
 if (!isset($_SESSION['user_id']) || $_SESSION['role'] != 'Professional') { header("Location: ../auth/login.php"); exit; }
 $user_id = $_SESSION['user_id'];
 
+// --- AGE CALCULATION HELPER ---
+function calculateAge($dob) {
+    if (empty($dob)) return 'N/A';
+    try {
+        $birthDate = new DateTime($dob);
+        $now = new DateTime();
+        $interval = $now->diff($birthDate);
+        return $interval->y;
+    } catch (Exception $e) {
+        return 'N/A';
+    }
+}
+
 // Fetch ALL Patients NOT connected to this doctor
-$sql = "SELECT u.User_ID, u.First_Name, u.Last_Name, u.User_Image, u.Email, u.Age
+// CHANGED: Select Date_Birth instead of Age
+$sql = "SELECT u.User_ID, u.First_Name, u.Last_Name, u.User_Image, u.Email, u.Birthday
         FROM user_profile u 
         WHERE u.Role = 'Patient'
         AND u.User_ID NOT IN (SELECT Patient_ID FROM patient_professional_link WHERE Professional_ID = ?)";
@@ -40,8 +54,9 @@ include('../../components/header_component.php');
                                     <h3 class="font-bold text-gray-800 text-lg">
                                         <?= htmlspecialchars($patient['First_Name'] . ' ' . $patient['Last_Name']) ?>
                                     </h3>
+                                    
                                     <p class="text-gray-500 text-sm">
-                                        <?= !empty($patient['Age']) ? $patient['Age'] . ' Years Old' : 'Age Not Set' ?>
+                                        <?= calculateAge($patient['Birthday']) ?> Years Old
                                     </p>
                                 </div>
                             </div>

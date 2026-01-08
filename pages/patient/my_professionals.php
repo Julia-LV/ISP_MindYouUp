@@ -92,7 +92,7 @@ include('../../components/header_component.php');
 
                             <a href="chat.php?link_id=<?= $doc['Link_ID'] ?>" 
                                class="w-full py-2.5 rounded-xl border border-gray-200 text-gray-600 text-sm font-medium hover:bg-gray-50 transition">
-                                Send Message
+                                Message
                             </a>
 
                         </div>
