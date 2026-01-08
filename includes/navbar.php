@@ -8,12 +8,14 @@ $user_role = isset($_SESSION['role']) ? strtolower($_SESSION['role']) : 'patient
 $base_path = ($user_role === 'professional') ? "../../pages/professional/" : "../../pages/patient/";
 ?>
 
+<div id="sidebar-overlay" class="fixed inset-0 bg-black/50 z-[90] hidden transition-opacity duration-300"></div>
+
 <nav id="sidebar"
      class="fixed top-0 left-0 h-full bg-[#FCFBF7] shadow-inner
             transform transition-all duration-300 z-[100]
             flex flex-col justify-between
             -translate-x-full md:translate-x-0
-            w-20">
+            w-64 w-20">
 
     <div class="w-full">
         <div id="toggleButton" class="h-16 flex items-center gap-4 px-4 py-6 border-b border-gray-300 cursor-pointer">  

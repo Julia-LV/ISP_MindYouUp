@@ -50,12 +50,19 @@ $body_class = $body_class ?? 'h-full bg-gray-100'
       - xl:pl-64 (approx 256px): For Big Screens when sidebar is full width.
     -->
     <div id="main-wrapper" class="flex-1 flex flex-col min-h-screen w-full md:pl-20 transition-all duration-300">
-        
+
         <!-- TOPBAR -->
         <header class="h-16 bg-[#FCFBF7] border-b sticky top-0 z-50 grid grid-cols-3 items-center px-4 shadow-sm">
             <div class="flex items-center space-x-2">
-                 <!-- Logo da App -->
-                 <img src="../../assets/img/MYU logos/logo_TT.png" alt="Mind You Up Logo" class="h-12 w-auto">
+                <button id="mobileMenuBtn" class="md:hidden p-2 focus:outline-none group transition-all duration-200 rounded-full active:bg-[#005949]">
+                    <svg id="hamburgerIcon" class="w-8 h-8 text-[#005949] group-active:text-white transition-colors duration-200"
+                        xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512">
+                        <path class="group-active:fill-white"
+                            d="M0 96C0 78.3 14.3 64 32 64l384 0c17.7 0 32 14.3 32 32s-14.3 32-32 32L32 128C14.3 128 0 113.7 0 96zM0 256c0-17.7 14.3-32 32-32l384 0c17.7 0 32 14.3 32 32s-14.3 32-32 32L32 288c-17.7 0-32-14.3-32-32zM448 416c0 17.7-14.3 32-32 32L32 448c-17.7 0-32-14.3-32-32s14.3-32 32-32l384 0c17.7 0 32 14.3 32 32z"/>
+                    </svg>
+                </button>
+                 
+                 <img src="../../assets/img/MYU logos/logo.png" alt="Mind You Up Logo" class="h-12 w-auto">
             </div>
 
             <div class="text-center">
