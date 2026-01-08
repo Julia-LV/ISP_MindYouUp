@@ -2,6 +2,7 @@
 session_start();
 require_once __DIR__ . '/../../config.php';
 
+
 // Fallback for PHP versions without str_starts_with
 if (!function_exists('str_starts_with')) {
     function str_starts_with(string $haystack, string $needle): bool
@@ -9,6 +10,7 @@ if (!function_exists('str_starts_with')) {
         return $needle !== '' && strpos($haystack, $needle) === 0;
     }
 }
+
 
 // ---------- AUTH GUARD: only logged‑in professionals ----------
 if (empty($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
@@ -28,14 +30,17 @@ if (strtolower($role) !== 'professional') {
  */
 $currentProfessionalId = (int)($_SESSION['user_id'] ?? ($_SESSION['userid'] ?? 0));
 
+
 // ---------- SETUP ----------
 $errors  = array();
+
 
 // pull any flash success message from previous request (then clear it)
 $success = $_SESSION['flash_success'] ?? '';
 unset($_SESSION['flash_success']);
 
 $selectedSharePatients = array();
+
 
 // Fixed categories list: same for everyone
 $skills = array(
@@ -44,6 +49,7 @@ $skills = array(
     'anxiety_management'     => 'Anxiety Management',
     'pmr_training'           => 'Progressive Muscle Relaxation Training',
 );
+
 
 // Helper to turn key into label (guarded to avoid redeclare)
 if (!function_exists('skill_label')) {
@@ -56,6 +62,7 @@ if (!function_exists('skill_label')) {
     }
 }
 
+
 /*
    Upload base folder (filesystem)
 */
@@ -63,6 +70,7 @@ $uploadBase = __DIR__ . '/../../uploads/';
 if (!is_dir($uploadBase)) {
     mkdir($uploadBase, 0777, true);
 }
+
 
 /**
  * Handle a file upload and return the stored value for media_url.
@@ -89,6 +97,7 @@ function handle_upload(string $fieldName, string $uploadBase): ?string
 
     return $filename;
 }
+
 
 /**
  * Delete a resource, its files and all patient links (silent if already gone).
@@ -146,6 +155,7 @@ function delete_resource(mysqli $conn, int $id, array &$errors, string &$success
     }
 }
 
+
 /* ---------- LOAD LINKED PATIENTS (for Share to) ---------- */
 $linkedPatients = array();
 if ($currentProfessionalId) {
@@ -166,7 +176,9 @@ if ($currentProfessionalId) {
     }
 }
 
+
 /* ---------- HANDLE ACTIONS ---------- */
+
 
 // helper: current page URL without query string (for PRG redirects)
 function current_page_url_without_query(): string {
@@ -174,6 +186,7 @@ function current_page_url_without_query(): string {
     $clean = strtok($uri, '?');
     return $clean ?: 'resourcehub_professional.php';
 }
+
 
 // DELETE via ?delete=ID
 if (isset($_GET['delete'])) {
@@ -186,6 +199,7 @@ if (isset($_GET['delete'])) {
         exit;
     }
 }
+
 
 // CREATE via POST  (PRG on success)
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -335,10 +349,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta charset="utf-8">
     <title>Resource Hub Admin</title>
     <meta name="viewport" content="width=device-width,initial-scale=1">
+
+    <!-- Tailwind needed for navbar.php -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
     <style>
         :root { --creme:#FFF7E1; --coral:#F26647; --rosa:#F282A9; --verde:#005949; --preto:#231F20; --light-green:#E9F0E9; --border-soft:#F0E3CC; --radius-lg:20px; --radius-md:14px; }
         * { box-sizing: border-box; }
-        body { margin:0; font-family: system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; background:var(--light-green); color:var(--preto); }
+        body {
+            margin:0;
+            font-family: system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+            background:var(--light-green);
+            color:var(--preto);
+            padding-left: 80px; /* sidebar width (w-20) */
+        }
         a { text-decoration:none; color:inherit; }
 
         .shell { min-height:100vh; padding:32px 24px 40px; }
@@ -411,7 +435,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         .btn-secondary-link:hover { background:#e6f3ec; }
 
-        /* NEW light‑orange library button */
         .btn-library-link {
             display:inline-flex;
             padding:11px 24px;
@@ -424,11 +447,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             text-decoration:none;
             box-shadow:0 7px 16px rgba(0,0,0,0.06);
         }
-        .btn-library-link:hover {
-            background:#FFE9C2;
-        }
+        .btn-library-link:hover { background:#FFE9C2; }
 
-        /* Row for the three actions so spacing is even */
         .actions-row {
             display:flex;
             gap:15px;
@@ -439,14 +459,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         .share-header { display:flex; justify-content:space-between; align-items:center; margin-top:14px; margin-bottom:4px; font-size:14px; }
 
-        /* Search + list wrapper has fixed height to avoid growing page */
-        .share-wrapper {
-            margin-top:4px;
-        }
-
-        .share-search {
-            margin-bottom:8px;
-        }
+        .share-wrapper { margin-top:4px; }
+        .share-search { margin-bottom:8px; }
 
         .share-search input {
             width:100%;
@@ -458,7 +472,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         .share-list {
-            max-height:220px;             /* fixed height, internal scroll */
+            max-height:220px;
             overflow:auto;
             border-radius:var(--radius-md);
             border:1px solid #E5E7EB;
@@ -470,11 +484,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         .share-name { color:#374151; margin-right:8px; flex:1; }
         .patient-checkbox { flex-shrink:0; }
 
-        .select-wrapper {
-            position:relative;
-            display:inline-block;
-            width:100%;
-        }
+        .select-wrapper { position:relative; display:inline-block; width:100%; }
         .select-wrapper select {
             appearance:none;
             -webkit-appearance:none;
@@ -500,6 +510,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         @media (max-width: 768px) {
+            body { padding-left: 0; }
             .shell { padding:20px 14px 28px; }
             .card { padding:18px 16px 22px; }
             .top-bar { flex-direction:column; align-items:flex-start; gap:12px; }
@@ -509,14 +520,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             input[type="text"], textarea, select { font-size:13px; }
             .share-row { flex-wrap:nowrap; }
             .share-name { font-size:13px; }
-            .select-wrapper select {
-                font-size:13px;
-                padding:9px 32px 9px 10px;
-            }
+            .select-wrapper select { font-size:13px; padding:9px 32px 9px 10px; }
         }
     </style>
 </head>
 <body>
+<?php require_once __DIR__ . '/navbar.php'; ?>
+
 <div class="shell">
     <div class="shell-inner">
 
@@ -524,11 +534,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <div class="top-left">
                 <div class="top-title">Resource Hub Admin</div>
                 <div class="top-subtitle">Create strategies, categories, and articles to share with your patients.</div>
-            </div>
-            <div class="top-actions">
-                <a href="../auth/logout.php">
-                    <button type="button" class="btn-logout">Log out</button>
-                </a>
             </div>
         </header>
 
@@ -598,9 +603,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <?php else: ?>
                     <div class="share-wrapper">
                         <div class="share-search">
-                            <input type="text"
-                                   id="patientSearch"
-                                   placeholder="Search patients by name">
+                            <input type="text" id="patientSearch" placeholder="Search patients by name">
                         </div>
                         <div class="share-list" id="shareList">
                             <?php foreach ($linkedPatients as $p): ?>
