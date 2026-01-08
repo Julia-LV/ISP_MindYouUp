@@ -400,8 +400,13 @@ if ($currentProfessionalId) {
     </style>
 </head>
 <body>
+</head>
+<body>
+<?php
+require_once __DIR__ . '/../../components/header_component.php';
+require_once __DIR__ . '/../../includes/navbar.php';
+?>
 <div class="shell">
-    <div class="shell-inner">
 
         <header class="top-bar">
             <div class="top-left">
