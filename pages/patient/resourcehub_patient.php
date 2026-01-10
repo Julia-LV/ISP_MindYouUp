@@ -10,7 +10,7 @@ if (empty($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true || strtolower
 
 $patient_id = $_SESSION['user_id'];
 $page_title = 'Resource Hub';
-$selected_cat = $_GET['cat'] ?? null; // Variable to track if we are on the "new page"
+$selected_cat = $_GET['cat'] ?? null;
 
 /* ---------- DATABASE FETCHING ---------- */
 $prof_id = 0;
@@ -21,10 +21,9 @@ $stmt->bind_result($prof_id);
 $stmt->fetch();
 $stmt->close();
 
-$skills_grouped = []; $articles = [];
+$skills_grouped = []; $articles = []; $db_banners = [];
 
 if ($prof_id > 0) {
-    // Fetching based on the database structure shown in your image (item_type, category_type, title, media_url, content)
     $sql = "SELECT rh.* FROM patient_resource_assignments pr 
             JOIN resource_hub rh ON pr.resource_id = rh.id 
             WHERE pr.patient_id = ? 
@@ -40,27 +39,32 @@ if ($prof_id > 0) {
             $skills_grouped[$row['category_type']][] = $row;
         } elseif ($row['item_type'] === 'article') {
             $articles[] = $row;
+        } elseif ($row['item_type'] === 'banner') {
+            $db_banners[] = [
+                'title' => $row['title'],
+                'desc'  => $row['subtitle'],
+                'type'  => $row['banner_content_type'] ?? 'article',
+                'url'   => $row['media_url'],
+                'img'   => !empty($row['image_url']) ? $row['image_url'] : 'https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=800'
+            ];
         }
     }
     $stmt->close();
 }
 
-/* ---------- FALLBACK CONTENT (All 3 Restored) ---------- */
+/* ---------- FALLBACKS ---------- */
 $starter_articles = [
     ['title' => 'Tics and Tic Disorders Infographic', 'media_url' => '../../uploads/starter/flyer.png', 'type' => 'image'],
     ['title' => 'Understanding Tourette Syndrome', 'media_url' => '../../uploads/starter/Understanding_tics.pdf', 'type' => 'pdf'],
-    ['title' => 'Relaxation Techniques for Stress Relief', 'media_url' => '../../uploads/starter/Relaxation Techniques for Stress Relief.pdf', 'type' => 'pdf'],
 ];
 $display_articles = !empty($articles) ? array_merge($articles, $starter_articles) : $starter_articles;
 
-/* ---------- STATIC BANNER DATA ---------- */
-$banner_items = [
+$default_banners = [
     ['title' => 'Deep Breathing', 'desc' => 'Calm your nervous system.', 'type' => 'video', 'url' => 'https://www.youtube.com/embed/aNXKjGFUlMs', 'img' => 'https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=800'],
-    ['title' => 'Overcoming Tics', 'desc' => 'Strategies for managing anxiety-induced symptoms.', 'type' => 'article', 'url' => 'https://tidesmentalhealth.com/how-to-stop-anxiety-induced-tics/', 'img' => 'https://tidesmentalhealth.com/wp-content/uploads/How-to-Stop-Anxiety-Induced-Tics.jpg'],
-    ['title' => 'Muscle Relaxation', 'desc' => 'Release physical tension step-by-step.', 'type' => 'video', 'url' => 'https://www.youtube.com/embed/1nZEdqcWqVk', 'img' => 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=800']
+    ['title' => 'Muscle Relaxation', 'desc' => 'Release physical tension.', 'type' => 'video', 'url' => 'https://www.youtube.com/embed/1nZEdqcWqVk', 'img' => 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=800']
 ];
+$banner_items = !empty($db_banners) ? $db_banners : $default_banners;
 
-/* ---------- CATEGORY UI DATA ---------- */
 $categories = [
     'competing_behaviours' => ['bg' => 'bg-[#F26647]', 'img' => 'https://images.unsplash.com/photo-1507413245164-6160d8298b31?w=300', 'name' => 'Competing Behaviours'],
     'habit_reversal'       => ['bg' => 'bg-[#F282A9]', 'img' => 'https://images.unsplash.com/photo-1484480974693-6ca0a78fb36b?w=300', 'name' => 'Habit Reversal'],
@@ -78,6 +82,7 @@ include '../../includes/navbar.php';
     .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     .video-modal { display: none; background: rgba(0,0,0,0.85); }
     .video-modal.active { display: flex; }
+    #banner-carousel { scroll-behavior: smooth; }
 </style>
 
 <div class="w-full min-h-screen overflow-y-auto bg-[#E9F0E9]">
@@ -89,20 +94,45 @@ include '../../includes/navbar.php';
                 <p class="text-gray-600">Your personalized library.</p>
             </div>
 
-            <section class="relative group/banner">
-                <div id="banner-carousel" class="no-scrollbar flex overflow-x-auto snap-x snap-mandatory gap-4">
-                    <?php foreach ($banner_items as $item): ?>
-                        <div class="min-w-full snap-center shrink-0">
-                            <div onclick="openItem(<?php echo htmlspecialchars(json_encode($item)); ?>)" class="relative h-52 md:h-72 w-full rounded-3xl overflow-hidden cursor-pointer shadow-sm group">
-                                <img src="<?php echo $item['img']; ?>" class="absolute inset-0 w-full h-full object-cover brightness-50 group-hover:scale-105 transition-transform duration-1000">
-                                <div class="absolute inset-0 p-8 flex flex-col justify-end bg-gradient-to-t from-black/80 via-transparent">
-                                    <h3 class="text-white text-3xl font-black pl-8"><?php echo $item['title']; ?></h3>
-                                    <p class="text-white/80 text-sm max-w-lg pl-8"><?php echo $item['desc']; ?></p>
-                                </div>
+            <section class="relative group/container">
+                <div id="banner-carousel" class="no-scrollbar flex overflow-x-auto snap-x snap-mandatory gap-0 rounded-3xl shadow-lg">
+                    <?php foreach ($banner_items as $index => $item): ?>
+                        <div class="min-w-full snap-center shrink-0 relative h-64 md:h-[320px] overflow-hidden group">
+                            <img src="<?php echo $item['img']; ?>" class="absolute inset-0 w-full h-full object-cover brightness-[0.45]">
+                            
+                            <div class="absolute bottom-8 left-12 md:bottom-10 md:left-16 z-10 flex flex-col items-start">
+                                <h3 class="text-white text-3xl md:text-4xl font-black mb-1">
+                                    <?php echo htmlspecialchars($item['title']); ?>
+                                </h3>
+                                <p class="text-white/90 text-base md:text-lg mb-5 font-medium max-w-lg">
+                                    <?php echo htmlspecialchars($item['desc']); ?>
+                                </p>
+                                
+                                <button onclick="openItem(<?php echo htmlspecialchars(json_encode($item)); ?>)" 
+                                        class="px-8 py-2.5 bg-white text-[#005949] font-bold rounded-full flex items-center gap-2 hover:bg-[#F282A9] hover:text-white transition-all transform hover:scale-105 shadow-xl">
+                                    <?php if($item['type'] === 'video'): ?>
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg> Watch Video
+                                    <?php else: ?>
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 fill-none stroke-current stroke-2" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg> Read Article
+                                    <?php endif; ?>
+                                </button>
                             </div>
                         </div>
                     <?php endforeach; ?>
                 </div>
+
+                <div class="flex justify-center space-x-2 mt-4">
+                    <?php for($i = 0; $i < count($banner_items); $i++): ?>
+                        <button class="dot w-3 h-3 rounded-full bg-white/50 hover:bg-white/80 transition-colors" data-slide="<?php echo $i; ?>"></button>
+                    <?php endfor; ?>
+                </div>
+
+                <button onclick="scrollBanner('left')" class="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/20 hover:bg-white/40 backdrop-blur-md rounded-full text-white flex items-center justify-center opacity-0 group-hover/container:opacity-100 transition-opacity z-20">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
+                </button>
+                <button onclick="scrollBanner('right')" class="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/20 hover:bg-white/40 backdrop-blur-md rounded-full text-white flex items-center justify-center opacity-0 group-hover/container:opacity-100 transition-opacity z-20">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
+                </button>
             </section>
 
             <section>
@@ -121,9 +151,7 @@ include '../../includes/navbar.php';
                         </div>
                         <div class="z-10">
                             <h4 class="text-white font-black text-lg leading-tight"><?php echo $cat['name']; ?></h4>
-                            <div class="mt-2 inline-flex items-center px-4 py-1 bg-white/20 rounded-full text-white text-[10px] font-bold uppercase tracking-widest">
-                                Open Folder
-                            </div>
+                            <div class="mt-2 inline-flex items-center px-4 py-1 bg-white/20 rounded-full text-white text-[10px] font-bold uppercase tracking-widest">Open Folder</div>
                         </div>
                     </a>
                     <?php endforeach; ?>
@@ -159,9 +187,7 @@ include '../../includes/navbar.php';
         <?php else: ?>
             <div class="flex items-center justify-between border-b border-gray-200 pb-4 mb-8">
                 <div>
-                    <h2 class="text-3xl font-bold text-[#005949]">
-                        <?php echo $categories[$selected_cat]['name'] ?? 'Resources'; ?>
-                    </h2>
+                    <h2 class="text-3xl font-bold text-[#005949]"><?php echo $categories[$selected_cat]['name'] ?? 'Resources'; ?></h2>
                     <p class="text-gray-600">Showing shared resources in this category.</p>
                 </div>
                 <a href="resourcehub_patient.php" class="bg-white px-6 py-2 rounded-full border border-gray-200 font-bold text-[#005949] shadow-sm hover:bg-gray-50 transition-all flex items-center gap-2">
@@ -178,10 +204,8 @@ include '../../includes/navbar.php';
                              <svg xmlns="http://www.w3.org/2000/svg" class="w-10 h-10" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
                         </div>
                         <h3 class="text-xl font-bold text-[#005949]">No resources yet</h3>
-                        <p class="text-gray-500">Your professional hasn't shared any resources in this folder yet.</p>
                     </div>
                 <?php else: foreach ($folder_items as $f_item): 
-                    // Logic to handle YouTube links in either 'media_url' or 'content' based on your DB screenshot
                     $target_url = !empty($f_item['media_url']) ? $f_item['media_url'] : $f_item['content'];
                     $is_video = (strpos($target_url, 'youtube') !== false || strpos($target_url, 'youtu.be') !== false);
                 ?>
@@ -217,10 +241,64 @@ include '../../includes/navbar.php';
 <script>
     const modal = document.getElementById('videoModal');
     const iframe = document.getElementById('modalIframe');
+    const carousel = document.getElementById('banner-carousel');
+    const dots = document.querySelectorAll('.dot');
+
+    let slideInterval = setInterval(() => scrollBanner('right'), 5000);
+
+    function updateDots(activeIndex) {
+        dots.forEach((dot, index) => {
+            if (index === activeIndex) {
+                dot.classList.add('bg-white');
+                dot.classList.remove('bg-white/50');
+            } else {
+                dot.classList.add('bg-white/50');
+                dot.classList.remove('bg-white');
+            }
+        });
+    }
+
+    dots.forEach((dot, index) => {
+        dot.addEventListener('click', () => {
+            const slideIndex = parseInt(dot.dataset.slide);
+            carousel.scrollTo({ left: slideIndex * carousel.offsetWidth, behavior: 'smooth' });
+            updateDots(slideIndex);
+            clearInterval(slideInterval);
+            slideInterval = setInterval(() => scrollBanner('right'), 5000);
+        });
+    });
+
+    carousel.addEventListener('scroll', () => {
+        const index = Math.round(carousel.scrollLeft / carousel.offsetWidth);
+        updateDots(index);
+    });
+
+    updateDots(0);
+
+    function scrollBanner(direction) {
+        const scrollAmount = carousel.offsetWidth;
+        if (direction === 'right') {
+            if (carousel.scrollLeft + scrollAmount >= carousel.scrollWidth) {
+                carousel.scrollTo({ left: 0, behavior: 'smooth' });
+            } else {
+                carousel.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+            }
+        } else {
+            if (carousel.scrollLeft <= 0) {
+                carousel.scrollTo({ left: carousel.scrollWidth, behavior: 'smooth' });
+            } else {
+                carousel.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
+            }
+        }
+        clearInterval(slideInterval);
+        slideInterval = setInterval(() => scrollBanner('right'), 5000);
+    }
 
     function openItem(item) {
         if (item.type === 'video') {
-            iframe.src = item.url + "?autoplay=1";
+            let url = item.url;
+            if(url.includes('watch?v=')) url = url.replace('watch?v=', 'embed/');
+            iframe.src = url + "?autoplay=1";
             modal.classList.add('active');
         } else {
             window.open(item.url, '_blank');
@@ -229,13 +307,9 @@ include '../../includes/navbar.php';
 
     function handleResourceClick(url, isVideo) {
         if (isVideo) {
-            // Transform YouTube URL to embed format if needed
             let embedUrl = url;
-            if(url.includes('watch?v=')) {
-                embedUrl = url.replace('watch?v=', 'embed/');
-            } else if(url.includes('youtu.be/')) {
-                embedUrl = url.replace('youtu.be/', 'youtube.com/embed/');
-            }
+            if(url.includes('watch?v=')) embedUrl = url.replace('watch?v=', 'embed/');
+            else if(url.includes('youtu.be/')) embedUrl = url.replace('youtu.be/', 'youtube.com/embed/');
             iframe.src = embedUrl + "?autoplay=1";
             modal.classList.add('active');
         } else {
