@@ -109,7 +109,7 @@ include '../../includes/navbar.php';
                                 </p>
                                 
                                 <button onclick="openItem(<?php echo htmlspecialchars(json_encode($item)); ?>)" 
-                                        class="px-8 py-2.5 bg-white text-[#005949] font-bold rounded-full flex items-center gap-2 hover:bg-[#F282A9] hover:text-white transition-all transform hover:scale-105 shadow-xl">
+                                        class="px-8 py-2.5 bg-white text-[#005949] font-bold rounded-full flex items-center gap-2 hover:bg-[#B0D1B8] hover:text-white transition-all transform hover:scale-105 shadow-xl">
                                     <?php if($item['type'] === 'video'): ?>
                                         <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg> Watch Video
                                     <?php else: ?>
@@ -204,6 +204,7 @@ include '../../includes/navbar.php';
                              <svg xmlns="http://www.w3.org/2000/svg" class="w-10 h-10" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
                         </div>
                         <h3 class="text-xl font-bold text-[#005949]">No resources yet</h3>
+                        <p class="text-gray-600 mt-2">Your professional has not shared any resources in this category.</p>
                     </div>
                 <?php else: foreach ($folder_items as $f_item): 
                     $target_url = !empty($f_item['media_url']) ? $f_item['media_url'] : $f_item['content'];

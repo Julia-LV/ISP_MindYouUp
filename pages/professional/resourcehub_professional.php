@@ -97,7 +97,13 @@ require_once __DIR__ . '/../../includes/navbar.php';
 
 <main class="min-h-screen bg-[#E9F0E9] pt-8 pb-12 px-4">
     <div class="max-w-4xl mx-auto">
-        <h1 class="text-3xl font-bold text-[#005949] mb-8">Resource Hub Admin</h1>
+        <div class="flex justify-between items-center mb-8">
+            <h1 class="text-3xl font-bold text-[#005949]">Resource Hub Admin</h1>
+            <div class="flex gap-4">
+                <a href="resourcehub_library.php" class="bg-[#005949] text-white px-6 py-2 rounded-full font-bold shadow-lg hover:bg-[#004236] transition-all">Library</a>
+                <a href="resourcehub_existing.php" class="bg-[#005949] text-white px-6 py-2 rounded-full font-bold shadow-lg hover:bg-[#004236] transition-all">Uploaded Items</a>
+            </div>
+        </div>
 
         <?php if ($success): ?>
             <div class="mb-6 p-4 bg-green-100 text-green-700 rounded-lg"><?php echo $success; ?></div>
@@ -111,15 +117,15 @@ require_once __DIR__ . '/../../includes/navbar.php';
         <form method="POST" enctype="multipart/form-data" class="bg-white rounded-[24px] shadow-sm p-8 space-y-6">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                    <label class="block text-sm font-bold text-[#005949] mb-2">Display Mode</label>
+                    <label class="block text-sm font-bold text-[#005949] mb-2">Select Item Type</label>
                     <select name="item_type" id="item_type" class="w-full p-3 rounded-xl border border-[#c7e4d7]">
-                        <option value="article">List as Article/Guide</option>
-                        <option value="category">Inside a Category Box</option>
-                        <option value="banner">Promoted Banner (Max 6)</option>
+                        <option value="article">Article/Guide</option>
+                        <option value="category">Categories</option>
+                        <option value="banner">Banner (Max 6)</option>
                     </select>
                 </div>
                 <div>
-                    <label class="block text-sm font-bold text-[#005949] mb-2">Select Category</label>
+                    <label class="block text-sm font-bold text-[#005949] mb-2">Select Category Type</label>
                     <select name="category_type" id="category_type" class="w-full p-3 rounded-xl border border-[#c7e4d7] disabled:bg-gray-100 disabled:cursor-not-allowed transition-all">
                         <option value="">-- No Category --</option>
                         <?php foreach ($skills as $k => $v): ?>
@@ -134,9 +140,9 @@ require_once __DIR__ . '/../../includes/navbar.php';
                     <label class="block text-sm font-bold text-[#005949] mb-2">Resource Title</label>
                     <input type="text" name="title" required class="w-full p-3 rounded-xl border border-[#c7e4d7]" placeholder="e.g., Breathing Exercises">
                 </div>
-                <div id="subtitle_box" class="hidden">
-                    <label class="block text-sm font-bold text-[#005949] mb-2">Subtitle (Banner Only)</label>
-                    <input type="text" name="subtitle" class="w-full p-3 rounded-xl border border-[#c7e4d7]" placeholder="Short description...">
+                <div id="subtitle_box">
+                    <label class="block text-sm font-bold text-[#005949] mb-2">Subtitle (for banners)</label>
+                    <input type="text" name="subtitle" class="w-full p-3 rounded-xl border border-[#c7e4d7]" placeholder="Short description or context...">
                 </div>
             </div>
 
@@ -162,20 +168,29 @@ require_once __DIR__ . '/../../includes/navbar.php';
                     <input type="file" name="media_file" class="w-full p-2 text-sm border border-[#c7e4d7] rounded-xl">
                 </div>
                 <div>
-                    <label class="block text-sm font-bold text-[#005949] mb-2">OR Paste Link (YouTube/Web)</label>
+                    <label class="block text-sm font-bold text-[#005949] mb-2">Paste Link (YouTube/Web)</label>
                     <input type="url" name="external_link" class="w-full p-3 rounded-xl border border-[#c7e4d7]" placeholder="https://youtube.com/...">
                 </div>
             </div>
 
             <div>
-                <label class="block text-sm font-bold text-[#005949] mb-2">Assign to Patients</label>
+                <div class="flex justify-between items-center mb-2">
+                    <label class="block text-sm font-bold text-[#005949]">Assign to Patients</label>
+                    <button type="button" id="toggle_all_patients" class="text-sm font-bold text-[#005949] hover:underline bg-[#c7e4d7]/30 px-3 py-1 rounded-lg">
+                        Select All
+                    </button>
+                </div>
                 <div class="border border-[#c7e4d7] rounded-xl p-4 max-h-40 overflow-y-auto">
-                    <?php foreach ($linkedPatients as $p): ?>
-                        <label class="flex items-center gap-3 p-1">
-                            <input type="checkbox" name="share_patients[]" value="<?php echo $p['User_ID']; ?>">
-                            <span><?php echo htmlspecialchars($p['First_Name'] . ' ' . $p['Last_Name']); ?></span>
-                        </label>
-                    <?php endforeach; ?>
+                    <?php if (empty($linkedPatients)): ?>
+                        <p class="text-gray-500 text-sm italic">No patients linked to your account.</p>
+                    <?php else: ?>
+                        <?php foreach ($linkedPatients as $p): ?>
+                            <label class="flex items-center gap-3 p-1 cursor-pointer hover:bg-gray-50 rounded-md transition-colors">
+                                <input type="checkbox" name="share_patients[]" value="<?php echo $p['User_ID']; ?>" class="patient-checkbox">
+                                <span><?php echo htmlspecialchars($p['First_Name'] . ' ' . $p['Last_Name']); ?></span>
+                            </label>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
                 </div>
             </div>
 
@@ -189,7 +204,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const itemType = document.getElementById('item_type');
     const catType = document.getElementById('category_type');
     const bannerFields = document.getElementById('banner_fields');
-    const subtitleBox = document.getElementById('subtitle_box');
+    const toggleBtn = document.getElementById('toggle_all_patients');
+    const checkboxes = document.querySelectorAll('.patient-checkbox');
 
     function updateForm() {
         const val = itemType.value;
@@ -202,14 +218,25 @@ document.addEventListener('DOMContentLoaded', function() {
             catType.value = "";
         }
 
-        // 2. Banner logic: Show subtitle and extra banner fields
+        // 2. Banner logic: Show extra banner fields (Subtitle is now always visible)
         if (val === 'banner') {
             bannerFields.classList.remove('hidden');
-            subtitleBox.classList.remove('hidden');
         } else {
             bannerFields.classList.add('hidden');
-            subtitleBox.classList.add('hidden');
         }
+    }
+
+    // Select All / Deselect All Logic
+    if(toggleBtn) {
+        toggleBtn.addEventListener('click', function() {
+            const anyUnchecked = Array.from(checkboxes).some(cb => !cb.checked);
+            
+            checkboxes.forEach(cb => {
+                cb.checked = anyUnchecked;
+            });
+
+            this.textContent = anyUnchecked ? 'Deselect All' : 'Select All';
+        });
     }
 
     itemType.addEventListener('change', updateForm);
