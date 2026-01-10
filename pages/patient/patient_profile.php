@@ -115,18 +115,6 @@ include('../../components/header_component.php');
                                 </div>
                             </div>
 
-                            <div class="grid grid-cols-3 px-6 py-4 bg-white border-b border-gray-50">
-                                <div class="font-medium text-gray-500 col-span-1">Current Status</div>
-                                <div class="font-semibold col-span-2">
-                                    <?php 
-                                        $status = $profile['Latest_Status'] ?? 'Not Connected';
-                                        $color = getStatusColor($status);
-                                    ?>
-                                    <span class="px-2 py-1 rounded-md border text-xs uppercase tracking-wider <?= $color ?>">
-                                        <?= $status ?>
-                                    </span>
-                                </div>
-                            </div>
 
                             <div class="grid grid-cols-3 px-6 py-4 bg-gray-50">
                                 <div class="font-medium text-gray-500 col-span-1">Treatment Type</div>

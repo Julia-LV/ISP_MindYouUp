@@ -2,498 +2,200 @@
 session_start();
 require_once __DIR__ . '/../../config.php';
 
-
-/* ---------- AUTH GUARD only logged-in patients ---------- */
-if (empty($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
+/* ---------- AUTH GUARD ---------- */
+if (empty($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true || strtolower($_SESSION['role'] ?? '') !== 'patient') {
     header("Location: ../auth/login.php");
     exit;
 }
 
+$patient_id = $_SESSION['user_id'];
+$page_title = 'Resource Hub';
 
-$role = $_SESSION['role'] ?? '';
-if (strtolower($role) !== 'patient') {
-    header("Location: ../professional/home_professional.php");
-    exit;
-}
+/* ---------- DATABASE FETCHING ---------- */
+$prof_id = 0;
+$stmt = $conn->prepare("SELECT Professional_ID FROM patient_professional_link WHERE Patient_ID = ? ORDER BY Assigned_Date DESC LIMIT 1");
+$stmt->bind_param("i", $patient_id);
+$stmt->execute();
+$stmt->bind_result($prof_id);
+$stmt->fetch();
+$stmt->close();
 
+$strategies = []; $skills = []; $articles = [];
 
-$currentPatientId = $_SESSION['user_id'] ?? 0;
-
-
-/* ---------- FIND LINKED PROFESSIONAL FOR THIS PATIENT ---------- */
-$currentProfessionalId = 0;
-if ($currentPatientId) {
-    $sql = "SELECT Professional_ID 
-            FROM patient_professional_link 
-            WHERE Patient_ID = ?
-            ORDER BY Assigned_Date DESC 
-            LIMIT 1";
-    if ($stmt = $conn->prepare($sql)) {
-        $stmt->bind_param('i', $currentPatientId);
-        $stmt->execute();
-        $stmt->bind_result($profId);
-        if ($stmt->fetch()) {
-            $currentProfessionalId = (int)$profId;
-        }
-        $stmt->close();
-    }
-}
-
-
-/* ---------- HELPERS ---------- */
-function build_media_paths(?string $stored): array {
-    if (!$stored) {
-        return [false, null, null];
-    }
-    $stored = trim($stored);
-    if ($stored === '') {
-        return [false, null, null];
-    }
-
-    if (str_starts_with($stored, 'uploads/')) {
-        $rel = $stored;
-    } else {
-        $rel = 'uploads/' . ltrim($stored, '/');
-    }
-
-    // From pages/patient - project root web is "../../"
-    $web    = '../../' . $rel;
-    $fs     = __DIR__ . '/../../' . $rel;
-    $exists = file_exists($fs);
-
-    return [$exists, $web, $fs];
-}
-
-
-/* ---------- FETCH STRATEGIES (ONLY FROM THIS PROFESSIONAL) ---------- */
-$strategies = [];
-if ($currentPatientId && $currentProfessionalId) {
-    $sql = "SELECT rh.*
-            FROM patient_resources pr
-            JOIN resource_hub rh ON pr.resource_id = rh.id
-            WHERE pr.patient_id = ?
-              AND pr.sent_by = ?
-              AND rh.item_type = 'strategy'
-            ORDER BY rh.sort_order, rh.id";
-    if ($stmt = $conn->prepare($sql)) {
-        $stmt->bind_param('ii', $currentPatientId, $currentProfessionalId);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        while ($row = $result->fetch_assoc()) {
+if ($prof_id > 0) {
+    // Aligned with Professional Admin table and column names
+    $sql = "SELECT rh.* FROM patient_resource_assignments pr 
+            JOIN resource_hub rh ON pr.resource_id = rh.id 
+            WHERE pr.patient_id = ? 
+            ORDER BY rh.id DESC"; // Showing newest first
+            
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("i", $patient_id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    
+    while ($row = $result->fetch_assoc()) {
+        if ($row['item_type'] === 'banner') {
             $strategies[] = $row;
-        }
-        $stmt->close();
-    }
-}
-
-
-/* ---------- FETCH SKILLS (ONLY FROM THIS PROFESSIONAL) ---------- */
-$skills = [];
-if ($currentPatientId && $currentProfessionalId) {
-    $sql = "SELECT rh.*
-            FROM patient_resources pr
-            JOIN resource_hub rh ON pr.resource_id = rh.id
-            WHERE pr.patient_id = ?
-              AND pr.sent_by = ?
-              AND rh.item_type = 'skill'
-            ORDER BY rh.sort_order, rh.id";
-    if ($stmt = $conn->prepare($sql)) {
-        $stmt->bind_param('ii', $currentPatientId, $currentProfessionalId);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        while ($row = $result->fetch_assoc()) {
+        } elseif ($row['item_type'] === 'category') {
             $skills[] = $row;
-        }
-        $stmt->close();
-    }
-}
-
-
-/* ---------- FETCH ARTICLES (ONLY FROM THIS PROFESSIONAL) ---------- */
-$articles = [];
-if ($currentPatientId && $currentProfessionalId) {
-    $sql = "SELECT rh.*
-            FROM patient_resources pr
-            JOIN resource_hub rh ON pr.resource_id = rh.id
-            WHERE pr.patient_id = ?
-              AND pr.sent_by = ?
-              AND rh.item_type = 'article'
-            ORDER BY rh.sort_order, rh.id";
-    if ($stmt = $conn->prepare($sql)) {
-        $stmt->bind_param('ii', $currentPatientId, $currentProfessionalId);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        while ($row = $result->fetch_assoc()) {
+        } else {
             $articles[] = $row;
         }
-        $stmt->close();
     }
+    $stmt->close();
 }
 
+/* ---------- FALLBACK CONTENT ---------- */
+$starter_articles = [
+    ['title' => 'Tics and Tic Disorders Infographic', 'media_url' => '../../uploads/starter/flyer.png', 'type' => 'image'],
+    ['title' => 'Understanding Tourette Syndrome', 'media_url' => '../../uploads/starter/Understanding_tics.pdf', 'type' => 'pdf'],
+    ['title' => 'Relaxation Techniques for Stress Relief', 'media_url' => '../../uploads/starter/Relaxation Techniques for Stress Relief.pdf', 'type' => 'pdf'],
+];
 
-/* ---------- STRATEGY NAVIGATION ---------- */
-$currentStrategy = null;
-$prevId = null;
-$nextId = null;
-$mediaExists = false;
-$mediaUrlWeb = null;
+// Combine shared articles with starter ones
+$display_articles = !empty($articles) ? array_merge($articles, $starter_articles) : $starter_articles;
 
-if (!empty($strategies)) {
-    $currentId = isset($_GET['strategy_id']) ? (int)$_GET['strategy_id'] : 0;
+/* ---------- HARDCODED BANNER DATA (Static) ---------- */
+$banner_items = [
+    ['title' => 'Deep Breathing', 'desc' => 'Calm your nervous system.', 'type' => 'video', 'url' => 'https://www.youtube.com/embed/aNXKjGFUlMs', 'img' => 'https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=800'],
+    ['title' => 'Overcoming Tics', 'desc' => 'Strategies for managing anxiety-induced symptoms.', 'type' => 'article', 'url' => 'https://tidesmentalhealth.com/how-to-stop-anxiety-induced-tics/', 'img' => 'https://tidesmentalhealth.com/wp-content/uploads/How-to-Stop-Anxiety-Induced-Tics.jpg'],
+    ['title' => 'Muscle Relaxation', 'desc' => 'Release physical tension step-by-step.', 'type' => 'video', 'url' => 'https://www.youtube.com/embed/1nZEdqcWqVk', 'img' => 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=800']
+];
 
-    if ($currentId === 0) {
-        $currentStrategy = $strategies[0];
-    } else {
-        foreach ($strategies as $s) {
-            if ((int)$s['id'] === $currentId) {
-                $currentStrategy = $s;
-                break;
-            }
-        }
-        if ($currentStrategy === null) {
-            $currentStrategy = $strategies[0];
-        }
-    }
+/* ---------- CATEGORY UI DATA ---------- */
+$categories = [
+    'competing_behaviours' => [
+        'bg' => 'bg-[#F26647]', 
+        'img' => 'https://images.unsplash.com/photo-1507413245164-6160d8298b31?auto=format&fit=crop&q=80&w=300', 
+        'name' => 'Competing Behaviours'
+    ],
+    'habit_reversal' => [
+        'bg' => 'bg-[#F282A9]', 
+        'img' => 'https://images.unsplash.com/photo-1484480974693-6ca0a78fb36b?auto=format&fit=crop&q=80&w=300',
+        'name' => 'Habit Reversal'
+    ],
+    'anxiety_management' => [
+        'bg' => 'bg-[#005949]', 
+        'img' => 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&q=80&w=300', 
+        'name' => 'Anxiety Management'
+    ],
+    'pmr_training' => [
+        'bg' => 'bg-[#FFB100]', 
+        'img' => 'https://images.unsplash.com/photo-1518611012118-696072aa579a?auto=format&fit=crop&q=80&w=300', 
+        'name' => 'PMR Training'
+    ],
+];
 
-    $ids   = array_column($strategies, 'id');
-    $index = array_search((int)$currentStrategy['id'], array_map('intval', $ids), true);
-    if ($index === false) {
-        $index = 0;
-    }
-
-    $prevIndex = ($index === 0) ? count($strategies) - 1 : $index - 1;
-    $nextIndex = ($index === count($strategies) - 1) ? 0 : $index + 1;
-
-    $prevId = $strategies[$prevIndex]['id'];
-    $nextId = $strategies[$nextIndex]['id'];
-
-    [$mediaExists, $mediaUrlWeb] = build_media_paths($currentStrategy['media_url'] ?? null);
-}
-
-
-/* ---------- PAGE SETUP ---------- */
-$page_title = 'Resource Hub';
-$body_class = 'h-full bg-gray-100';
-$no_layout  = false;
-
-include __DIR__ . '/../../components/header_component.php';
-include __DIR__ . '/../../includes/navbar.php';
+include '../../components/header_component.php';
+include '../../includes/navbar.php'; 
 ?>
 
-
+<script src="https://cdn.tailwindcss.com"></script>
 <style>
-/* old pills (if still used) */
-.skills-strip .skill-pill {
-  display: inline-block;
-  max-width: 240px;
-  white-space: normal;
-  overflow-wrap: anywhere;
-  hyphens: auto;
-  line-height: 1.3;
-}
-
-
-/* Square category cards */
-.skill-card {
-  min-width: 180px;
-  min-height: 180px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 16px;
-  border-radius: 16px;
-  border: 2px solid #d1d5db;
-  background: #ffffff;
-  font-size: 15px;
-  font-weight: 500;
-  color: #111827;
-  text-align: center;
-  line-height: 1.4;
-  text-decoration: none;
-  box-shadow: 0 3px 8px rgba(0,0,0,0.05);
-}
-
-.skill-card:hover {
-  border-color: #9ca3af;
-  box-shadow: 0 6px 14px rgba(0,0,0,0.08);
-  background: #f9fafb;
-}
-
-.skill-card--disabled {
-  color: #6b7280;
-  cursor: default;
-}
-
-
-/* Mobile carousel behaviour */
-@media (max-width: 768px) {
-  .skills-strip {
-    position: relative;
-    margin-top: 4px;
-  }
-  .skills-strip::before,
-  .skills-strip::after {
-    content: '';
-    position: absolute;
-    top: 0; bottom: 0; width: 28px;
-    pointer-events: none;
-    z-index: 3;
-  }
-  .skills-strip::before {
-    left: 0;
-    background: linear-gradient(to right, #ffffff, rgba(255,255,255,0));
-  }
-  .skills-strip::after {
-    right: 0;
-    background: linear-gradient(to left, #ffffff, rgba(255,255,255,0));
-  }
-
-  .skills-strip .card-row {
-    display: flex;
-    gap: 12px;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    padding: 4px 32px 8px;
-    scroll-behavior: smooth;
-    -ms-overflow-style: none;
-    scrollbar-width: none;
-  }
-  .skills-strip .card-row::-webkit-scrollbar { display: none; }
-
-  .skills-strip .card-row > * {
-    flex: 0 0 calc(50% - 10px);
-    min-width: 0;
-  }
-
-  .skills-nav {
-    position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 26px; height: 26px;
-    border-radius: 999px;
-    border: 1px solid rgba(0,0,0,0.06);
-    background: #ffffff;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.16);
-    display: flex; align-items: center; justify-content: center;
-    font-size: 16px; color: #374151;
-    cursor: pointer; z-index: 4;
-  }
-  .skills-nav--left { left: 6px; }
-  .skills-nav--right { right: 6px; }
-}
-
-
-/* Desktop centering of category squares */
-@media (min-width: 769px) {
-  .skills-strip .card-row {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center; /* centre the squares */
-    gap: 16px;
-    padding: 4px 0 0;
-  }
-}
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    .video-modal { display: none; background: rgba(0,0,0,0.85); }
+    .video-modal.active { display: flex; }
 </style>
 
-
-<main class="flex-1 w-full p-6 md:p-8 overflow-y-auto bg-[#E9F0E9]">
-  <div class="p-6 md:p-8 space-y-6 max-w-7xl mx-auto">
-    <!-- Header -->
-    <div class="flex items-center justify-between">
-      <div>
-        <h2 class="text-3xl font-bold text-[#005949]">Resource Hub</h2>
-        <p class="mt-1 text-sm text-[#6b7280]">
-          Your personalised strategies, skills, and articles from your professional.
-        </p>
-      </div>
-    </div>
-
-    <!-- SINGLE-COLUMN STACK -->
-    <div class="grid grid-cols-1 gap-5 lg:gap-6 items-start">
-      <!-- Daily Strategy -->
-      <div class="bg-white rounded-2xl border border-[#f0e3cc] shadow-[0_10px_28px_rgba(0,0,0,0.07)] p-5 min-h-[150px]">
-        <div class="flex items-baseline justify-between mb-3">
-          <?php if ($currentStrategy): ?>
-            <p class="text-xs text-[#6b7280]">Use this exercise to calm down</p>
-          <?php endif; ?>
+<div class="w-full min-h-screen overflow-y-auto bg-[#E9F0E9]">
+    <div class="p-6 md:p-8 space-y-10 max-w-7xl mx-auto">
+        
+        <div class="text-left border-b border-gray-200 pb-4">
+            <h2 class="text-3xl font-bold text-[#005949] mb-2"><?php echo htmlspecialchars($page_title); ?></h2>
+            <p class="text-gray-600 ">Your personalized library.</p>
         </div>
 
-        <?php if ($currentStrategy): ?>
-          <?php
-          [$sMediaExists, $sMediaUrlWeb] = build_media_paths($currentStrategy['media_url'] ?? null);
-          $strategyUrl = null;
-          if ($sMediaExists && $sMediaUrlWeb) {
-              $strategyUrl = $sMediaUrlWeb;
-          } else {
-              $rawStrategyContent = $currentStrategy['content'] ?? '';
-              if (preg_match('/https?:\/\/\S+/i', $rawStrategyContent, $m)) {
-                  $strategyUrl = $m[0];
-              }
-          }
-          $strategyHasLink = !empty($strategyUrl);
-          ?>
-          <div class="grid grid-cols-[auto_1fr_auto] gap-2 items-center">
-            <a href="?strategy_id=<?php echo (int)$prevId; ?>"
-               class="w-8 h-8 rounded-full border border-[#e2d7c1] bg-white flex items-center justify-center text-[15px] text-[#867a5a] hover:bg-[#f9f5eb]"
-               aria-label="Previous strategy">&#8249;</a>
-
-            <div class="flex items-center justify-between gap-3">
-              <div>
-                <?php if (!empty($currentStrategy['subtitle'])): ?>
-                  <p class="text-[11px] uppercase tracking-[0.06em] text-[#F26647] mb-1">
-                    <?php echo htmlspecialchars($currentStrategy['subtitle']); ?>
-                  </p>
-                <?php endif; ?>
-                <p class="text-[18px] font-semibold text-[#111827]">
-                  <?php echo htmlspecialchars($currentStrategy['title'] ?? ''); ?>
-                </p>
-              </div>
-
-              <?php if ($strategyHasLink): ?>
-                <a href="<?php echo htmlspecialchars($strategyUrl); ?>" target="_blank"
-                   class="w-11 h-11 rounded-full bg-[#005949] text-white flex items-center justify-center text-[21px] shadow-[0_7px_16px_rgba(0,0,0,0.18)] hover:bg-[#00453f]"
-                   aria-label="Open strategy">&#9654;</a>
-              <?php else: ?>
-                <button type="button"
-                        class="w-11 h-11 rounded-full bg-[#d4d7cf] text-white flex items-center justify-center text-[21px] cursor-default"
-                        aria-disabled="true">&#9654;</button>
-              <?php endif; ?>
+        <section class="relative group/banner">
+            <div id="banner-carousel" class="no-scrollbar flex overflow-x-auto snap-x snap-mandatory gap-4">
+                <?php foreach ($banner_items as $item): ?>
+                    <div class="min-w-full snap-center shrink-0">
+                        <div onclick="openItem(<?php echo htmlspecialchars(json_encode($item)); ?>)" class="relative h-52 md:h-72 w-full rounded-3xl overflow-hidden cursor-pointer shadow-sm group">
+                            <img src="<?php echo $item['img']; ?>" class="absolute inset-0 w-full h-full object-cover brightness-50 group-hover:scale-105 transition-transform duration-1000" alt="">
+                            <div class="absolute inset-0 p-8 flex flex-col justify-end bg-gradient-to-t from-black/80 via-transparent">
+                                <h3 class="text-white text-3xl font-black pl-8"><?php echo $item['title']; ?></h3>
+                                <p class="text-white/80 text-sm max-w-lg pl-8"><?php echo $item['desc']; ?></p>
+                            </div>
+                        </div>
+                    </div>
+                <?php endforeach; ?>
             </div>
+        </section>
 
-            <a href="?strategy_id=<?php echo (int)$nextId; ?>"
-               class="w-8 h-8 rounded-full border border-[#e2d7c1] bg-white flex items-center justify-center text-[15px] text-[#867a5a] hover:bg-[#f9f5eb]"
-               aria-label="Next strategy">&#8250;</a>
-          </div>
-        <?php else: ?>
-          <p class="text-sm text-[#6b7280]">No strategies available yet.</p>
-        <?php endif; ?>
-      </div>
-
-      <!-- Skills / Categories -->
-      <div class="bg-white rounded-2xl border border-[#f0e3cc] shadow-[0_10px_28px_rgba(0,0,0,0.07)] p-4">
-        <h2 class="text-sm font-semibold mb-2 text-[#231f20]">Categories</h2>
-        <?php if (!empty($skills)): ?>
-          <div class="skills-strip">
-            <button type="button" class="skills-nav skills-nav--left md:hidden" aria-label="Previous skills">&#8249;</button>
-
-            <div class="card-row">
-              <?php foreach ($skills as $skill): ?>
-                <?php
-                [$sMediaExists2, $sMediaUrlWeb2] = build_media_paths($skill['media_url'] ?? null);
-                $skillUrl = null;
-                if ($sMediaExists2 && $sMediaUrlWeb2) {
-                    $skillUrl = $sMediaUrlWeb2;
-                } else {
-                    $rawSkillContent = $skill['content'] ?? '';
-                    if (preg_match('/https?:\/\/\S+/i', $rawSkillContent, $m)) {
-                        $skillUrl = $m[0];
+        <section>
+            <h3 class="text-xl font-bold text-[#005949] mb-6 flex items-center gap-2">
+                <span class="w-1.5 h-6 bg-[#F282A9] rounded-full"></span> Categories
+            </h3>
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-6">
+                <?php foreach ($categories as $key => $cat): 
+                    $uploaded = null;
+                    // Look for matches in the new 'category_type' column
+                    foreach($skills as $s) { 
+                        if(isset($s['category_type']) && $s['category_type'] === $key) {
+                            $uploaded = $s; 
+                        }
                     }
-                }
-                $skillHasLink = !empty($skillUrl);
                 ?>
-                <?php if ($skillHasLink): ?>
-                  <a href="<?php echo htmlspecialchars($skillUrl); ?>" target="_blank"
-                     class="skill-card"
-                     title="Open skill resource">
-                    <?php echo htmlspecialchars($skill['title'] ?? ''); ?>
-                  </a>
-                <?php else: ?>
-                  <div class="skill-card skill-card--disabled">
-                    <?php echo htmlspecialchars($skill['title'] ?? ''); ?>
-                  </div>
-                <?php endif; ?>
-              <?php endforeach; ?>
-            </div>
+                <a href="<?php echo $uploaded ? htmlspecialchars($uploaded['media_url']) : '#'; ?>" 
+                   target="<?php echo $uploaded ? '_blank' : '_self'; ?>"
+                   class="group relative aspect-square <?php echo $cat['bg']; ?> rounded-[2.5rem] p-8 flex flex-col items-center justify-between shadow-md hover:-translate-y-2 transition-all overflow-hidden text-center">
+                    
+                    <div class="absolute inset-0 opacity-10 mix-blend-overlay">
+                        <img src="<?php echo $cat['img']; ?>" class="w-full h-full object-cover">
+                    </div>
 
-            <button type="button" class="skills-nav skills-nav--right md:hidden" aria-label="Next skills">&#8250;</button>
-          </div>
-        <?php else: ?>
-          <p class="text-sm text-[#6b7280]">No skills added yet.</p>
-        <?php endif; ?>
-      </div>
-
-      <!-- Articles & Guides -->
-      <div class="bg-white rounded-2xl border border-[#f0e3cc] shadow-[0_10px_28px_rgba(0,0,0,0.07)] p-4">
-        <h2 class="text-sm font-semibold mb-2 text-[#231f20]">Articles &amp; Guides</h2>
-        <?php if (!empty($articles)): ?>
-          <div class="flex flex-col gap-2">
-            <?php foreach ($articles as $article): ?>
-              <?php
-              [$aMediaExists, $aMediaUrlWeb] = build_media_paths($article['media_url'] ?? null);
-              $url = null;
-              if ($aMediaExists && $aMediaUrlWeb) {
-                  $url = $aMediaUrlWeb;
-              } else {
-                  $rawContent = $article['content'] ?? '';
-                  if (preg_match('/https?:\/\/\S+/i', $rawContent, $m)) {
-                      $url = $m[0];
-                  }
-              }
-              $hasLink = !empty($url);
-              ?>
-              <?php if ($hasLink): ?>
-                <a href="<?php echo htmlspecialchars($url); ?>" target="_blank"
-                   class="flex items-center gap-3 bg-white rounded-xl border border-[#f0e3cc] px-3 py-2 no-underline hover:bg-[#f9fafb]">
-                  <div class="w-8 h-8 rounded-full bg-[#e6f3ec] flex-shrink-0 relative">
-                    <div class="absolute inset-2 rounded-full border-2 border-[#c7e4d7]"></div>
-                  </div>
-                  <p class="m-0 text-[13px] text-[#111827] whitespace-nowrap overflow-hidden text-ellipsis">
-                    <?php echo htmlspecialchars($article['title'] ?? ''); ?>
-                  </p>
-                  <span class="ml-auto text-[16px] text-[#bcae8c] flex-shrink-0">&#8250;</span>
+                    <div class="relative w-20 h-20 md:w-24 md:h-24 rounded-full border-4 border-white/20 overflow-hidden shadow-inner z-10">
+                        <img src="<?php echo $cat['img']; ?>" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
+                    </div>
+                    
+                    <div class="z-10">
+                        <h4 class="text-white font-black text-lg leading-tight"><?php echo $cat['name']; ?></h4>
+                        <div class="mt-2 inline-flex items-center px-3 py-1 bg-white/10 rounded-full text-white text-[10px] font-bold uppercase tracking-widest">
+                            <?php echo $uploaded ? 'View Resource' : 'Locked'; ?>
+                        </div>
+                    </div>
                 </a>
-              <?php else: ?>
-                <div class="flex items-center gap-3 bg-white rounded-xl border border-[#f0e3cc] px-3 py-2 opacity-65">
-                  <div class="w-8 h-8 rounded-full bg-[#e6f3ec] flex-shrink-0 relative">
-                    <div class="absolute inset-2 rounded-full border-2 border-[#c7e4d7]"></div>
-                  </div>
-                  <p class="m-0 text-[13px] text-[#6b7280] whitespace-nowrap overflow-hidden text-ellipsis">
-                    <?php echo htmlspecialchars($article['title'] ?? ''); ?>
-                  </p>
-                  <span class="ml-auto text-[16px] text-[#bcae8c] flex-shrink-0">&#8250;</span>
-                </div>
-              <?php endif; ?>
-            <?php endforeach; ?>
-          </div>
-        <?php else: ?>
-          <p class="text-sm text-[#6b7280]">No articles yet.</p>
-        <?php endif; ?>
-      </div>
+                <?php endforeach; ?>
+            </div>
+        </section>
+
+        <section class="pb-12">
+            <h3 class="text-xl font-bold text-[#005949] mb-6 flex items-center gap-2">
+                <span class="w-1.5 h-6 bg-[#FFB100] rounded-full"></span> Articles & Guides
+            </h3>
+            <div class="bg-white rounded-3xl border border-[#c7e4d7] overflow-hidden shadow-sm">
+                <?php foreach ($display_articles as $art): 
+                    $is_image = preg_match('/\.(jpg|jpeg|png|gif|webp)$/i', $art['media_url']);
+                ?>
+                    <a href="<?php echo htmlspecialchars($art['media_url']); ?>" target="_blank" class="flex items-center p-6 border-b border-[#E9F0E9] last:border-0 hover:bg-[#F9FBF9] transition-all group">
+                        <div class="w-12 h-12 rounded-xl bg-[#E9F0E9] flex items-center justify-center text-[#005949] group-hover:bg-[#005949] group-hover:text-white transition-all">
+                            <?php if($is_image): ?>
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 fill-none stroke-current stroke-2" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                            <?php else: ?>
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 fill-none stroke-current stroke-2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+                            <?php endif; ?>
+                        </div>
+                        <div class="ml-6 flex-1">
+                            <h4 class="font-bold text-[#231F20] text-lg"><?php echo htmlspecialchars($art['title']); ?></h4>
+                            <p class="text-sm text-gray-400">View Resource</p>
+                        </div>
+                        <div class="text-[#bcae8c] text-2xl group-hover:translate-x-2 transition-transform">›</div>
+                    </a>
+                <?php endforeach; ?>
+            </div>
+        </section>
     </div>
-  </div>
-</main>
-
-
 </div>
 
-
-<?php
-if (file_exists(__DIR__ . '/../../components/modals.php')) {
-    include __DIR__ . '/../../components/modals.php';
-}
-?>
-
+<div id="videoModal" class="video-modal fixed inset-0 z-[999] items-center justify-center p-4">
+    <div class="relative w-full max-w-4xl aspect-video bg-black rounded-3xl overflow-hidden shadow-2xl">
+        <button onclick="closeVideo()" class="absolute top-4 right-4 text-white bg-black/50 w-10 h-10 rounded-full text-2xl z-10">✕</button>
+        <iframe id="modalIframe" class="w-full h-full" src="" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+    </div>
+</div>
 
 <script>
-
-document.addEventListener('DOMContentLoaded', function () {
-  const row  = document.querySelector('.skills-strip .card-row');
-  if (!row) return;
-
-  const prev = document.querySelector('.skills-nav--left');
-  const next = document.querySelector('.skills-nav--right');
-
-  function getStep() {
-    const item = row.children[0];
-    return item ? item.offsetWidth + 12 : 160;
-  }
-
-  prev && prev.addEventListener('click', function () {
-    row.scrollBy({ left: -getStep(), behavior: 'smooth' });
-  });
-
-  next && next.addEventListener('click', function () {
-    row.scrollBy({ left: getStep(), behavior: 'smooth' });
-  });
-});
+    // [Keep your existing JavaScript for Carousel and Modal here]
+    // ... 
 </script>
