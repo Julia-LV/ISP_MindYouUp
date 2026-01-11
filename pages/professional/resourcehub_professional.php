@@ -72,8 +72,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (empty($media_url)) $errors[] = "Please provide a file or a link.";
 
     if (empty($errors)) {
-        $stmt = $conn->prepare("INSERT INTO resource_hub (item_type, category_type, banner_content_type, title, subtitle, media_url, image_url) VALUES (?, ?, ?, ?, ?, ?, ?)");
-        $stmt->bind_param('sssssss', $item_type, $category_type, $banner_content_type, $title, $subtitle, $media_url, $image_url);
+        $stmt = $conn->prepare("INSERT INTO resource_hub (item_type, category_type, banner_content_type, title, subtitle, media_url, image_url, professional_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+        $stmt->bind_param('sssssssi', $item_type, $category_type, $banner_content_type, $title, $subtitle, $media_url, $image_url, $currentProfessionalId);
         
         if ($stmt->execute()) {
             $newId = $stmt->insert_id;
@@ -100,8 +100,8 @@ require_once __DIR__ . '/../../includes/navbar.php';
         <div class="flex justify-between items-center mb-8">
             <h1 class="text-3xl font-bold text-[#005949]">Resource Hub Admin</h1>
             <div class="flex gap-4">
-                <a href="resourcehub_library.php" class="bg-[#005949] text-white px-6 py-2 rounded-full font-bold shadow-lg hover:bg-[#004236] transition-all">Library</a>
-                <a href="resourcehub_existing.php" class="bg-[#005949] text-white px-6 py-2 rounded-full font-bold shadow-lg hover:bg-[#004236] transition-all">Uploaded Items</a>
+                <a href="resourcehub_library.php" class="bg-gray-400 text-white px-6 py-2 rounded-full font-bold shadow-lg hover:bg-gray-600 transition-all">Library</a>
+                <a href="resourcehub_existing.php" class="bg-[#F48066] text-white px-6 py-2 rounded-full font-bold shadow-lg hover:bg-[#e0553a] transition-all">History</a>
             </div>
         </div>
 
@@ -119,7 +119,7 @@ require_once __DIR__ . '/../../includes/navbar.php';
                 <div>
                     <label class="block text-sm font-bold text-[#005949] mb-2">Select Item Type</label>
                     <select name="item_type" id="item_type" class="w-full p-3 rounded-xl border border-[#c7e4d7]">
-                        <option value="article">Article/Guide</option>
+                        <option value="article">Article & Guide</option>
                         <option value="category">Categories</option>
                         <option value="banner">Banner (Max 6)</option>
                     </select>
