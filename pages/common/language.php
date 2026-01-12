@@ -11,6 +11,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['lang'])) {
     setcookie('site_lang', $choice, time() + 60 * 60 * 24 * 365, '/');
     $_SESSION['site_lang'] = $choice;
     $currentLang = $choice;
+    
+    // Redirect to apply language change
+    header("Location: language.php");
+    exit;
 }
 
 $page_title = 'Language';
@@ -107,26 +111,6 @@ $page_title = 'Language';
             vertical-align: middle;
             margin-right: 8px;
         }
-        
-        /* Hide Google Translate toolbar */
-        .goog-te-banner-frame,
-        .skiptranslate,
-        #goog-gt-tt,
-        .goog-te-balloon-frame,
-        div#goog-gt-,
-        .goog-tooltip,
-        .goog-tooltip:hover {
-            display: none !important;
-        }
-        
-        body {
-            top: 0 !important;
-        }
-        
-        .goog-text-highlight {
-            background-color: transparent !important;
-            box-shadow: none !important;
-        }
     </style>
 </head>
 <body>
@@ -205,48 +189,16 @@ $page_title = 'Language';
             </div>
         </div>
     </div>
-
-    <!-- Google Translate Element (hidden) -->
-    <div id="google_translate_element" style="display:none;"></div>
-
+    
     <script>
-    // Google Translate initialization
-    function googleTranslateElementInit() {
-        new google.translate.TranslateElement({
-            pageLanguage: 'en',
-            includedLanguages: 'en,pt,es,fr',
-            autoDisplay: false
-        }, 'google_translate_element');
-    }
-    
-    // Function to trigger translation
-    function translatePage(lang) {
-        // Wait for Google Translate to load
-        const checkGT = setInterval(() => {
-            const gtCombo = document.querySelector('.goog-te-combo');
-            if (gtCombo) {
-                clearInterval(checkGT);
-                gtCombo.value = lang;
-                gtCombo.dispatchEvent(new Event('change'));
-            }
-        }, 100);
-        
-        // Timeout after 5 seconds
-        setTimeout(() => clearInterval(checkGT), 5000);
-    }
-    
-    // Auto-translate on page load based on saved preference
+    // After language selection, trigger translation
     document.addEventListener('DOMContentLoaded', function() {
         const savedLang = '<?php echo $currentLang; ?>';
-        if (savedLang !== 'en') {
-            // Small delay to ensure Google Translate is loaded
-            setTimeout(() => translatePage(savedLang), 1000);
+        if (savedLang && savedLang !== 'en' && typeof translatePage === 'function') {
+            setTimeout(() => translatePage(savedLang), 1500);
         }
     });
     </script>
-    
-    <!-- Google Translate API -->
-    <script src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
     
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
 </body>

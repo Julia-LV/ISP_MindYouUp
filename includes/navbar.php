@@ -6,7 +6,66 @@ if (session_status() === PHP_SESSION_NONE) {
 $user_role = isset($_SESSION['role']) ? strtolower($_SESSION['role']) : 'patient';
 
 $base_path = ($user_role === 'professional') ? "../../pages/professional/" : "../../pages/patient/";
+
+// Get current language from session/cookie for Google Translate
+$currentLang = $_SESSION['site_lang'] ?? $_COOKIE['site_lang'] ?? 'en';
 ?>
+
+<!-- Google Translate Global Styles -->
+<style>
+/* Hide Google Translate toolbar and branding */
+.goog-te-banner-frame,
+#goog-gt-tt,
+.goog-te-balloon-frame,
+div#goog-gt-,
+.goog-tooltip,
+.goog-tooltip:hover,
+.goog-te-gadget-icon,
+.goog-te-gadget-simple .goog-te-menu-value span:first-child {
+    display: none !important;
+}
+
+/* Hide the translate element but keep it functional */
+#google_translate_element {
+    position: absolute !important;
+    top: -9999px !important;
+    left: -9999px !important;
+    visibility: hidden !important;
+}
+
+/* But keep the dropdown visible when opened */
+.goog-te-menu-frame {
+    visibility: visible !important;
+}
+
+body {
+    top: 0 !important;
+}
+
+.goog-text-highlight {
+    background-color: transparent !important;
+    box-shadow: none !important;
+}
+
+/* Fix for translated text styling */
+font[style] {
+    background-color: transparent !important;
+    box-shadow: none !important;
+}
+
+/* Hide the "Powered by Google" bar at top */
+.skiptranslate {
+    display: none !important;
+    height: 0 !important;
+}
+
+iframe.skiptranslate {
+    display: none !important;
+}
+</style>
+
+<!-- Google Translate Element (positioned off-screen, not display:none) -->
+<div id="google_translate_element"></div>
 
 <div id="sidebar-overlay" class="fixed inset-0 bg-black/50 z-[90] hidden transition-opacity duration-300"></div>
 
@@ -111,3 +170,102 @@ $base_path = ($user_role === 'professional') ? "../../pages/professional/" : "..
 </nav>
 
 <script src="../../JS/navbar.js"></script>
+
+<!-- Google Translate API -->
+<script>
+// Set Google Translate cookie BEFORE loading the API
+function setGoogleTranslateCookie(lang) {
+    const langCode = (lang === 'en') ? '' : '/en/' + lang;
+    // Clear existing cookies first
+    document.cookie = 'googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+    document.cookie = 'googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=.' + window.location.hostname;
+    
+    if (lang !== 'en') {
+        document.cookie = 'googtrans=' + langCode + '; path=/;';
+        document.cookie = 'googtrans=' + langCode + '; path=/; domain=.' + window.location.hostname;
+    }
+}
+
+// Set cookie immediately based on saved language
+const initialLang = '<?php echo $currentLang; ?>';
+setGoogleTranslateCookie(initialLang);
+</script>
+<script src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+<script>
+// Google Translate initialization - store reference for checking
+let googleTranslateReady = false;
+
+function googleTranslateElementInit() {
+    new google.translate.TranslateElement({
+        pageLanguage: 'en',
+        includedLanguages: 'en,pt,es,fr',
+        autoDisplay: false,
+        layout: google.translate.TranslateElement.InlineLayout.SIMPLE
+    }, 'google_translate_element');
+    
+    // Mark as ready after a short delay
+    setTimeout(() => {
+        googleTranslateReady = true;
+        console.log('Google Translate: Widget initialized');
+    }, 500);
+}
+
+// Function to trigger translation
+function translatePage(lang) {
+    // Set the Google Translate cookie
+    setGoogleTranslateCookie(lang);
+    
+    if (lang === 'en') {
+        // Reset to English - reload to clear translation
+        const googleTeCombo = document.querySelector('.goog-te-combo');
+        if (googleTeCombo) {
+            googleTeCombo.value = '';
+            googleTeCombo.dispatchEvent(new Event('change'));
+        }
+        // Force reload to clear translation state
+        setTimeout(() => location.reload(), 100);
+        return;
+    }
+    
+    // Wait for Google Translate to load and apply translation
+    let attempts = 0;
+    const maxAttempts = 150; // 15 seconds max
+    
+    const checkGT = setInterval(() => {
+        attempts++;
+        const gtCombo = document.querySelector('.goog-te-combo');
+        const gtFrame = document.querySelector('.goog-te-menu-frame');
+        
+        // Check both the combo box and if it has options loaded
+        if (gtCombo && gtCombo.options && gtCombo.options.length > 1) {
+            clearInterval(checkGT);
+            // Force the correct language
+            if (gtCombo.value !== lang) {
+                gtCombo.value = lang;
+                gtCombo.dispatchEvent(new Event('change'));
+                console.log('Google Translate: Language set to', lang);
+            }
+        } else if (attempts >= maxAttempts) {
+            clearInterval(checkGT);
+            console.warn('Google Translate: Timeout waiting for widget to load. gtCombo exists:', !!gtCombo, 'options:', gtCombo ? gtCombo.options.length : 0);
+        }
+    }, 100);
+}
+
+// Auto-translate on page load based on saved preference
+window.addEventListener('load', function() {
+    const savedLang = '<?php echo $currentLang; ?>';
+    if (savedLang && savedLang !== 'en') {
+        // Give Google Translate extra time to fully initialize
+        setTimeout(() => translatePage(savedLang), 2000);
+    }
+});
+</script>
+
+<?php 
+// Include push notification component (loads on every page)
+$pushNotifPath = __DIR__ . '/../components/push_notification.php';
+if (file_exists($pushNotifPath)) {
+    include_once $pushNotifPath;
+}
+?>
