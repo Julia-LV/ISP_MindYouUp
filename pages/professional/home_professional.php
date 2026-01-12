@@ -2,7 +2,7 @@
 /*
  * home_professional.php
  * * Doctor/Professional Dashboard
- * * Features: Independent Analytics + Recent Tables (Fixed Widths) + View All Modals
+ * * Features: Filtered Patient List, Dynamic Messaging, and Optimized PDF Reporting
  */
 
 session_start();
@@ -19,13 +19,14 @@ date_default_timezone_set('Europe/Lisbon');
 
 // --- SECURITY CHECK ---
 if (!isset($_SESSION["loggedin"]) || $_SESSION["loggedin"] !== true || $_SESSION["role"] !== "Professional") {
-    // header("Location: ../auth/login.php"); exit;
+    header("Location: ../auth/login.php");
+    exit;
 }
 
-$doctor_id = $_SESSION["user_id"] ?? 999;
+$doctor_id = $_SESSION["user_id"] ?? 0;
 
 // =================================================================================
-// 1. AJAX HANDLER
+// 1. AJAX HANDLER (For Graphs and Modals)
 // =================================================================================
 if (isset($_GET['ajax_fetch']) && isset($_GET['patient_id'])) {
     header('Content-Type: application/json');
@@ -177,10 +178,10 @@ if (isset($_GET['ajax_fetch']) && isset($_GET['patient_id'])) {
     }
 }
 
-// --- 1. FETCH PATIENT LIST  ---
+// --- 1. FETCH FILTERED PATIENT LIST ---
 $patients = [];
 if ($conn) {
-    // We join with the link table to only show patients assigned to THIS professional
+    // UPDATED: Only fetch patients linked to this professional
     $stmt = $conn->prepare("
         SELECT up.User_ID, up.First_Name, up.Last_Name, l.Link_ID 
         FROM user_profile up
@@ -208,7 +209,7 @@ $selected_link_id = 0;
 foreach ($patients as $p) {
     if ($p['id'] == $selected_patient_id) {
         $selected_patient_name = $p['name'];
-        $selected_link_id = $p['link_id']; // Capture the link for the selected patient
+        $selected_link_id = $p['link_id'];
         break;
     }
 }
@@ -266,7 +267,7 @@ if ($total_tics_prev_30d > 0) {
     $trend_direction = 'up';
 }
 
-// Graph 1: Dates & Stress/Severity
+// Graph 1 Data
 $dates = [];
 $tic_severity = [];
 $stress_levels = [];
@@ -293,7 +294,7 @@ if ($conn && $selected_patient_id) {
     }
 }
 
-// Graph 2: Pie
+// Pie Chart Data
 $motor_count = 0;
 $vocal_count = 0;
 if ($conn && $selected_patient_id) {
@@ -308,7 +309,7 @@ if ($conn && $selected_patient_id) {
     $stmt->close();
 }
 
-// Recent Logs
+// Recent Tables Data
 $recent_logs = [];
 $recent_emotions = [];
 if ($conn && $selected_patient_id) {
@@ -335,6 +336,59 @@ $page_title = "Professional Dashboard";
 include '../../components/header_component.php';
 include '../../includes/navbar.php';
 ?>
+
+<style>
+    /* PDF OPTIMIZATION STYLES
+       Prevents overlapping and ensures charts don't break across pages 
+    */
+    .pdf-mode {
+        width: 1024px !important;
+        background: #E9F0E9 !important;
+        padding: 40px !important;
+    }
+
+    .pdf-mode .bg-white {
+        border: 1px solid #e5e7eb !important;
+        box-shadow: none !important;
+    }
+
+    .pdf-card-fix {
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+    }
+
+    .html2pdf__page-break {
+        display: block;
+        height: 20px;
+        page-break-before: always;
+    }
+
+    .pdf-export-container {
+        width: 790px !important;
+        /* Fixed width for standard PDF */
+        background: #E9F0E9 !important;
+        padding: 30px !important;
+        color: #1f2937 !important;
+    }
+
+    .pdf-export-container .grid {
+        display: block !important;
+        /* Force single column for stability */
+    }
+
+    .pdf-export-container .bg-white {
+        margin-bottom: 20px !important;
+        border: 1px solid #e5e7eb !important;
+        break-inside: avoid !important;
+        /* Prevents splitting a card across pages */
+    }
+
+    .pdf-export-container canvas,
+    .pdf-export-container img {
+        max-width: 100% !important;
+        height: auto !important;
+    }
+</style>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -363,9 +417,9 @@ include '../../includes/navbar.php';
             <button onclick="exportPDF()" class="px-4 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 shadow-sm flex items-center gap-2">
                 <i data-lucide="download" class="w-4 h-4"></i> Export PDF
             </button>
+
             <?php if ($selected_link_id): ?>
-                <a href="chat.php?link_id=<?php echo $selected_link_id; ?>"
-                    class="px-4 py-2 text-sm font-medium text-white bg-[#005949] rounded-lg hover:bg-[#004539] shadow-sm flex items-center gap-2">
+                <a href="chat_professional.php?link_id=<?php echo $selected_link_id; ?>" class="px-4 py-2 text-sm font-medium text-white bg-[#005949] rounded-lg hover:bg-[#004539] shadow-sm flex items-center gap-2">
                     <i data-lucide="message-square" class="w-4 h-4"></i> Message
                 </a>
             <?php else: ?>
@@ -388,218 +442,229 @@ include '../../includes/navbar.php';
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
-                <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
-                    <p class="text-xs font-semibold text-gray-400 uppercase">Tics (30 Days)</p>
-                    <div class="mt-2 flex items-end gap-2">
-                        <span class="text-3xl font-bold text-gray-800"><?php echo $total_tics_30d; ?></span>
+            <div class="pdf-card-fix space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                    <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
+                        <p class="text-xs font-semibold text-gray-400 uppercase">Tics (30 Days)</p>
+                        <div class="mt-2 flex items-end gap-2">
+                            <span class="text-3xl font-bold text-gray-800"><?php echo $total_tics_30d; ?></span>
+                            <?php if ($trend_direction === 'up'): ?>
+                                <span class="text-xs font-bold text-red-500 flex items-center mb-1 bg-red-50 px-1.5 py-0.5 rounded">
+                                    <i data-lucide="arrow-up" class="w-3 h-3 mr-1"></i> <?php echo $trend_percent; ?>%
+                                </span>
+                            <?php elseif ($trend_direction === 'down'): ?>
+                                <span class="text-xs font-bold text-green-600 flex items-center mb-1 bg-green-50 px-1.5 py-0.5 rounded">
+                                    <i data-lucide="arrow-down" class="w-3 h-3 mr-1"></i> <?php echo $trend_percent; ?>%
+                                </span>
+                            <?php else: ?>
+                                <span class="text-xs font-bold text-gray-400 mb-1 px-1.5 py-0.5">— 0%</span>
+                            <?php endif; ?>
+                        </div>
+                        <p class="text-[10px] text-gray-400 mt-1">*compared to previous 30 days</p>
+                    </div>
 
-                        <?php if ($trend_direction === 'up'): ?>
-                            <span class="text-xs font-bold text-red-500 flex items-center mb-1 bg-red-50 px-1.5 py-0.5 rounded">
-                                <i data-lucide="arrow-up" class="w-3 h-3 mr-1"></i> <?php echo $trend_percent; ?>%
+                    <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
+                        <p class="text-xs font-semibold text-gray-400 uppercase">Avg Stress Score</p>
+                        <div class="mt-2 flex items-end gap-2"><span class="text-3xl font-bold text-gray-800"><?php echo $avg_stress_30d; ?></span><span class="text-xs text-gray-400 mb-1">/ 10</span></div>
+                    </div>
+
+                    <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
+                        <p class="text-xs font-semibold text-gray-400 uppercase">Dominant Type</p>
+                        <div class="mt-2"><span class="text-2xl font-bold text-[#005949]"><?php echo ($motor_count > $vocal_count) ? 'Motor' : 'Vocal'; ?></span></div>
+                    </div>
+
+                    <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
+                        <p class="text-xs font-semibold text-gray-400 uppercase">Adherence</p>
+                        <div class="mt-2 flex items-end gap-2">
+                            <span class="text-3xl font-bold <?php echo ($adherence_percentage >= 75) ? 'text-green-600' : (($adherence_percentage >= 50) ? 'text-yellow-600' : 'text-red-500'); ?>">
+                                <?php echo $adherence_percentage; ?>%
                             </span>
-                        <?php elseif ($trend_direction === 'down'): ?>
-                            <span class="text-xs font-bold text-green-600 flex items-center mb-1 bg-green-50 px-1.5 py-0.5 rounded">
-                                <i data-lucide="arrow-down" class="w-3 h-3 mr-1"></i> <?php echo $trend_percent; ?>%
-                            </span>
-                        <?php else: ?>
-                            <span class="text-xs font-bold text-gray-400 mb-1 px-1.5 py-0.5">— 0%</span>
-                        <?php endif; ?>
-                    </div>
-                    <p class="text-[10px] text-gray-400 mt-1">*compared to previous 30 days</p>
-                </div>
-
-                <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
-                    <p class="text-xs font-semibold text-gray-400 uppercase">Avg Stress Score</p>
-                    <div class="mt-2 flex items-end gap-2"><span class="text-3xl font-bold text-gray-800"><?php echo $avg_stress_30d; ?></span><span class="text-xs text-gray-400 mb-1">/ 10</span></div>
-                </div>
-
-                <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
-                    <p class="text-xs font-semibold text-gray-400 uppercase">Dominant Type</p>
-                    <div class="mt-2"><span class="text-2xl font-bold text-[#005949]"><?php echo ($motor_count > $vocal_count) ? 'Motor' : 'Vocal'; ?></span></div>
-                </div>
-
-                <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
-                    <p class="text-xs font-semibold text-gray-400 uppercase">Adherence</p>
-                    <div class="mt-2 flex items-end gap-2">
-                        <span class="text-3xl font-bold <?php echo ($adherence_percentage >= 75) ? 'text-green-600' : (($adherence_percentage >= 50) ? 'text-yellow-600' : 'text-red-500'); ?>">
-                            <?php echo $adherence_percentage; ?>%
-                        </span>
-                    </div>
-                    <p class="text-[10px] text-gray-400 mt-1">*Consistency (Log Freq)</p>
-                </div>
-            </div>
-
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div class="lg:col-span-2 bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
-                    <div class="flex justify-between items-center mb-4">
-                        <h3 class="font-bold text-gray-800">Trigger Analysis: Stress vs. Severity</h3>
-                        <div class="flex items-center gap-2">
-                            <button onclick="changeOffset('main', 7)" class="p-1 hover:bg-gray-100 rounded text-gray-500"><i data-lucide="chevron-left" class="w-5 h-5"></i></button>
-                            <button onclick="changeOffset('main', -7)" class="p-1 hover:bg-gray-100 rounded text-gray-500"><i data-lucide="chevron-right" class="w-5 h-5"></i></button>
                         </div>
+                        <p class="text-[10px] text-gray-400 mt-1">*Consistency (Log Freq)</p>
                     </div>
-                    <div class="h-72 w-full"><canvas id="doctorComboChart"></canvas></div>
                 </div>
-                <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex flex-col">
-                    <h3 class="font-bold text-gray-800 mb-4">Tic Classification</h3>
-                    <div class="flex-1 flex items-center justify-center relative">
-                        <canvas id="typeDoughnutChart"></canvas>
-                        <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
-                            <div class="text-center"><span class="block text-2xl font-bold text-gray-800"><?php echo $motor_count + $vocal_count; ?></span><span class="text-xs text-gray-400">Total</span></div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="lg:col-span-2 bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="font-bold text-gray-800">Trigger Analysis: Stress vs. Severity</h3>
+                            <div class="flex items-center gap-2 print:hidden">
+                                <button onclick="changeOffset('main', 7)" class="p-1 hover:bg-gray-100 rounded text-gray-500"><i data-lucide="chevron-left" class="w-5 h-5"></i></button>
+                                <button onclick="changeOffset('main', -7)" class="p-1 hover:bg-gray-100 rounded text-gray-500"><i data-lucide="chevron-right" class="w-5 h-5"></i></button>
+                            </div>
                         </div>
+                        <div class="h-72 w-full"><canvas id="doctorComboChart"></canvas></div>
                     </div>
-                    <div class="mt-4 grid grid-cols-2 gap-2 text-center text-xs">
-                        <div class="bg-teal-50 p-2 rounded text-[#005949] font-semibold">Motor: <?php echo $motor_count; ?></div>
-                        <div class="bg-[#FDE8EF] p-2 rounded text-[#F282A9] font-semibold">Vocal: <?php echo $vocal_count; ?></div>
+                    <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex flex-col">
+                        <h3 class="font-bold text-gray-800 mb-4">Tic Classification</h3>
+                        <div class="flex-1 flex items-center justify-center relative">
+                            <canvas id="typeDoughnutChart"></canvas>
+                            <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+                                <div class="text-center"><span class="block text-2xl font-bold text-gray-800"><?php echo $motor_count + $vocal_count; ?></span><span class="text-xs text-gray-400">Total</span></div>
+                            </div>
+                        </div>
+                        <div class="mt-4 grid grid-cols-2 gap-2 text-center text-xs">
+                            <div class="bg-teal-50 p-2 rounded text-[#005949] font-semibold">Motor: <?php echo $motor_count; ?></div>
+                            <div class="bg-[#FDE8EF] p-2 rounded text-[#F282A9] font-semibold">Vocal: <?php echo $vocal_count; ?></div>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 page-break-inside-avoid">
+            <div class="html2pdf__page-break"></div>
 
-                <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm lg:col-span-2">
-                    <div class="flex justify-between items-center mb-4">
-                        <div>
-                            <h3 class="font-bold text-gray-800">Symptom Cluster Analysis</h3>
-                            <p class="text-xs text-gray-400">Daily Breakdown</p>
-                        </div>
-                        <div class="flex items-center gap-2">
-                            <button onclick="changeOffset('multi', 7)" class="p-1 hover:bg-gray-100 rounded text-gray-500"><i data-lucide="chevron-left" class="w-4 h-4"></i></button>
-                            <button onclick="changeOffset('multi', -7)" class="p-1 hover:bg-gray-100 rounded text-gray-500"><i data-lucide="chevron-right" class="w-4 h-4"></i></button>
-                        </div>
-                    </div>
-                    <div class="h-64 relative flex justify-center"><canvas id="chart-multi"></canvas></div>
-                </div>
+            <div class="pdf-card-fix space-y-6">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
-                <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
-                    <div class="flex justify-between items-center mb-4">
-                        <div>
-                            <h3 class="font-bold text-gray-800">Sleep & Frequency</h3>
-                            <p class="text-xs text-gray-400">Sleep Score vs Count</p>
+                    <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm lg:col-span-2">
+                        <div class="flex justify-between items-center mb-4">
+                            <div>
+                                <h3 class="font-bold text-gray-800">Symptom Cluster Analysis</h3>
+                                <p class="text-xs text-gray-400">Daily Breakdown</p>
+                            </div>
+                            <div class="flex items-center gap-2 print:hidden">
+                                <button onclick="changeOffset('multi', 7)" class="p-1 hover:bg-gray-100 rounded text-gray-500"><i data-lucide="chevron-left" class="w-4 h-4"></i></button>
+                                <button onclick="changeOffset('multi', -7)" class="p-1 hover:bg-gray-100 rounded text-gray-500"><i data-lucide="chevron-right" class="w-4 h-4"></i></button>
+                            </div>
                         </div>
-                        <div class="flex items-center gap-2">
-                            <button onclick="changeOffset('sleep', 7)" class="p-1 hover:bg-gray-100 rounded text-gray-500"><i data-lucide="chevron-left" class="w-4 h-4"></i></button>
-                            <button onclick="changeOffset('sleep', -7)" class="p-1 hover:bg-gray-100 rounded text-gray-500"><i data-lucide="chevron-right" class="w-4 h-4"></i></button>
-                        </div>
+                        <div class="h-64 relative flex justify-center"><canvas id="chart-multi"></canvas></div>
                     </div>
-                    <div class="h-48 relative"><canvas id="chart-sleep"></canvas></div>
-                </div>
 
-                <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
-                    <div class="flex justify-between items-center mb-4">
-                        <div>
-                            <h3 class="font-bold text-gray-800">Hourly Rythm of the week</h3>
-                            <p class="text-xs text-gray-400">Activity by Hour</p>
+                    <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+                        <div class="flex justify-between items-center mb-4">
+                            <div>
+                                <h3 class="font-bold text-gray-800">Sleep & Frequency</h3>
+                                <p class="text-xs text-gray-400">Sleep Score vs Count</p>
+                            </div>
+                            <div class="flex items-center gap-2 print:hidden">
+                                <button onclick="changeOffset('sleep', 7)" class="p-1 hover:bg-gray-100 rounded text-gray-500"><i data-lucide="chevron-left" class="w-4 h-4"></i></button>
+                                <button onclick="changeOffset('sleep', -7)" class="p-1 hover:bg-gray-100 rounded text-gray-500"><i data-lucide="chevron-right" class="w-4 h-4"></i></button>
+                            </div>
                         </div>
-                        <div class="flex items-center gap-2">
-                            <button onclick="changeOffset('hourly', 7)" class="p-1 hover:bg-gray-100 rounded text-gray-500"><i data-lucide="chevron-left" class="w-4 h-4"></i></button>
-                            <span id="range-hourly" class="text-xs font-medium text-gray-400 w-24 text-center">...</span>
-                            <button onclick="changeOffset('hourly', -7)" class="p-1 hover:bg-gray-100 rounded text-gray-500"><i data-lucide="chevron-right" class="w-4 h-4"></i></button>
-                        </div>
+                        <div class="h-48 relative"><canvas id="chart-sleep"></canvas></div>
                     </div>
-                    <div class="h-48 relative"><canvas id="chart-hourly"></canvas></div>
-                </div>
 
-                <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
-                    <div class="flex justify-between items-center mb-4">
-                        <div>
-                            <h3 class="font-bold text-gray-800">Mood Profile</h3>
-                            <p class="text-xs text-gray-400">Top Reported in the week</p>
+                    <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+                        <div class="flex justify-between items-center mb-4">
+                            <div>
+                                <h3 class="font-bold text-gray-800">Hourly Rhythm of the week</h3>
+                                <p class="text-xs text-gray-400">Activity by Hour</p>
+                            </div>
+                            <div class="flex items-center gap-2 print:hidden">
+                                <button onclick="changeOffset('hourly', 7)" class="p-1 hover:bg-gray-100 rounded text-gray-500"><i data-lucide="chevron-left" class="w-4 h-4"></i></button>
+                                <span id="range-hourly" class="text-xs font-medium text-gray-400 w-24 text-center">...</span>
+                                <button onclick="changeOffset('hourly', -7)" class="p-1 hover:bg-gray-100 rounded text-gray-500"><i data-lucide="chevron-right" class="w-4 h-4"></i></button>
+                            </div>
                         </div>
-                        <div class="flex items-center gap-2">
-                            <button onclick="changeOffset('moods', 7)" class="p-1 hover:bg-gray-100 rounded text-gray-500"><i data-lucide="chevron-left" class="w-4 h-4"></i></button>
-                            <span id="range-moods" class="text-xs font-medium text-gray-400 w-24 text-center">...</span>
-                            <button onclick="changeOffset('moods', -7)" class="p-1 hover:bg-gray-100 rounded text-gray-500"><i data-lucide="chevron-right" class="w-4 h-4"></i></button>
-                        </div>
+                        <div class="h-48 relative"><canvas id="chart-hourly"></canvas></div>
                     </div>
-                    <div class="h-48 relative"><canvas id="chart-moods"></canvas></div>
-                </div>
-
-                <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
-                    <div class="flex justify-between items-center mb-4">
-                        <div>
-                            <h3 class="font-bold text-gray-800">Somatic Burden</h3>
-                            <p class="text-xs text-gray-400">Affected Muscles</p>
-                        </div>
-                        <div class="flex items-center gap-2">
-                            <button onclick="changeOffset('muscles', 7)" class="p-1 hover:bg-gray-100 rounded text-gray-500"><i data-lucide="chevron-left" class="w-4 h-4"></i></button>
-                            <span id="range-muscles" class="text-xs font-medium text-gray-400 w-24 text-center">...</span>
-                            <button onclick="changeOffset('muscles', -7)" class="p-1 hover:bg-gray-100 rounded text-gray-500"><i data-lucide="chevron-right" class="w-4 h-4"></i></button>
-                        </div>
-                    </div>
-                    <div class="h-48 relative flex justify-center"><canvas id="chart-muscles"></canvas></div>
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden flex flex-col">
-                    <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center bg-gray-50">
-                        <h3 class="font-bold text-gray-800">Recent Tic Logs</h3>
-                        <button onclick="openModal('modal-tics')" class="text-xs font-semibold text-[#005949] hover:underline">View All</button>
+            <div class="html2pdf__page-break"></div>
+
+            <div class="pdf-card-fix space-y-6">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+                        <div class="flex justify-between items-center mb-4">
+                            <div>
+                                <h3 class="font-bold text-gray-800">Mood Profile</h3>
+                                <p class="text-xs text-gray-400">Top Reported in the week</p>
+                            </div>
+                            <div class="flex items-center gap-2 print:hidden">
+                                <button onclick="changeOffset('moods', 7)" class="p-1 hover:bg-gray-100 rounded text-gray-500"><i data-lucide="chevron-left" class="w-4 h-4"></i></button>
+                                <span id="range-moods" class="text-xs font-medium text-gray-400 w-24 text-center">...</span>
+                                <button onclick="changeOffset('moods', -7)" class="p-1 hover:bg-gray-100 rounded text-gray-500"><i data-lucide="chevron-right" class="w-4 h-4"></i></button>
+                            </div>
+                        </div>
+                        <div class="h-48 relative"><canvas id="chart-moods"></canvas></div>
                     </div>
-                    <div class="overflow-x-auto flex-1">
-                        <table class="w-full text-sm text-left table-fixed">
-                            <thead class="bg-gray-50 text-gray-500 font-medium border-b border-gray-200">
-                                <tr>
-                                    <th class="px-6 py-3 w-[25%]">Date</th>
-                                    <th class="px-6 py-3 w-[45%]">Tic</th>
-                                    <th class="px-6 py-3 w-[30%] text-center">Intensity</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-gray-100">
-                                <?php if (count($recent_logs) > 0): ?>
-                                    <?php foreach ($recent_logs as $log): ?>
-                                        <tr class="hover:bg-gray-50">
-                                            <td class="px-6 py-3 text-gray-600 whitespace-nowrap"><?php echo date('M d, H:i', strtotime($log['Created_At'])); ?></td>
-                                            <td class="px-6 py-3">
-                                                <div class="font-medium text-gray-800 truncate" title="<?php echo htmlspecialchars($log['Type_Description']); ?>"><?php echo htmlspecialchars($log['Type_Description']); ?></div>
-                                                <div class="text-xs text-gray-400 truncate"><?php echo htmlspecialchars($log['Type']); ?></div>
-                                            </td>
-                                            <td class="px-6 py-3 text-center"><span class="inline-block px-2 py-0.5 rounded text-xs font-bold <?php echo ($log['Intensity'] > 7) ? 'bg-red-100 text-red-600' : 'bg-gray-100 text-gray-600'; ?>"><?php echo $log['Intensity']; ?></span></td>
-                                        </tr>
-                                    <?php endforeach; ?>
-                                <?php else: ?>
+
+                    <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+                        <div class="flex justify-between items-center mb-4">
+                            <div>
+                                <h3 class="font-bold text-gray-800">Somatic Burden</h3>
+                                <p class="text-xs text-gray-400">Affected Muscles</p>
+                            </div>
+                            <div class="flex items-center gap-2 print:hidden">
+                                <button onclick="changeOffset('muscles', 7)" class="p-1 hover:bg-gray-100 rounded text-gray-500"><i data-lucide="chevron-left" class="w-4 h-4"></i></button>
+                                <span id="range-muscles" class="text-xs font-medium text-gray-400 w-24 text-center">...</span>
+                                <button onclick="changeOffset('muscles', -7)" class="p-1 hover:bg-gray-100 rounded text-gray-500"><i data-lucide="chevron-right" class="w-4 h-4"></i></button>
+                            </div>
+                        </div>
+                        <div class="h-48 relative flex justify-center"><canvas id="chart-muscles"></canvas></div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden flex flex-col">
+                        <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center bg-gray-50">
+                            <h3 class="font-bold text-gray-800">Recent Tic Logs</h3>
+                            <button onclick="openModal('modal-tics')" class="text-xs font-semibold text-[#005949] hover:underline print:hidden">View All</button>
+                        </div>
+                        <div class="overflow-x-auto flex-1">
+                            <table class="w-full text-sm text-left table-fixed">
+                                <thead class="bg-gray-50 text-gray-500 font-medium border-b border-gray-200">
                                     <tr>
-                                        <td colspan="3" class="px-6 py-8 text-center text-gray-400">No logs found.</td>
+                                        <th class="px-6 py-3 w-[25%]">Date</th>
+                                        <th class="px-6 py-3 w-[45%]">Tic</th>
+                                        <th class="px-6 py-3 w-[30%] text-center">Intensity</th>
                                     </tr>
-                                <?php endif; ?>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-                <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden flex flex-col">
-                    <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center bg-gray-50">
-                        <h3 class="font-bold text-gray-800">Recent Emotions</h3>
-                        <button onclick="openModal('modal-emotions')" class="text-xs font-semibold text-[#005949] hover:underline">View All</button>
-                    </div>
-                    <div class="overflow-x-auto flex-1">
-                        <table class="w-full text-sm text-left table-fixed">
-                            <thead class="bg-gray-50 text-gray-500 font-medium border-b border-gray-200">
-                                <tr>
-                                    <th class="px-6 py-3 w-[25%]">Date</th>
-                                    <th class="px-6 py-3 w-[45%]">Emotion</th>
-                                    <th class="px-6 py-3 w-[30%] text-center">Levels (S/A/Sl)</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-gray-100">
-                                <?php if (count($recent_emotions) > 0): ?>
-                                    <?php foreach ($recent_emotions as $emo): ?>
-                                        <tr class="hover:bg-gray-50">
-                                            <td class="px-6 py-3 text-gray-600 whitespace-nowrap"><?php echo date('M d, H:i', strtotime($emo['Occurrence'])); ?></td>
-                                            <td class="px-6 py-3">
-                                                <div class="truncate max-w-full"><span class="px-2 py-1 rounded text-xs font-semibold bg-[#F7EBF0] text-[#F282A9]"><?php echo ucfirst($emo['Emotion']); ?></span></div>
-                                            </td>
-                                            <td class="px-6 py-3 text-xs text-gray-500 text-center"><span class="font-bold text-orange-500" title="Stress">St:<?php echo $emo['Stress']; ?></span> • <span class="font-bold text-blue-500" title="Anxiety">An:<?php echo $emo['Anxiety']; ?></span> • <span class="font-bold text-[#F282A9]" title="Sleep">Sl:<?php echo $emo['Sleep']; ?></span></td>
+                                </thead>
+                                <tbody class="divide-y divide-gray-100">
+                                    <?php if (count($recent_logs) > 0): ?>
+                                        <?php foreach ($recent_logs as $log): ?>
+                                            <tr class="hover:bg-gray-50">
+                                                <td class="px-6 py-3 text-gray-600 whitespace-nowrap"><?php echo date('M d, H:i', strtotime($log['Created_At'])); ?></td>
+                                                <td class="px-6 py-3">
+                                                    <div class="font-medium text-gray-800 truncate" title="<?php echo htmlspecialchars($log['Type_Description']); ?>"><?php echo htmlspecialchars($log['Type_Description']); ?></div>
+                                                    <div class="text-xs text-gray-400 truncate"><?php echo htmlspecialchars($log['Type']); ?></div>
+                                                </td>
+                                                <td class="px-6 py-3 text-center"><span class="inline-block px-2 py-0.5 rounded text-xs font-bold <?php echo ($log['Intensity'] > 7) ? 'bg-red-100 text-red-600' : 'bg-gray-100 text-gray-600'; ?>"><?php echo $log['Intensity']; ?></span></td>
+                                            </tr>
+                                        <?php endforeach; ?>
+                                    <?php else: ?>
+                                        <tr>
+                                            <td colspan="3" class="px-6 py-8 text-center text-gray-400">No logs found.</td>
                                         </tr>
-                                    <?php endforeach; ?>
-                                <?php else: ?>
+                                    <?php endif; ?>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden flex flex-col">
+                        <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center bg-gray-50">
+                            <h3 class="font-bold text-gray-800">Recent Emotions</h3>
+                            <button onclick="openModal('modal-emotions')" class="text-xs font-semibold text-[#005949] hover:underline print:hidden">View All</button>
+                        </div>
+                        <div class="overflow-x-auto flex-1">
+                            <table class="w-full text-sm text-left table-fixed">
+                                <thead class="bg-gray-50 text-gray-500 font-medium border-b border-gray-200">
                                     <tr>
-                                        <td colspan="3" class="px-6 py-8 text-center text-gray-400">No entries found.</td>
+                                        <th class="px-6 py-3 w-[25%]">Date</th>
+                                        <th class="px-6 py-3 w-[45%]">Emotion</th>
+                                        <th class="px-6 py-3 w-[30%] text-center">Levels (S/A/Sl)</th>
                                     </tr>
-                                <?php endif; ?>
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody class="divide-y divide-gray-100">
+                                    <?php if (count($recent_emotions) > 0): ?>
+                                        <?php foreach ($recent_emotions as $emo): ?>
+                                            <tr class="hover:bg-gray-50">
+                                                <td class="px-6 py-3 text-gray-600 whitespace-nowrap"><?php echo date('M d, H:i', strtotime($emo['Occurrence'])); ?></td>
+                                                <td class="px-6 py-3">
+                                                    <div class="truncate max-w-full"><span class="px-2 py-1 rounded text-xs font-semibold bg-[#F7EBF0] text-[#F282A9]"><?php echo ucfirst($emo['Emotion']); ?></span></div>
+                                                </td>
+                                                <td class="px-6 py-3 text-xs text-gray-500 text-center"><span class="font-bold text-orange-500" title="Stress">St:<?php echo $emo['Stress']; ?></span> • <span class="font-bold text-blue-500" title="Anxiety">An:<?php echo $emo['Anxiety']; ?></span> • <span class="font-bold text-[#F282A9]" title="Sleep">Sl:<?php echo $emo['Sleep']; ?></span></td>
+                                            </tr>
+                                        <?php endforeach; ?>
+                                    <?php else: ?>
+                                        <tr>
+                                            <td colspan="3" class="px-6 py-8 text-center text-gray-400">No entries found.</td>
+                                        </tr>
+                                    <?php endif; ?>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -664,6 +729,7 @@ include '../../includes/navbar.php';
     lucide.createIcons();
     const selectedPatientId = <?php echo $selected_patient_id; ?>;
 
+    // --- MODAL LOGIC ---
     async function openModal(id) {
         document.getElementById(id).classList.remove('hidden');
         if (id === 'modal-tics') await fetchAllData('fetch_all_tics', 'table-body-tics', ['Formatted_Date', 'Type', 'Type_Description', 'Intensity', 'Describe_Text']);
@@ -696,6 +762,7 @@ include '../../includes/navbar.php';
         }
     }
 
+    // --- CHART INITIALIZATION ---
     const initialLabels = <?php echo json_encode($dates); ?>;
     const initialSeverity = <?php echo json_encode($tic_severity); ?>;
     const initialStress = <?php echo json_encode($stress_levels); ?>;
@@ -903,6 +970,7 @@ include '../../includes/navbar.php';
         }
     });
 
+    // --- DYNAMIC GRAPH LOADING ---
     const offsets = {
         main: 0,
         sleep: 0,
@@ -1000,27 +1068,71 @@ include '../../includes/navbar.php';
         if (offsets[type] < 0) offsets[type] = 0;
         loadGraph(type);
     }
+
+    // Initial Load
     ['sleep', 'multi', 'hourly', 'moods', 'muscles'].forEach(t => loadGraph(t));
 
+    // --- PDF EXPORT LOGIC ---
     function exportPDF() {
-        const element = document.getElementById('report-container');
-        const header = document.getElementById('pdf-header');
-        header.classList.remove('hidden');
-        html2pdf().set({
-            margin: [0.5, 0.5],
-            filename: 'Report.pdf',
+        const original = document.getElementById('report-container');
+        const pdfHeader = document.getElementById('pdf-header');
+
+        // 1. Create a hidden wrapper for the clone
+        const wrapper = document.createElement('div');
+        wrapper.style.position = 'absolute';
+        wrapper.style.left = '-9999px';
+        wrapper.style.top = '0';
+        document.body.appendChild(wrapper);
+
+        // 2. Clone the dashboard content
+        const clone = original.cloneNode(true);
+        clone.classList.add('pdf-export-container');
+        clone.querySelector('#pdf-header').classList.remove('hidden'); // Show header in PDF only
+        wrapper.appendChild(clone);
+
+        // 3. Fix Charts: Canvases don't clone data, so we replace them with images
+        const originalCanvases = original.querySelectorAll('canvas');
+        const clonedCanvases = clone.querySelectorAll('canvas');
+
+        originalCanvases.forEach((canvas, index) => {
+            const img = document.createElement('img');
+            img.src = canvas.toDataURL('image/png', 1.0);
+            img.style.width = canvas.offsetWidth + 'px';
+            img.style.height = canvas.offsetHeight + 'px';
+
+            const target = clonedCanvases[index];
+            if (target) {
+                target.parentNode.replaceChild(img, target);
+            }
+        });
+
+        // 4. PDF Configuration
+        const opt = {
+            margin: [0.4, 0.4],
+            filename: `Report_<?php echo htmlspecialchars($selected_patient_name); ?>.pdf`,
             image: {
                 type: 'jpeg',
                 quality: 0.98
             },
             html2canvas: {
-                scale: 2
+                scale: 2,
+                useCORS: true,
+                logging: false,
+                width: 800
             },
             jsPDF: {
                 unit: 'in',
                 format: 'letter',
                 orientation: 'portrait'
+            },
+            pagebreak: {
+                mode: ['css', 'legacy']
             }
-        }).from(element).save().then(() => header.classList.add('hidden'));
+        };
+
+        // 5. Generate and Cleanup
+        html2pdf().set(opt).from(clone).save().then(() => {
+            document.body.removeChild(wrapper);
+        });
     }
 </script>
