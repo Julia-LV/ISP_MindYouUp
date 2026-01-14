@@ -28,8 +28,8 @@ CREATE TABLE IF NOT EXISTS medications (
   Medication_ID INT AUTO_INCREMENT PRIMARY KEY,
   User_ID INT NOT NULL,
   Name VARCHAR(255) NOT NULL,
+  Times_Per_Day INT DEFAULT 1,
   Reminder_DateTime DATETIME NULL,
-  Repeat_Option VARCHAR(20) DEFAULT 'Never',
   Taken_Today TINYINT(1) DEFAULT 0,
   Created DATETIME DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
@@ -41,13 +41,13 @@ $checkCol = mysqli_query($conn, "SHOW COLUMNS FROM medications LIKE 'Taken_Today
 if (mysqli_num_rows($checkCol) == 0) {
     mysqli_query($conn, "ALTER TABLE medications ADD COLUMN Taken_Today TINYINT(1) DEFAULT 0");
 }
-$checkCol2 = mysqli_query($conn, "SHOW COLUMNS FROM medications LIKE 'Reminder_DateTime'");
+$checkCol2 = mysqli_query($conn, "SHOW COLUMNS FROM medications LIKE 'Times_Per_Day'");
 if (mysqli_num_rows($checkCol2) == 0) {
-    mysqli_query($conn, "ALTER TABLE medications ADD COLUMN Reminder_DateTime DATETIME NULL");
+    mysqli_query($conn, "ALTER TABLE medications ADD COLUMN Times_Per_Day INT DEFAULT 1");
 }
-$checkCol3 = mysqli_query($conn, "SHOW COLUMNS FROM medications LIKE 'Repeat_Option'");
+$checkCol3 = mysqli_query($conn, "SHOW COLUMNS FROM medications LIKE 'Reminder_DateTime'");
 if (mysqli_num_rows($checkCol3) == 0) {
-    mysqli_query($conn, "ALTER TABLE medications ADD COLUMN Repeat_Option VARCHAR(20) DEFAULT 'Never'");
+    mysqli_query($conn, "ALTER TABLE medications ADD COLUMN Reminder_DateTime DATETIME NULL");
 }
 
 // Handle add medication
@@ -57,20 +57,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     } else {
         if ($_POST['action'] === 'add') {
             $name = trim($_POST['name'] ?? '');
+            $timesPerDay = (int)($_POST['times_per_day'] ?? 1);
+            if ($timesPerDay < 1) $timesPerDay = 1;
+            if ($timesPerDay > 6) $timesPerDay = 6;
+            
             $reminderDate = $_POST['reminder_date'] ?? '';
             $reminderTime = $_POST['reminder_time'] ?? '';
-            $repeatOption = $_POST['repeat_option'] ?? 'Never';
+            $reminderDateTime = null;
+            if ($reminderDate && $reminderTime) {
+                $reminderDateTime = $reminderDate . ' ' . $reminderTime . ':00';
+            }
 
             if ($name === '') {
                 $message = 'Medication name is required.';
             } else {
-                $reminderDateTime = null;
-                if ($reminderDate && $reminderTime) {
-                    $reminderDateTime = $reminderDate . ' ' . $reminderTime . ':00';
-                }
-                
-                $stmt = mysqli_prepare($conn, "INSERT INTO medications (User_ID, Name, Reminder_DateTime, Repeat_Option) VALUES (?, ?, ?, ?)");
-                mysqli_stmt_bind_param($stmt, 'isss', $userId, $name, $reminderDateTime, $repeatOption);
+                $stmt = mysqli_prepare($conn, "INSERT INTO medications (User_ID, Name, Times_Per_Day, Reminder_DateTime) VALUES (?, ?, ?, ?)");
+                mysqli_stmt_bind_param($stmt, 'isis', $userId, $name, $timesPerDay, $reminderDateTime);
                 mysqli_stmt_execute($stmt);
                 mysqli_stmt_close($stmt);
                 header("Location: " . basename(__FILE__));
@@ -103,7 +105,7 @@ if (isset($_GET['delete']) && $isLoggedIn) {
 $medsNotTaken = [];
 $medsTaken = [];
 if ($isLoggedIn) {
-    $stmt = mysqli_prepare($conn, "SELECT Medication_ID, Name, Reminder_DateTime, Repeat_Option, Taken_Today FROM medications WHERE User_ID = ? ORDER BY Reminder_DateTime ASC");
+    $stmt = mysqli_prepare($conn, "SELECT Medication_ID, Name, Times_Per_Day, Reminder_DateTime, Taken_Today FROM medications WHERE User_ID = ? ORDER BY Name ASC");
     mysqli_stmt_bind_param($stmt, 'i', $userId);
     mysqli_stmt_execute($stmt);
     $res = mysqli_stmt_get_result($stmt);
@@ -123,23 +125,23 @@ if ($isLoggedIn) {
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Track Medications</title>
-    <!-- TailwindCSS CDN -->
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
-    <link href="../../CSS/medication_tracking.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link href="../../CSS/medication_tracking.css?v=9" rel="stylesheet">
 </head>
 <body>
     <?php include_once __DIR__ . '/../../includes/navbar.php'; ?>
     <?php include __DIR__ . '/../../components/header_component.php'; ?>
 
     <div class="main-content">
-        <div class="med-wrapper">
-            <!-- Header -->
-            <div class="med-header">
-                <h1>Track Medicines</h1>
-            </div>
+        <!-- Page Header (outside box, full width) -->
+        <div class="page-header">
+            <h1 class="page-title">Track Medication</h1>
+            <p class="page-subtitle">Manage your daily medications</p>
+        </div>
 
+        <div class="med-wrapper">
             <!-- Medication List -->
         <div class="med-list">
             <?php if (empty($medsNotTaken) && empty($medsTaken)): ?>
@@ -186,104 +188,57 @@ if ($isLoggedIn) {
             <?php endif; ?>
         </div>
 
-        <!-- Floating Buttons -->
-        <div class="fab-buttons">
-            <button class="fab-delete" id="fabDelete" onclick="deleteSelectedMeds()">
-                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 448 512" fill="white">
-                    <path d="M135.2 17.7L128 32H32C14.3 32 0 46.3 0 64S14.3 96 32 96H416c17.7 0 32-14.3 32-32s-14.3-32-32-32H320l-7.2-14.3C307.4 6.8 296.3 0 284.2 0H163.8c-12.1 0-23.2 6.8-28.6 17.7zM416 128H32L53.2 467c1.6 25.3 22.6 45 47.9 45H346.9c25.3 0 46.3-19.7 47.9-45L416 128z"/>
-                </svg>
-            </button>
-            <button class="fab-add" onclick="openAddModal()">
-                <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="white">
-                    <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
-                </svg>
-            </button>
-        </div>
+        <!-- Add Button - bottom right corner -->
+            <div class="add-btn-container">
+                <?php $label = 'Add Medication'; $type = 'button'; $variant = 'primary'; $width = 'w-auto'; $onclick = 'openAddModal()'; include __DIR__ . '/../../components/button.php'; ?>
+            </div>
+
+        <!-- Floating Delete Button -->
+        <button class="fab-delete" id="fabDelete" onclick="deleteSelectedMeds()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 448 512" fill="white">
+                <path d="M135.2 17.7L128 32H32C14.3 32 0 46.3 0 64S14.3 96 32 96H416c17.7 0 32-14.3 32-32s-14.3-32-32-32H320l-7.2-14.3C307.4 6.8 296.3 0 284.2 0H163.8c-12.1 0-23.2 6.8-28.6 17.7zM416 128H32L53.2 467c1.6 25.3 22.6 45 47.9 45H346.9c25.3 0 46.3-19.7 47.9-45L416 128z"/>
+            </svg>
+        </button>
     </div>
 </div>
 
-    <!-- Add/Edit Modal -->
+    <!-- Add/Edit Modal (Combined) -->
     <div class="modal-overlay" id="modalOverlay" onclick="closeModal()">
         <div class="modal-content" onclick="event.stopPropagation()">
             <form method="post" id="medForm">
                 <input type="hidden" name="action" value="add">
                 
                 <div class="modal-body">
-                    <input type="text" name="name" id="medName" class="med-input" placeholder="Medication name..." required>
+                    <!-- Medication Name -->
+                    <div class="field-group">
+                        <label>Medication Name</label>
+                        <input type="text" name="name" id="medName" class="med-input" placeholder="Enter medication name..." required>
+                    </div>
+
+                    <!-- Times a Day -->
+                    <div class="field-group">
+                        <label>Times a Day</label>
+                        <input type="number" id="timesPerDay" name="times_per_day" class="form-control" min="1" max="10" value="1" placeholder="Enter number...">
+                    </div>
+
+                    <!-- Date -->
+                    <div class="field-group">
+                        <label>Date</label>
+                        <input type="date" id="reminderDate" name="reminder_date" class="form-control">
+                    </div>
+
+                    <!-- Time -->
+                    <div class="field-group">
+                        <label>Time</label>
+                        <input type="time" id="reminderTime" name="reminder_time" class="form-control">
+                    </div>
                 </div>
 
                 <div class="modal-footer">
-                    <button type="button" class="reminder-btn" onclick="openReminderPicker()">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <circle cx="12" cy="12" r="10"></circle>
-                            <polyline points="12 6 12 12 16 14"></polyline>
-                        </svg>
-                        Set reminder
-                    </button>
-                    <button type="submit" class="done-btn">Done</button>
+                    <?php $label = 'Cancel'; $type = 'button'; $variant = 'secondary'; $width = 'w-auto'; $onclick = 'closeModal()'; include __DIR__ . '/../../components/button.php'; ?>
+                    <?php $label = 'Done'; $type = 'submit'; $variant = 'primary'; $width = 'w-auto'; include __DIR__ . '/../../components/button.php'; ?>
                 </div>
             </form>
-        </div>
-    </div>
-
-    <!-- Reminder Picker Modal -->
-    <div class="reminder-overlay" id="reminderOverlay" onclick="closeReminderPicker()">
-        <div class="reminder-content" onclick="event.stopPropagation()">
-            <h3>Set reminder</h3>
-            <p class="reminder-preview" id="reminderPreview">Select date and time</p>
-
-            <div class="repeat-section">
-                <label>Repeat</label>
-                <select id="repeatOption" name="repeat_option" onchange="updateDateTimeFields()">
-                    <option value="Never">Never</option>
-                    <option value="Daily">Daily</option>
-                    <option value="Weekly">Weekly</option>
-                    <option value="Monthly">Monthly</option>
-                </select>
-            </div>
-
-            <div class="datetime-picker" id="datetimePicker">
-                <!-- Date field for Never option -->
-                <div class="field-group" id="dateField">
-                    <label>Date</label>
-                    <input type="date" id="reminderDate" name="reminder_date" onchange="updateReminderPreview()">
-                </div>
-                
-                <!-- Weekday field for Weekly option -->
-                <div class="field-group" id="weekdayField" style="display:none;">
-                    <label>Day of Week</label>
-                    <select id="reminderWeekday" onchange="updateReminderPreview()">
-                        <option value="1">Monday</option>
-                        <option value="2">Tuesday</option>
-                        <option value="3">Wednesday</option>
-                        <option value="4">Thursday</option>
-                        <option value="5">Friday</option>
-                        <option value="6">Saturday</option>
-                        <option value="0">Sunday</option>
-                    </select>
-                </div>
-                
-                <!-- Month day field for Monthly option -->
-                <div class="field-group" id="monthdayField" style="display:none;">
-                    <label>Day of Month</label>
-                    <select id="reminderMonthday" onchange="updateReminderPreview()">
-                        <?php for ($i = 1; $i <= 31; $i++): ?>
-                            <option value="<?= $i ?>"><?= $i ?></option>
-                        <?php endfor; ?>
-                    </select>
-                </div>
-                
-                <!-- Time field always visible -->
-                <div class="field-group" id="timeField">
-                    <label>Time</label>
-                    <input type="time" id="reminderTime" name="reminder_time" onchange="updateReminderPreview()">
-                </div>
-            </div>
-
-            <div class="reminder-actions">
-                <button type="button" class="cancel-btn" onclick="closeReminderPicker()">Cancel</button>
-                <button type="button" class="ok-btn" onclick="confirmReminder()">OK</button>
-            </div>
         </div>
     </div>
 
@@ -324,187 +279,14 @@ if ($isLoggedIn) {
     }
 
     function openAddModal() {
+        // Reset form values
         document.getElementById('medName').value = '';
-        document.getElementById('reminderDate').value = '';
-        document.getElementById('reminderTime').value = '';
-        document.getElementById('repeatOption').value = 'Never';
+        document.getElementById('timesPerDay').value = '1';
         document.getElementById('modalOverlay').classList.add('active');
     }
 
     function closeModal() {
         document.getElementById('modalOverlay').classList.remove('active');
-    }
-
-    function openReminderPicker() {
-        // Set default time to now
-        const now = new Date();
-        const timeStr = now.toTimeString().slice(0, 5);
-        
-        if (!document.getElementById('reminderTime').value) {
-            document.getElementById('reminderTime').value = timeStr;
-        }
-        
-        // Reset to Never and update fields
-        document.getElementById('repeatOption').value = 'Never';
-        updateDateTimeFields();
-        
-        // Set default date to today for Never option
-        if (!document.getElementById('reminderDate').value) {
-            document.getElementById('reminderDate').value = now.toISOString().split('T')[0];
-        }
-        
-        updateReminderPreview();
-        document.getElementById('reminderOverlay').classList.add('active');
-    }
-
-    function closeReminderPicker() {
-        document.getElementById('reminderOverlay').classList.remove('active');
-    }
-
-    function updateDateTimeFields() {
-        const repeatOption = document.getElementById('repeatOption').value;
-        const dateField = document.getElementById('dateField');
-        const weekdayField = document.getElementById('weekdayField');
-        const monthdayField = document.getElementById('monthdayField');
-        
-        // Hide all optional fields first
-        dateField.style.display = 'none';
-        weekdayField.style.display = 'none';
-        monthdayField.style.display = 'none';
-        
-        // Show appropriate field based on repeat option
-        switch (repeatOption) {
-            case 'Never':
-                dateField.style.display = 'block';
-                break;
-            case 'Daily':
-                // Only time needed, no extra fields
-                break;
-            case 'Weekly':
-                weekdayField.style.display = 'block';
-                break;
-            case 'Monthly':
-                monthdayField.style.display = 'block';
-                break;
-        }
-        
-        updateReminderPreview();
-    }
-
-    function updateReminderPreview() {
-        const repeatOption = document.getElementById('repeatOption').value;
-        const time = document.getElementById('reminderTime').value;
-        let previewText = 'Select time';
-        
-        if (!time) {
-            document.getElementById('reminderPreview').textContent = previewText;
-            return;
-        }
-        
-        const timeFormatted = formatTime(time);
-        
-        switch (repeatOption) {
-            case 'Never':
-                const date = document.getElementById('reminderDate').value;
-                if (date) {
-                    const dt = new Date(date + 'T' + time);
-                    const options = { weekday: 'short', month: 'short', day: 'numeric' };
-                    previewText = dt.toLocaleDateString('en-US', options) + ' at ' + timeFormatted;
-                }
-                break;
-            case 'Daily':
-                previewText = 'Every day at ' + timeFormatted;
-                break;
-            case 'Weekly':
-                const weekday = document.getElementById('reminderWeekday');
-                const dayName = weekday.options[weekday.selectedIndex].text;
-                previewText = 'Every ' + dayName + ' at ' + timeFormatted;
-                break;
-            case 'Monthly':
-                const monthday = document.getElementById('reminderMonthday').value;
-                previewText = 'Every month on day ' + monthday + ' at ' + timeFormatted;
-                break;
-        }
-        
-        document.getElementById('reminderPreview').textContent = previewText;
-    }
-
-    function formatTime(timeStr) {
-        const [hours, minutes] = timeStr.split(':');
-        const h = parseInt(hours);
-        const ampm = h >= 12 ? 'PM' : 'AM';
-        const h12 = h % 12 || 12;
-        return h12 + ':' + minutes + ' ' + ampm;
-    }
-
-    function confirmReminder() {
-        const form = document.getElementById('medForm');
-        const repeatOption = document.getElementById('repeatOption').value;
-        
-        // Add repeat option
-        let repeatInput = form.querySelector('input[name="repeat_option"]');
-        if (!repeatInput) {
-            repeatInput = document.createElement('input');
-            repeatInput.type = 'hidden';
-            repeatInput.name = 'repeat_option';
-            form.appendChild(repeatInput);
-        }
-        repeatInput.value = repeatOption;
-        
-        // Add time
-        let timeInput = form.querySelector('input[name="reminder_time"]');
-        if (!timeInput) {
-            timeInput = document.createElement('input');
-            timeInput.type = 'hidden';
-            timeInput.name = 'reminder_time';
-            form.appendChild(timeInput);
-        }
-        timeInput.value = document.getElementById('reminderTime').value;
-        
-        // Add date based on repeat option
-        let dateInput = form.querySelector('input[name="reminder_date"]');
-        if (!dateInput) {
-            dateInput = document.createElement('input');
-            dateInput.type = 'hidden';
-            dateInput.name = 'reminder_date';
-            form.appendChild(dateInput);
-        }
-        
-        switch (repeatOption) {
-            case 'Never':
-                dateInput.value = document.getElementById('reminderDate').value;
-                break;
-            case 'Daily':
-                // For daily, use today's date as starting point
-                dateInput.value = new Date().toISOString().split('T')[0];
-                break;
-            case 'Weekly':
-                // Store weekday value (0-6) in a special field
-                let weekdayInput = form.querySelector('input[name="reminder_weekday"]');
-                if (!weekdayInput) {
-                    weekdayInput = document.createElement('input');
-                    weekdayInput.type = 'hidden';
-                    weekdayInput.name = 'reminder_weekday';
-                    form.appendChild(weekdayInput);
-                }
-                weekdayInput.value = document.getElementById('reminderWeekday').value;
-                dateInput.value = new Date().toISOString().split('T')[0];
-                break;
-            case 'Monthly':
-                // Store month day in a special field
-                let monthdayInput = form.querySelector('input[name="reminder_monthday"]');
-                if (!monthdayInput) {
-                    monthdayInput = document.createElement('input');
-                    monthdayInput.type = 'hidden';
-                    monthdayInput.name = 'reminder_monthday';
-                    form.appendChild(monthdayInput);
-                }
-                monthdayInput.value = document.getElementById('reminderMonthday').value;
-                dateInput.value = new Date().toISOString().split('T')[0];
-                break;
-        }
-        
-        closeReminderPicker();
     }
 
     function toggleTaken(medId, taken) {
