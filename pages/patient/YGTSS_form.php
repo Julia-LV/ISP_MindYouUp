@@ -477,27 +477,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <html lang="en">
 <head>
 	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title>YGTSS Form</title>
-	<!-- Tailwind (for utility classes) -->
-	<link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
 	<!-- Bootstrap CSS -->
 	<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 	<!-- Custom CSS for YGTSS form -->
-	<link rel="stylesheet" href="../../CSS/YGTSS_form.css">
+	<link rel="stylesheet" href="../../CSS/YGTSS_form.css?v=6">
 </head>
 <body>
 <?php include_once __DIR__ . '/../../includes/navbar.php'; ?>
 <?php include_once __DIR__ . '/../../components/header_component.php'; ?>
-<div class="container mt-5 mb-5 ygtss-section">
-	<h2 class="mb-4">Yale Global Tic Severity Scale (YGTSS) Form</h2>
-	<!-- Developer credits -->
-	<div class="mb-3 text-center">
-		<div class="small text-muted">
+<div class="main-content">
+	<!-- Page Header (outside the white box) -->
+	<div class="page-header">
+		<h2 class="page-title">Yale Global Tic Severity Scale (YGTSS) Form</h2>
+		<!-- Developer credits -->
+		<div class="page-subtitle text-center">
 			<strong>Developed by:</strong> LECKMAN, J.F.; RIDDLE, M.A.; HARDIN, M.T.; ORT, S.I.; SWARTZ, K.L.; STEVENSON, J.; COHEN, D.J.<br>
 			DEPARTMENT OF PSYCHIATRY<br>
 			YALE UNIVERSITY SCHOOL OF MEDICINE
 		</div>
 	</div>
+	
+	<div class="ygtss-section">
 	<?php if ($step === 1): ?>
 		<?php if (!empty($error_msg)): ?>
 			<div class="alert alert-danger mb-3"><?= htmlspecialchars($error_msg) ?></div>
@@ -654,6 +656,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 				<li>Age when treatment was sought: <?= !empty($_SESSION['ygtss_answers']['final_treatment_age']) ? htmlspecialchars($_SESSION['ygtss_answers']['final_treatment_age']) : 'Not provided' ?></li>
 			</ul>
 		</div>
+	</div>
+</div>
 <!-- Bootstrap JS bundle -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>

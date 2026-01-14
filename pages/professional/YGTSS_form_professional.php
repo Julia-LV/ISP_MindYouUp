@@ -45,7 +45,7 @@ $selected_patient_id = isset($_GET['patient_id']) ? (int)$_GET['patient_id'] : n
 // Get list of patients linked to this professional
 $patients = [];
 $patientStmt = mysqli_prepare($conn, "
-    SELECT DISTINCT u.User_ID, u.First_Name, u.Last_Name, u.Email, u.User_Image
+    SELECT DISTINCT u.User_ID, u.First_Name, u.Last_Name, u.Email, u.User_Image, u.Birthday
     FROM user_profile u
     INNER JOIN patient_professional_link ppl ON u.User_ID = ppl.Patient_ID
     WHERE ppl.Professional_ID = ? AND ppl.Connection_Status = 'Accepted'
@@ -214,119 +214,19 @@ function parseSymptoms($a1_json, $all_questions) {
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>YGTSS Results - Professional View</title>
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="../../CSS/YGTSS_form.css">
-    <style>
-        .results-table th {
-            background-color: #005949;
-            color: white;
-            text-align: center;
-            vertical-align: middle;
-        }
-        .results-table td {
-            text-align: center;
-            vertical-align: middle;
-        }
-        .results-table .row-label {
-            background-color: #f8f9fa;
-            font-weight: 600;
-            text-align: left;
-        }
-        .score-cell {
-            font-weight: bold;
-            font-size: 1.1em;
-        }
-        .total-row {
-            background-color: #e9ecef;
-            font-weight: bold;
-        }
-        .grand-total-row {
-            background-color: #005949;
-            color: white;
-            font-weight: bold;
-        }
-        .patient-card {
-            cursor: pointer;
-            transition: all 0.2s ease;
-            border: 2px solid transparent;
-        }
-        .patient-card:hover {
-            border-color: #005949;
-            transform: translateY(-2px);
-        }
-        .patient-card.selected {
-            border-color: #005949;
-            background-color: #f0f7f5;
-        }
-        .result-card {
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-        .result-card:hover {
-            background-color: #f8f9fa;
-        }
-        .severity-badge {
-            padding: 4px 12px;
-            border-radius: 12px;
-            font-size: 0.85em;
-            font-weight: 600;
-        }
-        .bg-orange {
-            background-color: #fd7e14 !important;
-            color: white;
-        }
-        .info-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 16px;
-            margin-bottom: 24px;
-        }
-        .info-box {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 16px;
-            border-radius: 12px;
-            text-align: center;
-        }
-        .info-box.green {
-            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
-        }
-        .info-box.orange {
-            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-        }
-        .info-box .value {
-            font-size: 2em;
-            font-weight: bold;
-        }
-        .info-box .label {
-            font-size: 0.9em;
-            opacity: 0.9;
-        }
-        .symptom-list {
-            max-height: 400px;
-            overflow-y: auto;
-        }
-        .symptom-item {
-            padding: 8px 12px;
-            border-bottom: 1px solid #eee;
-        }
-        .symptom-item:last-child {
-            border-bottom: none;
-        }
-        .symptom-present {
-            background-color: #fff3cd;
-        }
-        .symptom-past {
-            background-color: #cff4fc;
-        }
-    </style>
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="../../CSS/YGTSS_form.css?v=3">
+    <link rel="stylesheet" href="../../CSS/YGTSS_form_professional.css?v=4">
 </head>
 <body>
 <?php include_once __DIR__ . '/../../includes/navbar.php'; ?>
 <?php include_once __DIR__ . '/../../components/header_component.php'; ?>
 
+<div class="main-content">
 <div class="container-fluid mt-4 mb-5">
     <div class="row">
         <!-- Sidebar: Patient List -->
@@ -335,11 +235,18 @@ function parseSymptoms($a1_json, $all_questions) {
                 <div class="card-header bg-white">
                     <h5 class="mb-0">My Patients</h5>
                 </div>
-                <div class="card-body p-2">
+                <div class="card-body p-3">
                     <?php if (empty($patients)): ?>
                         <p class="text-muted text-center py-3">No linked patients.</p>
                     <?php else: ?>
-                        <?php foreach ($patients as $patient): ?>
+                        <?php foreach ($patients as $patient): 
+                            $age = '';
+                            if (!empty($patient['Birthday'])) {
+                                $birthDate = new DateTime($patient['Birthday']);
+                                $today = new DateTime();
+                                $age = $birthDate->diff($today)->y . ' years old';
+                            }
+                        ?>
                             <a href="?patient_id=<?= $patient['User_ID'] ?>" class="text-decoration-none">
                                 <div class="patient-card card mb-2 <?= $selected_patient_id == $patient['User_ID'] ? 'selected' : '' ?>">
                                     <div class="card-body p-2 d-flex align-items-center">
@@ -349,7 +256,7 @@ function parseSymptoms($a1_json, $all_questions) {
                                         <div>
                                             <strong><?= htmlspecialchars($patient['First_Name'] . ' ' . $patient['Last_Name']) ?></strong>
                                             <br>
-                                            <small class="text-muted"><?= htmlspecialchars($patient['Email']) ?></small>
+                                            <small class="text-muted"><?= $age ?: 'Age not available' ?></small>
                                         </div>
                                     </div>
                                 </div>
@@ -412,7 +319,7 @@ function parseSymptoms($a1_json, $all_questions) {
                                     <div class="value"><?= $result['Motor_Tic_Total'] ?? ($result['Number_Motor'] + $result['Frequency_Motor'] + $result['Intensity_Motor'] + $result['Complexity_Motor'] + $result['Interference_Motor']) ?></div>
                                     <div class="label">Motor Tic Score</div>
                                 </div>
-                                <div class="info-box green">
+                                <div class="info-box purple">
                                     <div class="value"><?= $result['Vocal_Tic_Total'] ?? ($result['Number_Vocal'] + $result['Frequency_Vocal'] + $result['Intensity_Vocal'] + $result['Complexity_Vocal'] + $result['Interference_Vocal']) ?></div>
                                     <div class="label">Vocal Tic Score</div>
                                 </div>
@@ -722,15 +629,6 @@ function parseSymptoms($a1_json, $all_questions) {
         </div>
     </div>
 </div>
-
-<!-- Credits -->
-<div class="container mb-4">
-    <div class="text-center small text-muted">
-        <strong>YGTSS - Yale Global Tic Severity Scale</strong><br>
-        Developed by: LECKMAN, J.F.; RIDDLE, M.A.; HARDIN, M.T.; ORT, S.I.; SWARTZ, K.L.; STEVENSON, J.; COHEN, D.J.<br>
-        Department of Psychiatry, Yale University School of Medicine<br>
-        Brazilian Translation: PROTOC - Maria Conceição do Rosário-Campos, Marcos T. Mercadante, Ana G. Hounie e Eurípedes Constantino Miguel Filho.
-    </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
