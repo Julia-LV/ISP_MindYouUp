@@ -25,93 +25,11 @@ $page_title = 'Language';
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title><?php echo $page_title; ?></title>
-    <!-- TailwindCSS CDN -->
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
-    <link href="../../CSS/settings.css" rel="stylesheet">
-    <style>
-        .language-options {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            max-width: 500px;
-            margin: 0 auto;
-        }
-        
-        .lang-btn {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            padding: 16px 20px;
-            background: #fff;
-            border: 2px solid #ddd;
-            border-radius: 12px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            text-align: left;
-        }
-        
-        .lang-btn:hover {
-            border-color: var(--accent-green);
-            background: #f9f9f9;
-        }
-        
-        .lang-btn.active {
-            border-color: var(--accent-green);
-            background: rgba(0, 89, 73, 0.08);
-        }
-        
-        .lang-btn.active .check-icon {
-            display: flex;
-        }
-        
-        .lang-flag {
-            font-size: 2rem;
-            line-height: 1;
-        }
-        
-        .lang-info {
-            flex: 1;
-        }
-        
-        .lang-name {
-            font-size: 1.1rem;
-            font-weight: 500;
-            color: var(--text-dark);
-        }
-        
-        .lang-native {
-            font-size: 0.9rem;
-            color: var(--muted);
-        }
-        
-        .check-icon {
-            display: none;
-            width: 24px;
-            height: 24px;
-            background: var(--accent-green);
-            border-radius: 50%;
-            align-items: center;
-            justify-content: center;
-            color: white;
-        }
-        
-        .translation-note {
-            text-align: center;
-            margin-top: 30px;
-            padding: 16px;
-            background: rgba(74, 144, 217, 0.1);
-            border-radius: 8px;
-            color: var(--text-dark);
-            font-size: 0.9rem;
-        }
-        
-        .translation-note svg {
-            vertical-align: middle;
-            margin-right: 8px;
-        }
-    </style>
+    <!-- Custom CSS -->
+    <link href="../../CSS/settings.css?v=2" rel="stylesheet">
+    <link href="../../CSS/language.css?v=2" rel="stylesheet">
 </head>
 <body>
     <?php include_once __DIR__ . '/../../includes/navbar.php'; ?>
