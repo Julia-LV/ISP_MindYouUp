@@ -30,7 +30,7 @@ $page_title = 'Settings';
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
-    <link href="../../CSS/settings.css" rel="stylesheet">
+    <link href="../../CSS/settings.css?v=2" rel="stylesheet">
 </head>
 <body>
     <?php include_once __DIR__ . '/../../includes/navbar.php'; ?>
@@ -43,10 +43,22 @@ $page_title = 'Settings';
             </div>
 
             <div class="settings-container">
-                <a class="btn" href="language.php">Language</a>
-                <a class="btn" href="notifications.php">Notifications</a>
-                <a class="btn" href="privacy.php">Privacy Policy</a>
-                <a class="btn" href="about.php">About the app</a>
+                <?php 
+                $type = 'link'; $href = 'language.php'; $label = 'Language'; $variant = 'primary'; $width = 'w-full';
+                include __DIR__ . '/../../components/button.php';
+                ?>
+                <?php 
+                $type = 'link'; $href = 'notifications.php'; $label = 'Notifications'; $variant = 'primary'; $width = 'w-full';
+                include __DIR__ . '/../../components/button.php';
+                ?>
+                <?php 
+                $type = 'link'; $href = 'privacy.php'; $label = 'Privacy Policy'; $variant = 'primary'; $width = 'w-full';
+                include __DIR__ . '/../../components/button.php';
+                ?>
+                <?php 
+                $type = 'link'; $href = 'aboutus.php'; $label = 'About the app'; $variant = 'primary'; $width = 'w-full';
+                include __DIR__ . '/../../components/button.php';
+                ?>
             </div>
         </div>
     </div>
