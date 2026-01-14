@@ -21,8 +21,17 @@ div#goog-gt-,
 .goog-tooltip,
 .goog-tooltip:hover,
 .goog-te-gadget-icon,
-.goog-te-gadget-simple .goog-te-menu-value span:first-child {
+.goog-te-gadget-simple .goog-te-menu-value span:first-child,
+.goog-logo-link,
+.goog-te-gadget,
+.goog-te-gadget-simple,
+.VIpgJd-ZVi9od-ORHb-OEVmcd,
+.VIpgJd-ZVi9od-l4eHX-hSRGPd,
+.VIpgJd-ZVi9od-aZ2wEe-wOHMyf,
+.VIpgJd-ZVi9od-aZ2wEe-OiiCO {
     display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
 }
 
 /* Hide the translate element but keep it functional */
@@ -31,6 +40,8 @@ div#goog-gt-,
     top: -9999px !important;
     left: -9999px !important;
     visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
 }
 
 /* But keep the dropdown visible when opened */
