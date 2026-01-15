@@ -124,11 +124,11 @@ $has_more = false;
 
 if ($conn) {
     // Select meds for this user that haven't been marked as taken today
-    // Order by time so the earliest/overdue one shows up first
-    $sql_med = "SELECT Medication_Name, Medication_Time 
-                FROM track_medication 
-                WHERE Patient_ID = ? AND Medication_Status = 0 
-                ORDER BY Medication_Time ASC";
+    // Order by Reminder_DateTime so the earliest/overdue one shows up first
+    $sql_med = "SELECT Name, Reminder_DateTime 
+                FROM medications 
+                WHERE User_ID = ? AND Taken_Today = 0 
+                ORDER BY Reminder_DateTime ASC";
     
     if ($stmt_m = $conn->prepare($sql_med)) {
         $stmt_m->bind_param("i", $patient_id);
@@ -146,11 +146,11 @@ if ($conn) {
         if ($med_count > 0) {
             // Grab the first medication in the list
             $first_med = $pending_meds[0];
-            $med_name_display = htmlspecialchars($first_med['Medication_Name']);
+            $med_name_display = htmlspecialchars($first_med['Name']);
             
             // Format the time (e.g., 08:00 PM) if a time is set
-            if (!empty($first_med['Medication_Time'])) {
-                $med_time_display = date('h:i A', strtotime($first_med['Medication_Time']));
+            if (!empty($first_med['Reminder_DateTime'])) {
+                $med_time_display = date('h:i A', strtotime($first_med['Reminder_DateTime']));
             } else {
                 $med_time_display = "Today";
             }
@@ -322,7 +322,7 @@ include '../../includes/navbar.php';
             </div>
             <div class="bg-white p-6 rounded-lg shadow-sm border-l-4 border-blue-400 flex items-center justify-between">
                 <div>
-                    <p class="text-sm text-gray-500 font-medium">Next Medication</p>
+                    <p class="text-sm text-gray-500 font-medium">Medication</p>
                     
                     <?php if ($med_count > 0): ?>
                         <h3 class="text-lg font-bold text-gray-800 mt-2">
