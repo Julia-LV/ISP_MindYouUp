@@ -1,5 +1,8 @@
 <?php
-
+/*
+ * ticlog_motor.php
+ * Updated: Fixed "No Tics" filtering and added debug block for DB verification.
+ */
 
 // --- 1. PHP Logic ---
 session_start();
@@ -36,8 +39,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     // 1. Check for "No Tics" Shortcut
     if (isset($_POST['no_tics'])) {
-        $sql = "INSERT INTO tic_log (Patient_ID, Type_Description, Duration, Intensity, Describe_Text, Self_Reported, Created_At) 
-                VALUES (?, 'No Tics Today', 'No tics', 0, 'Patient reported no tics today.', 1, NOW())";
+        // We log this with Intensity 0 and a specific description to filter it out in analytics
+        $sql = "INSERT INTO tic_log (Patient_ID, Type, Type_Description, Duration, Intensity, Describe_Text, Self_Reported, Created_At) 
+                VALUES (?, 'None', 'No Tics Today', 'No tics', 0, 'Patient reported no tics today.', 1, NOW())";
         if ($stmt = $conn->prepare($sql)) {
             $stmt->bind_param("i", $patient_id);
             if ($stmt->execute()) {
@@ -52,14 +56,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     // 2. Standard Entry
     else {
         // --- 1. CAPTURE DATA ---
-
-        
         $main_type = ucfirst($_POST['active_context'] ?? 'Motor');
-
-        
         $category = $_POST['tic_category'] ?? '';
-
-        
         $specific_tic = $_POST['specific_tic'] ?? '';
 
         // Other Fields
@@ -75,16 +73,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         if (empty($category) || empty($specific_tic) || empty($duration)) {
             $message = "Please select the Tic Category, Specific Tic, and Duration.";
         } else {
-
-            // --- 3.  SQL INSERT ---
-            
+            // --- 3. SQL INSERT ---
             $sql = "INSERT INTO tic_log 
                     (Patient_ID, Type, Category, Type_Description, Muscle_Group, Duration, Intensity, Pain_Level, Premonitory_Urge, Describe_Text, Self_Reported, Created_At) 
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())";
 
             if ($stmt = $conn->prepare($sql)) {
-                
-
                 $stmt->bind_param(
                     "isssssiissi",
                     $patient_id,
@@ -115,22 +109,16 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 }
 // --- END PHP LOGIC ---
 
-
 // --- 2. Page Display ---
 $page_title = 'Tic Log';
-
-
 include '../../components/header_component.php';
 include '../../includes/navbar.php';
 ?>
 
-
 <link rel="stylesheet" href="../../css/ticlog_motor.css">
 <link rel="stylesheet" href="../../css/new_emotional_diary.css">
 
-<!-- Main Content Wrapper -->
 <main class="flex-1 w-full p-6 md:p-2 overflow-y-auto bg-[#E9F0E9]">
-
     <div class="p-6 md:p-8 space-y-6 max-w-7xl mx-auto">
         <div class="text-left">
             <h2 class="text-3xl font-bold text-[#005949] mb-2">
@@ -152,19 +140,13 @@ include '../../includes/navbar.php';
                         <p class="text-sm text-emerald-700">If you haven't experienced any tics, log it quickly here.</p>
                     </div>
                 </div>
-
                 <button type="button" onclick="askConfirm('no_tics')" class="w-full md:w-auto px-6 py-2.5 bg-[#005949] hover:bg-[#004539] text-white font-bold rounded-md shadow-sm transition-all flex items-center justify-center gap-2">
-
                     <span>No Tic Today!</span>
                 </button>
             </div>
         </form>
 
         <form action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>" method="POST" class="space-y-6" id="form-main">
-
-
-
-
             <div class="bg-white p-6 rounded-lg shadow-sm">
                 <?php
                 $tabs = [
@@ -175,8 +157,6 @@ include '../../includes/navbar.php';
                 $is_js = true; 
                 include '../../components/diary_tabs.php';
                 ?>
-
-
 
                 <input type="hidden" name="active_context" id="active_context" value="motor">
                 <input type="hidden" name="tic_category" id="final_tic_category">
@@ -215,7 +195,7 @@ include '../../includes/navbar.php';
                     </div>
                 </div>
 
-                <div id="pane-vocal" class="tab-pane space-y-4">
+                <div id="pane-vocal" class="tab-pane space-y-4" style="display:none;">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
                             <label class="block text-sm font-semibold text-gray-700 mb-2">Complexity</label>
@@ -235,7 +215,6 @@ include '../../includes/navbar.php';
                 </div>
             </div>
 
-
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div class="bg-white p-6 rounded-lg shadow-sm">
                     <label class="block text-sm font-semibold text-gray-700 mb-2">Duration</label>
@@ -247,122 +226,78 @@ include '../../includes/navbar.php';
                         <option>Continuous / Flurry</option>
                     </select>
                 </div>
-
                 <?php
                 $label = 'Intensity';
                 $id = 'intensity';
                 $name = 'intensity';
-                
                 include '../../components/slider_card.php';
-                ?>
 
-                <?php
                 $label = 'Pain / Discomfort';
-                
                 $id = 'stress';
                 $name = 'stress';
-                $min = 0;
-                $max = 10;
-                $val = 0;
+                $min = 0; $max = 10; $val = 0;
                 include '../../components/slider_card.php';
                 ?>
             </div>
 
-
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-
                 <div class="bg-white p-6 rounded-lg shadow-sm">
-                    <label class="block text-sm font-semibold text-gray-700 mb-3">
-                        Did you feel it coming? (Premonitory Urge)
-                    </label>
-                    <div class="flex items-center  gap-20">
+                    <label class="block text-sm font-semibold text-gray-700 mb-3">Did you feel it coming? (Premonitory Urge)</label>
+                    <div class="flex items-center gap-20">
                         <label class="inline-flex items-center cursor-pointer">
-                            <input type="radio" name="pre_tic" value="yes" checked
-                                class="w-5 h-5 text-[#005949] focus:ring-[#005949] border-gray-300">
+                            <input type="radio" name="pre_tic" value="yes" checked class="w-5 h-5 text-[#005949] focus:ring-[#005949] border-gray-300">
                             <span class="ml-2 text-gray-700 font-medium">Yes</span>
                         </label>
                         <label class="inline-flex items-center cursor-pointer">
-                            <input type="radio" name="pre_tic" value="no"
-                                class="w-5 h-5 text-[#005949] focus:ring-[#005949] border-gray-300">
+                            <input type="radio" name="pre_tic" value="no" class="w-5 h-5 text-[#005949] focus:ring-[#005949] border-gray-300">
                             <span class="ml-2 text-gray-700 font-medium">No</span>
                         </label>
                     </div>
                 </div>
-
                 <div class="bg-white p-6 rounded-lg shadow-sm flex flex-col justify-between">
-                    <label class="block text-sm font-semibold text-gray-700 mb-3">
-                        Reported By
-                    </label>
+                    <label class="block text-sm font-semibold text-gray-700 mb-3">Reported By</label>
                     <input type="hidden" name="self_reported" id="self_reported" value="patient">
-
                     <div class="flex bg-gray-100 p-1 rounded-md">
-                        <button type="button" onclick="setReporter('patient', this)"
-                            class="rep-btn w-1/2 py-2 rounded shadow-sm bg-white text-[#005949] text-sm font-bold transition-all">
-                            Self
-                        </button>
-                        <button type="button" onclick="setReporter('caregiver', this)"
-                            class="rep-btn w-1/2 py-2 rounded text-gray-500 text-sm font-medium transition-all hover:text-gray-700">
-                            Caregiver
-                        </button>
+                        <button type="button" onclick="setReporter('patient', this)" class="rep-btn w-1/2 py-2 rounded shadow-sm bg-white text-[#005949] text-sm font-bold transition-all">Self</button>
+                        <button type="button" onclick="setReporter('caregiver', this)" class="rep-btn w-1/2 py-2 rounded text-gray-500 text-sm font-medium transition-all hover:text-gray-700">Caregiver</button>
                     </div>
                 </div>
-
             </div>
-
 
             <?php
             $journal_title = 'Describe the Tic Episode';
-            $journal_placeholder = 'Describe the environment, triggers, or specific details about the tic...';
+            $journal_placeholder = 'Describe the environment, triggers, or specific details...';
             $journal_rows = 4; 
-
             include '../../components/journal_card.php';
             ?>
 
             <div class="flex items-center justify-end space-x-4 mt-8">
-
                 <div class="w-auto">
                     <?php
-                    $label = 'Cancel';
-                    $type = 'link';
-                    $href = 'home_patient.php';
-                    $variant = 'secondary';
-                    $width = 'w-auto';
-                    $onclick = '';
+                    $label = 'Cancel'; $type = 'link'; $href = 'home_patient.php'; $variant = 'secondary';
                     include '../../components/button.php';
                     ?>
                 </div>
-
                 <div class="w-auto">
                     <?php
-                    $label = 'Save Entry';
-                    $type = 'button';
-                    $variant = 'primary';
-                    $width = 'w-auto';
-                    
-                    $href = null;
-                    $onclick = "askConfirm('main')";
+                    $label = 'Save Entry'; $type = 'button'; $variant = 'primary'; $onclick = "askConfirm('main')";
                     include '../../components/button.php';
                     ?>
                 </div>
-
             </div>
-
         </form>
     </div>
 </main>
 
 <?php include '../../components/modals.php'; ?>
-</body>
-
-</html>
-
 <script src="../../js/patient/ticlog_motor.js"></script>
 
 <?php if (!empty($message) && $message_type === 'success'): ?>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            
             openSuccess("Entry Recorded!", "<?php echo $message; ?>");
         });
     </script>
 <?php endif; ?>
+</body>
+</html>

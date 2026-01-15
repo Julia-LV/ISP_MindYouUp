@@ -88,7 +88,7 @@ if (isset($_GET['ajax_fetch']) && isset($_GET['patient_id'])) {
                 $severity = [];
                 for ($i = 6; $i >= 0; $i--) {
                     $d = date('Y-m-d', strtotime("-" . ($offset + $i) . " days"));
-                    $stmt = $conn->prepare("SELECT MAX(Intensity) as i FROM tic_log WHERE Patient_ID = ? AND DATE(Created_At) = ?");
+                    $stmt = $conn->prepare("SELECT MAX(Intensity) as i FROM tic_log WHERE Patient_ID = ? AND DATE(Created_At) = ? AND Type_Description != 'No Tics Today'");
                     $stmt->bind_param("is", $patient_id, $d);
                     $stmt->execute();
                     $severity[] = $stmt->get_result()->fetch_assoc()['i'] ?? 0;
@@ -108,7 +108,7 @@ if (isset($_GET['ajax_fetch']) && isset($_GET['patient_id'])) {
                     $stmt->bind_param("is", $patient_id, $d);
                     $stmt->execute();
                     $sleep[] = round($stmt->get_result()->fetch_assoc()['s'] ?? 0, 1);
-                    $stmt = $conn->prepare("SELECT COUNT(*) as c FROM tic_log WHERE Patient_ID = ? AND DATE(Created_At) = ?");
+                    $stmt = $conn->prepare("SELECT COUNT(*) as c FROM tic_log WHERE Patient_ID = ? AND DATE(Created_At) = ? AND Type_Description != 'No Tics Today'");
                     $stmt->bind_param("is", $patient_id, $d);
                     $stmt->execute();
                     $frequency[] = $stmt->get_result()->fetch_assoc()['c'] ?? 0;
@@ -129,7 +129,7 @@ if (isset($_GET['ajax_fetch']) && isset($_GET['patient_id'])) {
                     $stress[] = round($resE['s'] ?? 0, 1);
                     $anxiety[] = round($resE['a'] ?? 0, 1);
                     $sleep[] = round($resE['sl'] ?? 0, 1);
-                    $stmt = $conn->prepare("SELECT COUNT(*) as c, MAX(Intensity) as i FROM tic_log WHERE Patient_ID = ? AND DATE(Created_At) = ?");
+                    $stmt = $conn->prepare("SELECT COUNT(*) as c, MAX(Intensity) as i FROM tic_log WHERE Patient_ID = ? AND DATE(Created_At) = ? AND Type_Description != 'No Tics Today'");
                     $stmt->bind_param("is", $patient_id, $d);
                     $stmt->execute();
                     $resT = $stmt->get_result()->fetch_assoc();
@@ -139,7 +139,7 @@ if (isset($_GET['ajax_fetch']) && isset($_GET['patient_id'])) {
                 $response['data'] = ['stress' => $stress, 'anxiety' => $anxiety, 'sleep' => $sleep, 'intensity' => $intensity, 'frequency' => $frequency];
             } elseif ($graph_type === 'hourly') {
                 $hourly = array_fill(0, 24, 0);
-                $stmt = $conn->prepare("SELECT HOUR(Created_At) as h, COUNT(*) as c FROM tic_log WHERE Patient_ID = ? AND DATE(Created_At) BETWEEN ? AND ? GROUP BY h");
+                $stmt = $conn->prepare("SELECT HOUR(Created_At) as h, COUNT(*) as c FROM tic_log WHERE Patient_ID = ? AND DATE(Created_At) BETWEEN ? AND ? AND Type_Description != 'No Tics Today' GROUP BY h");
                 $stmt->bind_param("iss", $patient_id, $start_date_db, $end_date_db);
                 $stmt->execute();
                 $res = $stmt->get_result();
@@ -221,13 +221,13 @@ $avg_stress_30d = 0;
 $adherence_percentage = 0;
 
 if ($conn && $selected_patient_id) {
-    $stmt = $conn->prepare("SELECT COUNT(*) as c FROM tic_log WHERE Patient_ID = ? AND Created_At >= DATE_SUB(NOW(), INTERVAL 30 DAY)");
+    $stmt = $conn->prepare("SELECT COUNT(*) as c FROM tic_log WHERE Patient_ID = ? AND Created_At >= DATE_SUB(NOW(), INTERVAL 30 DAY) AND Type_Description != 'No Tics Today'");
     $stmt->bind_param("i", $selected_patient_id);
     $stmt->execute();
     $total_tics_30d = $stmt->get_result()->fetch_assoc()['c'];
     $stmt->close();
 
-    $stmt = $conn->prepare("SELECT COUNT(*) as c FROM tic_log WHERE Patient_ID = ? AND Created_At >= DATE_SUB(NOW(), INTERVAL 60 DAY) AND Created_At < DATE_SUB(NOW(), INTERVAL 30 DAY)");
+    $stmt = $conn->prepare("SELECT COUNT(*) as c FROM tic_log WHERE Patient_ID = ? AND Created_At >= DATE_SUB(NOW(), INTERVAL 60 DAY) AND Created_At < DATE_SUB(NOW(), INTERVAL 30 DAY) AND Type_Description != 'No Tics Today'");
     $stmt->bind_param("i", $selected_patient_id);
     $stmt->execute();
     $total_tics_prev_30d = $stmt->get_result()->fetch_assoc()['c'];
@@ -280,7 +280,7 @@ if ($conn && $selected_patient_id) {
         $day_date = ($db_date === $today_str) ? "Today" : date('d M', $timestamp);
         $dates[] = [$day_name, $day_date];
 
-        $stmt = $conn->prepare("SELECT MAX(Intensity) as i FROM tic_log WHERE Patient_ID = ? AND DATE(Created_At) = ?");
+        $stmt = $conn->prepare("SELECT MAX(Intensity) as i FROM tic_log WHERE Patient_ID = ? AND DATE(Created_At) = ? AND Type_Description != 'No Tics Today'");
         $stmt->bind_param("is", $selected_patient_id, $db_date);
         $stmt->execute();
         $tic_severity[] = $stmt->get_result()->fetch_assoc()['i'] ?? 0;
@@ -298,7 +298,7 @@ if ($conn && $selected_patient_id) {
 $motor_count = 0;
 $vocal_count = 0;
 if ($conn && $selected_patient_id) {
-    $stmt = $conn->prepare("SELECT Type, COUNT(*) as c FROM tic_log WHERE Patient_ID = ? GROUP BY Type");
+    $stmt = $conn->prepare("SELECT Type, COUNT(*) as c FROM tic_log WHERE Patient_ID = ? AND Type_Description != 'No Tics Today' GROUP BY Type");
     $stmt->bind_param("i", $selected_patient_id);
     $stmt->execute();
     $res = $stmt->get_result();

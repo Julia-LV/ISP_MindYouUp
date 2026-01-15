@@ -1,9 +1,5 @@
 <?php
-/*
- * home_patient.php
- * Patient Dashboard
- * Updated: Affected Areas (Cumulative) & Daily Rhythm (Today Only)
- */
+
 
 session_start();
 $config_path = '../../config.php';
@@ -19,7 +15,7 @@ if (!isset($_SESSION["loggedin"]) || $_SESSION["loggedin"] !== true || $_SESSION
 $patient_id = $_SESSION["user_id"] ?? 1; 
 
 // =================================================================================
-// 1. AJAX HANDLER (Reusable for any graph)
+// 1. AJAX HANDLER 
 // =================================================================================
 if (isset($_GET['ajax_fetch']) && isset($_GET['offset'])) {
     header('Content-Type: application/json');
@@ -46,7 +42,7 @@ if (isset($_GET['ajax_fetch']) && isset($_GET['offset'])) {
             $resp_labels[] = [$day_name, $second_line];
 
             // Tic Data
-            $sql = "SELECT COUNT(*) as c, AVG(Intensity) as i FROM tic_log WHERE Patient_ID = ? AND DATE(Created_At) = ?";
+            $sql = "SELECT COUNT(*) as c, AVG(Intensity) as i FROM tic_log WHERE Patient_ID = ? AND DATE(Created_At) = ? AND Type_Description != 'No Tics Today'";
             $stmt = $conn->prepare($sql);
             $stmt->bind_param("is", $patient_id, $date_db);
             $stmt->execute();
@@ -100,7 +96,7 @@ $greeting_text = ($hour < 12) ? "Good Morning" : (($hour < 18) ? "Good Afternoon
 // Today Stats
 $today_tics = 0; $avg_stress = 0; 
 if ($conn) {
-    $sql_tics = "SELECT COUNT(*) as count FROM tic_log WHERE Patient_ID = ? AND DATE(Created_At) = CURDATE()";
+    $sql_tics = "SELECT COUNT(*) as count FROM tic_log WHERE Patient_ID = ? AND DATE(Created_At) = CURDATE() AND Type_Description != 'No Tics Today'";
     $stmt = $conn->prepare($sql_tics); $stmt->bind_param("i", $patient_id); $stmt->execute();
     $today_tics = $stmt->get_result()->fetch_assoc()['count']; $stmt->close();
 
@@ -178,7 +174,7 @@ if ($conn) {
         $second_line = ($date_db === $today_str) ? "Today" : $day_date;
         $dates[] = [$day_name, $second_line]; 
 
-        $sql = "SELECT COUNT(*) as c, AVG(Intensity) as i FROM tic_log WHERE Patient_ID = ? AND DATE(Created_At) = ?";
+        $sql = "SELECT COUNT(*) as c, AVG(Intensity) as i FROM tic_log WHERE Patient_ID = ? AND DATE(Created_At) = ? AND Type_Description != 'No Tics Today'";
         $stmt = $conn->prepare($sql); $stmt->bind_param("is", $patient_id, $date_db); $stmt->execute();
         $res = $stmt->get_result()->fetch_assoc();
         $tic_counts[] = $res['c'] ?? 0; $tic_intensities[] = $res['i'] ? round($res['i'], 1) : 0; $stmt->close();
@@ -217,8 +213,8 @@ if ($conn) {
     
     $sql = "SELECT HOUR(Created_At) as tic_hour, COUNT(*) as count 
             FROM tic_log 
-            WHERE Patient_ID = ? AND DATE(Created_At) = CURDATE() 
-            GROUP BY HOUR(Created_At)";
+            WHERE Patient_ID = ? AND DATE(Created_At) = CURDATE() AND Type_Description != 'No Tics Today'
+            GROUP BY HOUR(Created_At)" ;
     $stmt = $conn->prepare($sql); 
     $stmt->bind_param("i", $patient_id); 
     $stmt->execute(); 
