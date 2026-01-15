@@ -201,7 +201,7 @@ $test_pid = 1;
       <span>TicTracker – Mind You Up Portal</span>
       <span>For clinical use and ongoing support in tic disorders.</span>
       <span class="footer-links">
-        <a href="/ISP_MindYouUp/Privacy-Policy.pdf"
+        <a href="/ISP_MindYouUp/Privacy_Policy.pdf"
            target="_blank"
            rel="noopener">
            Privacy Policy

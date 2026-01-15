@@ -365,28 +365,45 @@ include '../../includes/navbar.php';
 
     .pdf-export-container {
         width: 790px !important;
-        /* Fixed width for standard PDF */
         background: #E9F0E9 !important;
-        padding: 30px !important;
+        padding: 20px !important;
         color: #1f2937 !important;
+        display: block !important;
     }
 
     .pdf-export-container .grid {
         display: block !important;
-        /* Force single column for stability */
+        /* Force single column to prevent horizontal cutting */
+        width: 100% !important;
     }
 
     .pdf-export-container .bg-white {
-        margin-bottom: 20px !important;
-        border: 1px solid #e5e7eb !important;
-        break-inside: avoid !important;
-        /* Prevents splitting a card across pages */
+        margin-bottom: 15px !important;
+        /* Reduce gap between cards */
+        padding: 15px !important;
+        border: 1px solid #ddd !important;
+        height: auto !important;
+        overflow: visible !important;
+        /* Critical: shows the full table */
+        display: block !important;
+        page-break-inside: avoid !important;
+        /* Prevents splitting a chart in half */
     }
 
-    .pdf-export-container canvas,
-    .pdf-export-container img {
-        max-width: 100% !important;
-        height: auto !important;
+    /* Fix for the huge doughnut chart */
+    .pdf-export-container .doughnut-wrapper {
+        max-width: 250px !important;
+        margin: 0 auto !important;
+    }
+
+    .pdf-export-container table {
+        width: 100% !important;
+        border-collapse: collapse !important;
+        page-break-inside: auto !important;
+    }
+
+    .pdf-export-container tr {
+        page-break-inside: avoid !important;
     }
 </style>
 
@@ -1074,65 +1091,86 @@ include '../../includes/navbar.php';
 
     // --- PDF EXPORT LOGIC ---
     function exportPDF() {
-        const original = document.getElementById('report-container');
-        const pdfHeader = document.getElementById('pdf-header');
+    const original = document.getElementById('report-container');
+    const pdfHeader = document.getElementById('pdf-header');
+    
+    // 1. Create a hidden wrapper
+    const wrapper = document.createElement('div');
+    wrapper.style.position = 'absolute';
+    wrapper.style.left = '-9999px';
+    wrapper.style.top = '0';
+    wrapper.style.width = '800px'; 
+    document.body.appendChild(wrapper);
 
-        // 1. Create a hidden wrapper for the clone
-        const wrapper = document.createElement('div');
-        wrapper.style.position = 'absolute';
-        wrapper.style.left = '-9999px';
-        wrapper.style.top = '0';
-        document.body.appendChild(wrapper);
+    // 2. Clone the dashboard
+    const clone = original.cloneNode(true);
+    clone.classList.add('pdf-export-container');
+    
+    // Ensure the header is visible
+    const header = clone.querySelector('#pdf-header');
+    if(header) header.classList.remove('hidden');
 
-        // 2. Clone the dashboard content
-        const clone = original.cloneNode(true);
-        clone.classList.add('pdf-export-container');
-        clone.querySelector('#pdf-header').classList.remove('hidden'); // Show header in PDF only
-        wrapper.appendChild(clone);
+    wrapper.appendChild(clone);
 
-        // 3. Fix Charts: Canvases don't clone data, so we replace them with images
-        const originalCanvases = original.querySelectorAll('canvas');
-        const clonedCanvases = clone.querySelectorAll('canvas');
-
-        originalCanvases.forEach((canvas, index) => {
-            const img = document.createElement('img');
-            img.src = canvas.toDataURL('image/png', 1.0);
-            img.style.width = canvas.offsetWidth + 'px';
-            img.style.height = canvas.offsetHeight + 'px';
-
-            const target = clonedCanvases[index];
-            if (target) {
-                target.parentNode.replaceChild(img, target);
+    // 3. Fix Charts & Layout
+    const originalCanvases = original.querySelectorAll('canvas');
+    const clonedCanvases = clone.querySelectorAll('canvas');
+    
+    originalCanvases.forEach((canvas, index) => {
+        const img = document.createElement('img');
+        img.src = canvas.toDataURL('image/png', 1.0);
+        
+        const target = clonedCanvases[index];
+        if (target) {
+            // Check if this is the doughnut chart (based on its ID or container)
+            if (target.id === 'typeDoughnutChart' || target.closest('.h-48')) {
+                img.style.width = '200px'; // Keep doughnut small
+                img.style.margin = '0 auto';
+                target.parentNode.classList.add('doughnut-wrapper');
+            } else {
+                img.style.width = '100%'; // Full width for line/bar charts
             }
-        });
+            
+            img.style.height = 'auto';
+            img.style.display = 'block';
+            
+            // Remove the fixed-height container constraints from the PDF clone
+            const parent = target.parentNode;
+            parent.style.height = 'auto';
+            parent.style.minHeight = '0';
+            parent.replaceChild(img, target);
+        }
+    });
 
-        // 4. PDF Configuration
-        const opt = {
-            margin: [0.4, 0.4],
-            filename: `Report_<?php echo htmlspecialchars($selected_patient_name); ?>.pdf`,
-            image: {
-                type: 'jpeg',
-                quality: 0.98
-            },
-            html2canvas: {
-                scale: 2,
-                useCORS: true,
-                logging: false,
-                width: 800
-            },
-            jsPDF: {
-                unit: 'in',
-                format: 'letter',
-                orientation: 'portrait'
-            },
-            pagebreak: {
-                mode: ['css', 'legacy']
-            }
-        };
+    // 4. Force Tables to stay visible
+    clone.querySelectorAll('.overflow-x-auto, .overflow-y-auto').forEach(el => {
+        el.style.overflow = 'visible';
+        el.style.height = 'auto';
+        el.style.maxHeight = 'none';
+        el.style.display = 'block';
+    });
 
-        // 5. Generate and Cleanup
-        html2pdf().set(opt).from(clone).save().then(() => {
-            document.body.removeChild(wrapper);
-        });
-    }
+    // Remove buttons and interactive elements
+    clone.querySelectorAll('button, .print\\:hidden, .print-hide').forEach(el => el.remove());
+
+    // 5. PDF Options
+    const opt = {
+        margin: [0.3, 0.3],
+        filename: `Report_<?php echo htmlspecialchars($selected_patient_name); ?>.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { 
+            scale: 2, 
+            useCORS: true, 
+            logging: false,
+            width: 800
+        },
+        jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' },
+        pagebreak: { mode: ['css', 'legacy'], avoid: '.bg-white' }
+    };
+
+    // 6. Save and Remove Clone
+    html2pdf().set(opt).from(clone).save().then(() => {
+        document.body.removeChild(wrapper);
+    });
+}
 </script>
