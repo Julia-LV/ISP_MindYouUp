@@ -18,7 +18,7 @@ session_start();
     .app-footer-inner {
       display: flex;
       align-items: center;
-      justify-content: space-between;   /* left + right layout */
+      justify-content: space-between;  
       padding: 18px 32px;
       gap: 16px;
       text-align: left;
@@ -105,7 +105,7 @@ session_start();
     </div>
   </header>
 
-  <!-- HERO (full-width background, text on left) -->
+  <!-- HERO  -->
   <section class="portal-hero">
     <div class="hero-grid hero-left">
       <div class="hero-text-block">

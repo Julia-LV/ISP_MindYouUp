@@ -1,15 +1,10 @@
 <?php
-/*
- * forgot_password.php
- *
- * Page for a user to request a password reset link.
- * It uses our existing components.
- */
+
 
 // --- 1. PHP Logic ---
 session_start();
 $message = ""; 
-$message_type = "error"; // "error" or "success"
+$message_type = "error"; 
 
 // If user is already logged in, redirect them
 if (isset($_SESSION["loggedin"]) && $_SESSION["loggedin"] === true) {
@@ -39,56 +34,36 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $stmt->store_result();
 
             if ($stmt->num_rows == 1) {
-                // --- User exists! Now generate the token ---
+                
                 
                 // 1. Create a secure, random token
                 $token = bin2hex(random_bytes(32)); 
                 
                 // 2. Set an expiration time (e.g., 1 hour from now)
-                $expires = time() + 3600; // time() is in seconds. 3600 = 1 hour.
+                $expires = time() + 3600; // 3600 = 1 hour.
 
-                // 3. Store this token in our new 'password_resets' table
+                
                 $sql_insert = "INSERT INTO password_resets (Email, Token, Expires) VALUES (?, ?, ?)";
                 if ($stmt_insert = $conn->prepare($sql_insert)) {
                     $stmt_insert->bind_param("ssi", $email, $token, $expires);
                     $stmt_insert->execute();
 
                     // 4. Create the reset link
-                    // This is the link we WOULD email. 
-                    // Note: This assumes your site is at 'http://localhost/ISP_PROJECT/ISP_MindYouUp/'
-                    // Adjust the path if needed!
                     $reset_link = "http://localhost/ISP_PROJECT/ISP_MindYouUp/pages/auth/reset_password.php?token=" . $token;
 
-                    // --- !!! DEVELOPER HACK FOR TESTING !!! ---
-                    // Since we can't send email from XAMPP easily, we will
-                    // display the link on the page in a success message.
+                    
                     
                     $message_type = "success";
                     $message = 'User found! Click this link to reset: <br><a href="' . htmlspecialchars($reset_link) . '" class="font-bold underline">RESET MY PASSWORD</a>';
 
-                    // --- !!! END HACK !!! ---
-
-                    /* // --- REAL WORLD CODE (Replaced by the hack above) ---
-                    $subject = "Your Password Reset Link for Mind You Up";
-                    $body = "Click this link to reset your password: " . $reset_link;
-                    $headers = "From: no-reply@mindyouup.com";
                     
-                    if (mail($email, $subject, $body, $headers)) {
-                         $message_type = "success";
-                         $message = "A reset link has been sent to your email address.";
-                    } else {
-                         $message = "Could not send email. Please contact support.";
-                    }
-                    // --- END REAL WORLD CODE ---
-                    */
 
                     $stmt_insert->close();
                 }
 
             } else {
-                // No user found with this email.
-                // We give a generic success message for security,
-                // so attackers can't guess which emails are registered.
+                
+                
                 $message_type = "success";
                 $message = "If an account with that email exists, a reset link has been sent.";
             }
@@ -100,8 +75,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
 // --- 2. Page Display ---
 $page_title = 'Forgot Password - Mind You Up';
-$no_layout = true; // disable topbar + wrapper for this page
-// Define Custom Body Classes for Centering & Background Color
+$no_layout = true; 
 $body_class = "bg-[#E9F0E9] min-h-screen flex items-center justify-center p-4 ";
 include '../../components/header_component.php'; 
 

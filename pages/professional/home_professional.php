@@ -373,24 +373,24 @@ include '../../includes/navbar.php';
 
     .pdf-export-container .grid {
         display: block !important;
-        /* Force single column to prevent horizontal cutting */
+        
         width: 100% !important;
     }
 
     .pdf-export-container .bg-white {
         margin-bottom: 15px !important;
-        /* Reduce gap between cards */
+        
         padding: 15px !important;
         border: 1px solid #ddd !important;
         height: auto !important;
         overflow: visible !important;
-        /* Critical: shows the full table */
+        
         display: block !important;
         page-break-inside: avoid !important;
-        /* Prevents splitting a chart in half */
+       
     }
 
-    /* Fix for the huge doughnut chart */
+    
     .pdf-export-container .doughnut-wrapper {
         max-width: 250px !important;
         margin: 0 auto !important;

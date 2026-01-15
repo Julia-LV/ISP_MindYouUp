@@ -1,13 +1,5 @@
 <?php
-/*
- * ticlog.php
- *
- * Adapted from new_emotional_diary.php to maintain consistency.
- * "Assembler" pattern:
- * 1. Tic Selector Card (Custom implementation of Mood Card)
- * 2. 3-column grid (Duration, Intensity, Pain)
- * 3. Full-width Journal card (Reused Component)
- */
+
 
 // --- 1. PHP Logic ---
 session_start();
@@ -61,16 +53,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     else {
         // --- 1. CAPTURE DATA ---
 
-        // Column 1: Type (Motor vs Vocal)
-        // We get this from the hidden input 'active_context'
+        
         $main_type = ucfirst($_POST['active_context'] ?? 'Motor');
 
-        // Column 2: Category (Simple vs Complex)
-        // We get this from the dropdown (e.g., "Simple motor tics")
+        
         $category = $_POST['tic_category'] ?? '';
 
-        // Column 3: Type_Description (Specific Tic)
-        // We get this from the second dropdown (e.g., "Eye blinking")
+        
         $specific_tic = $_POST['specific_tic'] ?? '';
 
         // Other Fields
@@ -87,32 +76,21 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $message = "Please select the Tic Category, Specific Tic, and Duration.";
         } else {
 
-            // --- 3. UPDATED SQL INSERT ---
-            // Now mapping to: Type, Category, Type_Description
+            // --- 3.  SQL INSERT ---
+            
             $sql = "INSERT INTO tic_log 
                     (Patient_ID, Type, Category, Type_Description, Muscle_Group, Duration, Intensity, Pain_Level, Premonitory_Urge, Describe_Text, Self_Reported, Created_At) 
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())";
 
             if ($stmt = $conn->prepare($sql)) {
-                // --- 4. BIND PARAMETERS ---
-                // i = Patient_ID
-                // s = Type (Motor/Vocal)
-                // s = Category (Simple/Complex)
-                // s = Type_Description (Specific Tic)
-                // s = Muscle_Group
-                // s = Duration
-                // i = Intensity
-                // i = Pain_Level
-                // s = Premonitory_Urge
-                // s = Describe_Text
-                // i = Self_Reported
+                
 
                 $stmt->bind_param(
                     "isssssiissi",
                     $patient_id,
-                    $main_type,     // e.g. "Motor"
-                    $category,      // e.g. "Simple motor tics"
-                    $specific_tic,  // e.g. "Eye blinking"
+                    $main_type,     
+                    $category,      
+                    $specific_tic,  
                     $muscle,
                     $duration,
                     $intensity,
@@ -141,7 +119,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 // --- 2. Page Display ---
 $page_title = 'Tic Log';
 
-// We load the same header/navbar as Emotional Diary
+
 include '../../components/header_component.php';
 include '../../includes/navbar.php';
 ?>
@@ -194,7 +172,7 @@ include '../../includes/navbar.php';
                     'Vocal Tics' => "switchTab('vocal')"
                 ];
                 $active_tab = 'Motor Tics';
-                $is_js = true; // Tell component to use buttons, not links
+                $is_js = true; 
                 include '../../components/diary_tabs.php';
                 ?>
 
@@ -274,13 +252,13 @@ include '../../includes/navbar.php';
                 $label = 'Intensity';
                 $id = 'intensity';
                 $name = 'intensity';
-                // We reset vars to be safe
+                
                 include '../../components/slider_card.php';
                 ?>
 
                 <?php
                 $label = 'Pain / Discomfort';
-                // We map this to 'stress' or 'pain_meter' depending on your DB column
+                
                 $id = 'stress';
                 $name = 'stress';
                 $min = 0;
@@ -335,7 +313,7 @@ include '../../includes/navbar.php';
             <?php
             $journal_title = 'Describe the Tic Episode';
             $journal_placeholder = 'Describe the environment, triggers, or specific details about the tic...';
-            $journal_rows = 4; // Make it a bit shorter for Tics
+            $journal_rows = 4; 
 
             include '../../components/journal_card.php';
             ?>
@@ -360,7 +338,7 @@ include '../../includes/navbar.php';
                     $type = 'button';
                     $variant = 'primary';
                     $width = 'w-auto';
-                    // We reset variables we don't need to ensure cleanliness
+                    
                     $href = null;
                     $onclick = "askConfirm('main')";
                     include '../../components/button.php';
@@ -383,7 +361,7 @@ include '../../includes/navbar.php';
 <?php if (!empty($message) && $message_type === 'success'): ?>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Pass the PHP message to the JS function so you can see the Log ID
+            
             openSuccess("Entry Recorded!", "<?php echo $message; ?>");
         });
     </script>

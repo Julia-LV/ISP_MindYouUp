@@ -195,7 +195,7 @@ if ($conn) {
     // --- UPDATED AFFECTED AREAS LOGIC (CUMULATIVE) ---
     $muscle_labels = []; 
     $muscle_data = [];
-    // No date restriction: fetches lifetime counts for this patient
+   
     $sql = "SELECT Muscle_Group, COUNT(*) as count 
             FROM tic_log 
             WHERE Patient_ID = ? AND Muscle_Group != '' AND Muscle_Group IS NOT NULL 
@@ -212,9 +212,9 @@ if ($conn) {
     } 
     $stmt->close();
 
-    // --- UPDATED DAILY RHYTHM LOGIC (TODAY ONLY) ---
-    $hourly_activity = array_fill(0, 24, 0); // Init 0-23 hours with 0
-    // Strictly filters for CURDATE()
+    // --- UPDATED DAILY RHYTHM LOGIC  ---
+    $hourly_activity = array_fill(0, 24, 0); 
+    
     $sql = "SELECT HOUR(Created_At) as tic_hour, COUNT(*) as count 
             FROM tic_log 
             WHERE Patient_ID = ? AND DATE(Created_At) = CURDATE() 
@@ -236,9 +236,9 @@ if ($conn) {
     $hourly_activity = array_fill(0, 24, 0);
 }
 
-// --------------------------------------------------------
+
 // RECENT ACTIVITY LOGIC
-// --------------------------------------------------------
+
 $recent_activities = [];
 if ($conn) {
     $temp = [];

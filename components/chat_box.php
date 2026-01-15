@@ -8,18 +8,18 @@ $raw_image = trim($chat_target_image ?? '');
 $img_path = null;
 
 if (!empty($raw_image)) {
-    // If the database string already starts with '../', use it as is
+    
     if (strpos($raw_image, '../') === 0) {
         $img_path = $raw_image;
     } else {
-        // Otherwise, point to your 'uploads' folder
+        
         $img_path = "../../uploads/" . $raw_image;
     }
 }
 ?>
 
 <style>
-    /* This removes the scrollbar from the browser window */
+    
     body {
         margin: 0;
         padding: 0;

@@ -1,7 +1,5 @@
 <?php
-/*
- * new_emotional_diary.php
- */
+
 
 // --- 1. PHP Logic ---
 session_start();
@@ -35,11 +33,10 @@ if ($_SESSION["role"] != "Patient") {
 }
 $patient_id = $_SESSION["user_id"];
 
-// --- AGE CHECK LOGIC (UPDATED FOR DATE OF BIRTH) ---
-// We calculate age dynamically from Date_Birth
-$patient_age = 0; // Default
 
-// CHANGED: Select Date_Birth instead of Age
+$patient_age = 0; 
+
+
 $sql_age = "SELECT Birthday FROM user_profile WHERE User_ID = ?";
 if ($stmt_age = $conn->prepare($sql_age)) {
     $stmt_age->bind_param("i", $patient_id);
@@ -52,9 +49,8 @@ if ($stmt_age = $conn->prepare($sql_age)) {
                     $dob_date = new DateTime($db_dob);
                     $now = new DateTime();
                     $interval = $now->diff($dob_date);
-                    $patient_age = $interval->y; // This gives the age in years
+                    $patient_age = $interval->y; 
                 } catch (Exception $e) {
-                    // Fallback if date parsing fails
                     $patient_age = 20; 
                 }
             }
@@ -102,7 +98,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     }
     $conn->close();
 }
-// --- END PHP LOGIC ---
+
 
 
 // --- 2. Page Display ---
@@ -110,7 +106,7 @@ $page_title = 'Emotional Diary';
 
 include '../../components/header_component.php';
 
-// Get the current page's filename
+
 $current_page = basename($_SERVER['PHP_SELF']);
 ?>
 
@@ -138,7 +134,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
         <form action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>" method="POST" class="space-y-6" id="emotional-form">
 
             <?php
-            // Logic uses the calculated $patient_age
+            
             if ($patient_age > 0 && $patient_age <= 16) {
                 if (file_exists('../../components/new_mood_selector.php')) {
                     include '../../components/new_mood_selector.php';

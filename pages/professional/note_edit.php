@@ -1,5 +1,5 @@
 <?php
-// Professional note edit/create page
+
 session_start();
 $userId = $_SESSION['user_id'] ?? null;
 $role = $_SESSION['role'] ?? null;
@@ -35,7 +35,7 @@ $form_title = '';
 $form_text = '';
 $form_patient = '';
 
-// Load note for editing if ID provided
+
 if (!empty($_GET['id'])) {
     $eid = (int)$_GET['id'];
     $est = $conn->prepare("SELECT Note_ID, Note_Title, Note_Text FROM professional_notes WHERE Note_ID = ? AND Professional_ID = ? LIMIT 1");
@@ -98,13 +98,13 @@ $page_title = $form_id ? 'Edit Note' : 'New Note';
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <title><?php echo htmlspecialchars($page_title); ?></title>
 
-    <!-- TailwindCSS CDN -->
+    
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     
-    <!-- Bootstrap CSS -->
+   
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
     
-    <!-- Notes Page CSS -->
+    
     <link href="../../CSS/notes_page.css?v=2" rel="stylesheet">
 </head>
 <body>
