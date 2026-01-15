@@ -452,13 +452,13 @@ session_start();
       <span class="footer-links">
         <a href="about_blank.php">About us</a>
         <span aria-hidden="true">·</span>
-        <a href="/ISP_MindYouUp/Privacy-Policy.pdf"
+        <a href="/ISP_PROJECT/ISP_MINDYOUUP/Privacy_Policy.pdf"
            target="_blank"
            rel="noopener">
           Privacy Policy
         </a>
         <span aria-hidden="true">·</span>
-        <a href="/ISP_MindYouUp/Terms-Conditions.pdf"
+        <a href="/ISP_PROJECT/ISP_MINDYOUUP/Terms-Conditions.pdf"
            target="_blank"
            rel="noopener">
           Terms &amp; Conditions
