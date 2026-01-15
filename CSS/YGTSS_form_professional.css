@@ -1,0 +1,277 @@
+/* YGTSS Form Professional Styles */
+
+/* Base styling to match patient pages */
+:root {
+    --bg-main: #E9F0E9;
+    --accent-green: #005949;
+    --text-dark: #0b2a24;
+    --radius: 12px;
+}
+
+body {
+    background: var(--bg-main);
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+}
+
+/* Main Content Wrapper - Green Background */
+.main-content {
+    background: var(--bg-main);
+    min-height: calc(100vh - 80px);
+    padding: 0;
+}
+
+/* Results Table */
+.results-table th {
+    background-color: var(--accent-green);
+    color: white;
+    text-align: center;
+    vertical-align: middle;
+}
+
+.results-table td {
+    text-align: center;
+    vertical-align: middle;
+}
+
+.results-table .row-label {
+    background-color: #f8f9fa;
+    font-weight: 600;
+    text-align: left;
+}
+
+.score-cell {
+    font-weight: bold;
+    font-size: 1.1em;
+}
+
+.total-row {
+    background-color: #e9ecef;
+    font-weight: bold;
+}
+
+.grand-total-row {
+    background-color: var(--accent-green);
+    color: white;
+    font-weight: bold;
+}
+
+/* Patient Card - no green left border */
+.patient-card {
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: 2px solid transparent !important;
+    border-left: none !important;
+    border-radius: var(--radius);
+    box-shadow: none;
+}
+
+.patient-card:hover {
+    border-color: var(--accent-green) !important;
+    transform: translateY(-2px);
+}
+
+.patient-card.selected {
+    border-color: var(--accent-green) !important;
+    background-color: #f0f7f5;
+}
+
+/* Result Card */
+.result-card {
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border-radius: var(--radius);
+}
+
+.result-card:hover {
+    background-color: #f8f9fa;
+}
+
+/* Container card styling */
+.card {
+    border-radius: var(--radius);
+    border: none;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    border-left: 4px solid var(--accent-green);
+}
+
+.card-header {
+    background-color: #fff;
+    border-bottom: 1px solid #e5e7eb;
+    font-weight: 600;
+    color: var(--accent-green);
+}
+
+/* Severity Badge */
+.severity-badge {
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 0.85em;
+    font-weight: 600;
+}
+
+.bg-orange {
+    background-color: #fd7e14 !important;
+    color: white;
+}
+
+/* Info Grid */
+.info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.info-box {
+    background: var(--accent-green);
+    color: white;
+    padding: 16px;
+    border-radius: var(--radius);
+    text-align: center;
+}
+
+.info-box.purple {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.info-box.orange {
+    background: #f5576c;
+}
+
+.info-box .value {
+    font-size: 2em;
+    font-weight: bold;
+}
+
+.info-box .label {
+    font-size: 0.9em;
+    opacity: 0.9;
+}
+
+/* Symptom List */
+.symptom-list {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.symptom-item {
+    padding: 8px 12px;
+    border-bottom: 1px solid #eee;
+}
+
+.symptom-item:last-child {
+    border-bottom: none;
+}
+
+.symptom-present {
+    background-color: #fff3cd;
+}
+
+.symptom-past {
+    background-color: #cff4fc;
+}
+
+/* Responsive Styles */
+
+/* Tablets */
+@media (max-width: 992px) {
+    .container-fluid {
+        padding-left: 15px;
+        padding-right: 15px;
+    }
+    
+    /* Stack sidebar and main content */
+    .row > .col-md-3,
+    .row > .col-md-9 {
+        flex: 0 0 100%;
+        max-width: 100%;
+    }
+    
+    .row > .col-md-3 {
+        margin-bottom: 20px;
+    }
+    
+    .info-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* Mobile devices */
+@media (max-width: 768px) {
+    .card {
+        margin-bottom: 15px;
+    }
+    
+    .card-body {
+        padding: 1rem;
+    }
+    
+    .info-grid {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+    
+    .info-box {
+        padding: 12px;
+    }
+    
+    .info-box .value {
+        font-size: 1.5em;
+    }
+    
+    /* Results table responsive */
+    .results-table {
+        font-size: 0.85rem;
+    }
+    
+    .results-table th,
+    .results-table td {
+        padding: 8px 4px;
+    }
+    
+    /* Patient cards */
+    .patient-card {
+        padding: 10px;
+    }
+    
+    /* Symptom list */
+    .symptom-list {
+        max-height: 300px;
+    }
+    
+    .symptom-item {
+        padding: 6px 10px;
+        font-size: 0.9rem;
+    }
+}
+
+/* Small mobile */
+@media (max-width: 480px) {
+    .results-table {
+        font-size: 0.75rem;
+    }
+    
+    .results-table th,
+    .results-table td {
+        padding: 6px 2px;
+    }
+    
+    .score-cell {
+        font-size: 1em;
+    }
+    
+    .info-box .value {
+        font-size: 1.25em;
+    }
+    
+    .info-box .label {
+        font-size: 0.8em;
+    }
+    
+    .severity-badge {
+        padding: 3px 8px;
+        font-size: 0.75em;
+    }
+}

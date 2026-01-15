@@ -10,11 +10,11 @@ if (file_exists($configPath)) { require_once $configPath; }
 
 // 2. DB CONNECTION (XAMPP COMPATIBLE)
 if (!isset($pdo)) {
-    // Force 127.0.0.1 for Windows XAMPP
-    $db_host = isset($host) && $host != 'localhost' ? $host : '127.0.0.1';
-    $db_name = isset($db) ? $db : 'tictracker_v9';
-    $db_user = isset($user) ? $user : 'root';
-    $db_pass = isset($pass) ? $pass : '';
+    // Use variables from config.php directly
+    $db_host = isset($servername) && $servername != 'localhost' ? $servername : '127.0.0.1';
+    $db_name = isset($dbname) ? $dbname : 'tictracker_v9';
+    $db_user = isset($username) ? $username : 'root';
+    $db_pass = isset($password) ? $password : '';
     $db_port = isset($port) ? $port : '3307'; 
 
     try {

@@ -105,29 +105,39 @@ $page_title = $form_id ? 'Edit Note' : 'New Note';
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
     
     <!-- Notes Page CSS -->
-    <link href="../../CSS/notes_page.css" rel="stylesheet">
+    <link href="../../CSS/notes_page.css?v=2" rel="stylesheet">
 </head>
 <body>
 <?php include_once __DIR__ . '/../../includes/navbar.php'; ?>
 <?php include __DIR__ . '/../../components/header_component.php'; ?>
 
-    <div class="note-form-container">
-        <?php if ($message): ?>
-            <div class="error-msg"><?php echo htmlspecialchars($message); ?></div>
-        <?php endif; ?>
-        
-        <div class="form-card">
-            <form method="post">
-                <input type="hidden" name="edit_id" value="<?php echo htmlspecialchars($form_id) ?>">
-                
-                <label for="title">Title</label>
-                <input id="title" name="title" type="text" placeholder="Note title..." value="<?php echo htmlspecialchars($form_title) ?>">
-                
-                <label for="text">Note</label>
-                <textarea id="text" name="text" placeholder="Write your note here..."><?php echo htmlspecialchars($form_text) ?></textarea>
-                
-                <button class="btn-save" type="submit"><?php echo $form_id ? 'Update Note' : 'Save Note' ?></button>
-            </form>
+    <div class="main-content">
+        <div class="notes-wrapper">
+            <div class="notes-header">
+                <h1><?php echo $form_id ? 'Edit Note' : 'New Note' ?></h1>
+            </div>
+            
+            <?php if ($message): ?>
+                <div class="error-msg" style="background:#fee;border-left:4px solid #c00;padding:12px;border-radius:8px;margin-bottom:16px;"><?php echo htmlspecialchars($message); ?></div>
+            <?php endif; ?>
+            
+            <div class="form-card" style="max-width:500px;margin:0 auto;">
+                <form method="post">
+                    <input type="hidden" name="edit_id" value="<?php echo htmlspecialchars($form_id) ?>">
+                    
+                    <div style="margin-bottom:16px;">
+                        <label for="title" style="display:block;margin-bottom:6px;font-weight:600;">Title</label>
+                        <input id="title" name="title" type="text" placeholder="Note title..." value="<?php echo htmlspecialchars($form_title) ?>" style="width:100%;padding:12px;border:1px solid #ddd;border-radius:8px;font-size:1rem;">
+                    </div>
+                    
+                    <div style="margin-bottom:20px;">
+                        <label for="text" style="display:block;margin-bottom:6px;font-weight:600;">Note</label>
+                        <textarea id="text" name="text" placeholder="Write your note here..." style="width:100%;padding:12px;border:1px solid #ddd;border-radius:8px;font-size:1rem;min-height:150px;resize:vertical;"><?php echo htmlspecialchars($form_text) ?></textarea>
+                    </div>
+                    
+                    <button type="submit" style="width:100%;padding:14px;background:#005949;color:#fff;border:none;border-radius:8px;font-size:1rem;font-weight:600;cursor:pointer;"><?php echo $form_id ? 'Update Note' : 'Save Note' ?></button>
+                </form>
+            </div>
         </div>
     </div>
     

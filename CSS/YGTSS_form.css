@@ -1,25 +1,60 @@
 /* YGTSS Form Custom Styles */
 :root {
-    --bg-creme: #FFF7E1;
+    --bg-main: #E9F0E9;
     --accent-orange: #F26647;
     --accent-green: #005949;
     --text-dark: #0b2a24;
     --muted: rgba(11,42,36,0.65);
-    --radius: 10px;
+    --radius: 12px;
 }
 body {
-    background: var(--bg-creme);
+    background: var(--bg-main);
     color: var(--text-dark);
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
 }
+
+/* Main Content Wrapper - Green Background */
+.main-content {
+    background: var(--bg-main);
+    min-height: calc(100vh - 80px);
+    padding: 24px 16px;
+}
+
+/* Page Header - Outside the white box */
+.page-header {
+    max-width: 1100px;
+    margin: 0 auto 24px auto;
+    text-align: center;
+}
+
+.page-title {
+    font-size: 1.875rem;
+    font-weight: 700;
+    color: var(--accent-green);
+    margin: 0 0 16px 0;
+}
+
+.page-subtitle {
+    color: #6b7280;
+    font-size: 0.85rem;
+    line-height: 1.6;
+}
+
 h2, h4 {
     color: var(--accent-green);
 }
+
+/* White box container */
 .ygtss-section {
     background: #fff;
     border-radius: var(--radius);
-    box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
     padding: 2rem;
-    margin-bottom: 2rem;
+    margin: 0 auto 2rem auto;
+    max-width: 1100px;
+    border-left: 4px solid var(--accent-green);
 }
 .ygtss-section .form-check-input,
 .ygtss-section .form-check-input[type="radio"] {
@@ -36,20 +71,134 @@ h2, h4 {
 }
 .ygtss-section .form-check-input:checked,
 .ygtss-section .form-check-input[type="radio"]:checked {
-    background-color: var(--accent-orange) !important;
-    border-color: var(--accent-orange) !important;
+    background-color: var(--accent-green) !important;
+    border-color: var(--accent-green) !important;
     box-shadow: none !important;
 }
 .btn-primary {
-    background: linear-gradient(180deg, var(--accent-orange), #e6553e);
+    background: var(--accent-green);
     border: none;
 }
+.btn-primary:hover {
+    background: #004539;
+}
 .btn-success {
-    background: linear-gradient(180deg, var(--accent-green), #007d63);
+    background: var(--accent-green);
+    border: none;
+}
+.btn-success:hover {
+    background: #004539;
+}
+.btn-secondary {
+    background: #6c757d;
     border: none;
 }
 .alert-info {
     background: #e6f9ee;
     color: var(--accent-green);
     border-radius: var(--radius);
+}
+.alert-danger {
+    border-radius: var(--radius);
+}
+.form-control:focus {
+    border-color: var(--accent-green);
+    box-shadow: 0 0 0 0.2rem rgba(0, 89, 73, 0.25);
+}
+.form-select:focus {
+    border-color: var(--accent-green);
+    box-shadow: 0 0 0 0.2rem rgba(0, 89, 73, 0.25);
+}
+
+/* Responsive Styles */
+
+/* Tablets and smaller desktops */
+@media (max-width: 992px) {
+    .container.ygtss-section {
+        max-width: 100%;
+        padding-left: 16px;
+        padding-right: 16px;
+    }
+    
+    .ygtss-section {
+        padding: 1.5rem;
+    }
+}
+
+/* Mobile devices */
+@media (max-width: 768px) {
+    .ygtss-section {
+        padding: 1.25rem;
+        margin-left: 10px;
+        margin-right: 10px;
+        border-radius: 8px;
+    }
+    
+    .ygtss-section h2 {
+        font-size: 1.5rem;
+    }
+    
+    .ygtss-section h4 {
+        font-size: 1.15rem;
+    }
+    
+    /* Stack form buttons on mobile */
+    .ygtss-section .d-flex.gap-2 {
+        flex-direction: column;
+    }
+    
+    .ygtss-section .d-flex.gap-2 .btn {
+        width: 100%;
+    }
+    
+    /* Improve touch targets */
+    .form-check {
+        padding-top: 8px;
+        padding-bottom: 8px;
+    }
+    
+    .form-check-label {
+        font-size: 0.95rem;
+        line-height: 1.5;
+    }
+    
+    /* Adjust input fields */
+    .form-control-sm {
+        font-size: 1rem;
+        padding: 0.5rem 0.75rem;
+    }
+    
+    /* Developer credits */
+    .text-center .small {
+        font-size: 0.75rem;
+    }
+}
+
+/* Small mobile devices */
+@media (max-width: 480px) {
+    .ygtss-section {
+        padding: 1rem;
+        margin-left: 5px;
+        margin-right: 5px;
+    }
+    
+    .ygtss-section h2 {
+        font-size: 1.25rem;
+    }
+    
+    .ygtss-section h4 {
+        font-size: 1rem;
+    }
+    
+    .ms-3 {
+        margin-left: 0.5rem !important;
+    }
+    
+    /* Make age onset input full width */
+    .form-control-sm[style*="max-width:150px"] {
+        max-width: 100% !important;
+        display: block !important;
+        width: 100%;
+        margin-top: 8px;
+    }
 }

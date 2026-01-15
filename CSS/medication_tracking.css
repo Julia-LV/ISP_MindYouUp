@@ -1,6 +1,6 @@
 /* Brand colors and layout for medication_tracking.php */
 :root {
-    --bg-creme: #FFF7E1;
+    --bg-main: #E9F0E9;
     --accent-orange: #F26647;
     --accent-green: #005949;
     --text-dark: #0b2a24;
@@ -11,46 +11,65 @@
 
 body { 
     font-family: Arial, sans-serif; 
-    background: var(--bg-creme); 
+    background: var(--bg-main); 
     margin: 0; 
     padding: 0 !important; 
     color: var(--text-dark); 
 }
 
-/* Main Content Area */
+/* Main Content Area - full width green background */
 .main-content {
-    padding: 20px;
-    min-height: calc(100vh - 140px);
+    padding: 24px 16px;
+    min-height: calc(100vh - 80px);
+    background: var(--bg-main);
 }
 
-/* Main Wrapper */
+/* Page Header - Outside the box, full width, not constrained */
+.page-header {
+    max-width: 1100px;
+    margin: 0 auto 24px auto;
+    padding: 0 16px;
+}
+
+.page-title {
+    font-size: 1.875rem;
+    font-weight: 700;
+    color: var(--accent-green);
+    margin: 0;
+}
+
+.page-subtitle {
+    color: #6b7280;
+    margin-top: 4px;
+    font-size: 0.95rem;
+}
+
+/* Main Wrapper - Box styling like home_patient cards */
 .med-wrapper {
     background: #fff;
-    border-radius: 16px;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-    padding: 30px;
-    min-height: calc(100vh - 200px);
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    padding: 24px;
+    max-width: 1100px;
+    margin: 0 auto;
     position: relative;
+    min-height: 400px;
+    border-left: 4px solid var(--accent-green);
+    padding-bottom: 80px; /* Space for button at bottom */
 }
 
-/* Header */
-.med-header {
-    text-align: center;
-    margin-bottom: 30px;
-}
-
-.med-header h1 {
-    font-size: 1.75rem;
-    font-weight: 500;
-    color: var(--text-dark);
-    margin: 0;
+/* Add Button Container - bottom right corner inside box */
+.add-btn-container {
+    position: absolute;
+    bottom: 24px;
+    right: 24px;
 }
 
 /* Medication List */
 .med-list {
-    max-width: 500px;
-    margin: 0 auto;
-    padding-bottom: 80px;
+    max-width: 100%;
+    margin: 0;
+    padding-bottom: 20px;
 }
 
 /* Medication Card */
@@ -58,15 +77,17 @@ body {
     display: flex;
     align-items: center;
     background: #fff;
-    border: 2px solid #333;
+    border: 1px solid #e5e7eb;
     border-radius: 8px;
-    padding: 14px 16px;
+    padding: 16px;
     margin-bottom: 12px;
     transition: all 0.2s ease;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
 }
 
 .med-card:hover {
     border-color: var(--accent-green);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 }
 
 .med-card.selected {
@@ -164,9 +185,9 @@ body {
 
 /* Taken Section */
 .taken-section {
-    margin-top: 20px;
-    border-top: 1px solid #eee;
-    padding-top: 12px;
+    margin-top: 24px;
+    border-top: 1px solid #e5e7eb;
+    padding-top: 16px;
 }
 
 .taken-toggle {
@@ -177,10 +198,15 @@ body {
     border: none;
     cursor: pointer;
     padding: 12px 0;
-    color: var(--muted);
+    color: #6b7280;
     font-size: 0.95rem;
+    font-weight: 500;
     width: 100%;
     text-align: left;
+}
+
+.taken-toggle:hover {
+    color: var(--accent-green);
 }
 
 .taken-toggle .chevron {
@@ -199,20 +225,12 @@ body {
     display: none;
 }
 
-/* Floating Buttons Container */
-.fab-buttons {
-    position: absolute;
-    bottom: 30px;
-    right: 30px;
-    display: flex;
-    flex-direction: row;
-    gap: 16px;
-    align-items: center;
-}
-
 /* Floating Delete Button */
 .fab-delete {
     display: none;
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
     width: 60px;
     height: 60px;
     background: linear-gradient(180deg, #dc3545, #c82333);
@@ -223,6 +241,7 @@ body {
     cursor: pointer;
     box-shadow: 0 4px 12px rgba(220,53,69,0.4);
     transition: transform 0.2s, box-shadow 0.2s;
+    z-index: 100;
 }
 
 .fab-delete.visible {
@@ -234,31 +253,11 @@ body {
     box-shadow: 0 6px 16px rgba(220,53,69,0.5);
 }
 
-/* Floating Add Button */
-.fab-add {
-    width: 60px;
-    height: 60px;
-    background: linear-gradient(180deg, var(--primary-blue), #357ABD);
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border: none;
-    cursor: pointer;
-    box-shadow: 0 4px 12px rgba(74,144,217,0.4);
-    transition: transform 0.2s, box-shadow 0.2s;
-}
-
-.fab-add:hover {
-    transform: scale(1.1);
-    box-shadow: 0 6px 16px rgba(74,144,217,0.5);
-}
-
 /* Empty State */
 .empty-state {
     text-align: center;
     padding: 60px 20px;
-    color: #666;
+    color: #6b7280;
 }
 
 .empty-state p {
@@ -266,13 +265,12 @@ body {
 }
 
 .empty-state .small {
-    font-size: 0.9rem;
-    color: #999;
+    font-size: 0.875rem;
+    color: #9ca3af;
 }
 
 /* Modal Overlay */
-.modal-overlay,
-.reminder-overlay {
+.modal-overlay {
     position: fixed;
     top: 0;
     left: 0;
@@ -280,13 +278,13 @@ body {
     bottom: 0;
     background: rgba(0,0,0,0.5);
     display: none;
-    align-items: flex-end;
+    align-items: center;
     justify-content: center;
     z-index: 1000;
+    padding: 20px;
 }
 
-.modal-overlay.active,
-.reminder-overlay.active {
+.modal-overlay.active {
     display: flex;
 }
 
@@ -294,86 +292,12 @@ body {
 .modal-content {
     background: #fff;
     width: 100%;
-    max-width: 500px;
-    border-radius: 16px 16px 0 0;
-    padding: 20px;
-    animation: slideUp 0.3s ease;
-}
-
-@keyframes slideUp {
-    from { transform: translateY(100%); }
-    to { transform: translateY(0); }
-}
-
-.modal-body {
-    padding: 16px 0;
-}
-
-.med-input {
-    flex: 1;
-    border: none;
-    border-bottom: 2px solid #ddd;
-    font-size: 1rem;
-    padding: 12px 0;
-    outline: none;
-    color: var(--text-dark);
-    width: 100%;
-}
-
-.med-input:focus {
-    border-bottom-color: var(--primary-blue);
-}
-
-.med-input::placeholder {
-    color: #999;
-}
-
-.modal-footer {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding-top: 16px;
-    border-top: 1px solid #eee;
-}
-
-.reminder-btn {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    background: none;
-    border: none;
-    cursor: pointer;
-    color: var(--text-dark);
-    font-size: 0.95rem;
-    padding: 10px 0;
-}
-
-.reminder-btn:hover {
-    color: var(--accent-green);
-}
-
-.done-btn {
-    background: none;
-    border: none;
-    cursor: pointer;
-    color: var(--muted);
-    font-size: 1rem;
-    padding: 10px 16px;
-}
-
-.done-btn:hover {
-    color: var(--accent-green);
-}
-
-/* Reminder Picker */
-.reminder-content {
-    background: #fff;
-    width: 90%;
-    max-width: 360px;
+    max-width: 450px;
     border-radius: 16px;
     padding: 24px;
-    margin-bottom: 20%;
     animation: fadeIn 0.2s ease;
+    max-height: 90vh;
+    overflow-y: auto;
 }
 
 @keyframes fadeIn {
@@ -381,55 +305,16 @@ body {
     to { opacity: 1; transform: scale(1); }
 }
 
-.reminder-content h3 {
-    font-size: 1.1rem;
-    font-weight: 600;
-    color: var(--text-dark);
-    margin: 0 0 4px;
+.modal-body {
+    padding: 0;
 }
 
-.reminder-preview {
-    color: #999;
-    font-size: 0.9rem;
-    margin: 0 0 20px;
-}
-
-.repeat-section {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 12px 0;
-    border-bottom: 1px solid #eee;
-    margin-bottom: 16px;
-}
-
-.repeat-section label {
-    color: var(--text-dark);
-    font-size: 0.95rem;
-    font-weight: 500;
-}
-
-.repeat-section select {
-    background: none;
-    border: 1px solid #ddd;
-    padding: 8px 12px;
-    border-radius: 8px;
-    color: var(--text-dark);
-    font-size: 0.95rem;
-    cursor: pointer;
-}
-
-.datetime-picker {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-    margin-bottom: 20px;
-}
-
+/* Field Group Styling */
 .field-group {
     display: flex;
     flex-direction: column;
     gap: 6px;
+    margin-bottom: 16px;
 }
 
 .field-group label {
@@ -438,54 +323,100 @@ body {
     font-weight: 500;
 }
 
-.datetime-picker input,
-.datetime-picker select {
-    padding: 14px;
+.med-input {
     border: 1px solid #ddd;
     border-radius: 8px;
     font-size: 1rem;
+    padding: 14px;
+    outline: none;
     color: var(--text-dark);
-    background: #fff;
+    width: 100%;
+    box-sizing: border-box;
 }
 
-.datetime-picker input:focus,
-.datetime-picker select:focus {
-    border-color: var(--primary-blue);
+.med-input:focus {
+    border-color: var(--accent-green);
+}
+
+.med-input::placeholder {
+    color: #999;
+}
+
+/* Reminder Section in Modal */
+.reminder-section {
+    margin-top: 8px;
+    padding-top: 16px;
+    border-top: 1px solid #eee;
+}
+
+.section-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-dark);
+    margin: 0 0 4px;
+}
+
+.section-title svg {
+    color: var(--accent-green);
+}
+
+.reminder-preview {
+    color: #999;
+    font-size: 0.85rem;
+    margin: 0 0 16px;
+}
+
+.modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 12px;
+    padding-top: 20px;
+    border-top: 1px solid #eee;
+    margin-top: 8px;
+}
+
+/* Form Controls */
+.form-select,
+.form-control {
+    padding: 12px 14px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    color: var(--text-dark);
+    background: #fff;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.form-select:focus,
+.form-control:focus {
+    border-color: var(--accent-green);
     outline: none;
 }
 
-.reminder-actions {
+.datetime-picker {
     display: flex;
-    justify-content: flex-end;
-    gap: 12px;
+    flex-direction: column;
+    gap: 0;
 }
-
-.cancel-btn,
-.ok-btn {
-    padding: 12px 28px;
-    border-radius: 24px;
-    font-size: 0.95rem;
-    cursor: pointer;
-    transition: all 0.2s;
-}
-
-.cancel-btn {
-    background: #f5f5f5;
-    border: none;
-    color: var(--text-dark);
-}
-
-.cancel-btn:hover {
-    background: #eee;
-}
-
-.ok-btn {
-    background: var(--primary-blue);
-    border: none;
-    color: #fff;
-}
-
-.ok-btn:hover {
-    background: #357ABD;
+/* Responsive adjustments */
+@media (max-width: 576px) {
+    .modal-content {
+        margin: 10px;
+        max-height: 85vh;
+    }
+    
+    .modal-footer {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .modal-footer button {
+        width: 100%;
+    }
 }
 

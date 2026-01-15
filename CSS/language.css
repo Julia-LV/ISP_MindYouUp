@@ -1,0 +1,88 @@
+/* Language Page Styles */
+
+/* Language Options Container */
+.language-options {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+/* Language Button */
+.lang-btn {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px 20px;
+    background: #fff;
+    border: 2px solid #ddd;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: left;
+}
+
+.lang-btn:hover {
+    border-color: #005949;
+    background: #f9f9f9;
+}
+
+.lang-btn.active {
+    border-color: #005949;
+    background: rgba(0, 89, 73, 0.08);
+}
+
+.lang-btn.active .check-icon {
+    display: flex;
+}
+
+/* Language Flag Emoji */
+.lang-flag {
+    font-size: 2rem;
+    line-height: 1;
+}
+
+/* Language Info Section */
+.lang-info {
+    flex: 1;
+}
+
+.lang-name {
+    font-size: 1.1rem;
+    font-weight: 500;
+    color: #333;
+}
+
+.lang-native {
+    font-size: 0.9rem;
+    color: #6c757d;
+}
+
+/* Check Icon */
+.check-icon {
+    display: none;
+    width: 24px;
+    height: 24px;
+    background: #005949;
+    border-radius: 50%;
+    align-items: center;
+    justify-content: center;
+    color: white;
+}
+
+/* Translation Note Box */
+.translation-note {
+    text-align: center;
+    margin-top: 30px;
+    padding: 16px;
+    background: rgba(74, 144, 217, 0.1);
+    border-radius: 8px;
+    color: #333;
+    font-size: 0.9rem;
+}
+
+.translation-note svg {
+    vertical-align: middle;
+    margin-right: 8px;
+}
