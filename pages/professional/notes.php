@@ -124,8 +124,17 @@ if (!empty($_GET['edit'])) {
             <?php endif; ?>
         </div>
         
-        <!-- New Note Button inside box -->
-        <a href="note_edit.php" style="position:absolute;bottom:20px;right:20px;width:56px;height:56px;background:#005949;color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:28px;text-decoration:none;box-shadow:0 4px 12px rgba(0,89,73,0.3);">+</a>
+        <!-- New Note Button using button component -->
+        <div style="position:absolute;bottom:20px;right:20px;">
+            <?php 
+                $type = 'link';
+                $href = 'note_edit.php';
+                $label = 'Add Note';
+                $variant = 'primary'; // Green
+                $width = 'w-auto';
+                include __DIR__ . '/../../components/button.php';
+            ?>
+        </div>
     </div>
 </div>
 

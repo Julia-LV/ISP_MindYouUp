@@ -48,9 +48,22 @@ $page_title = 'Settings';
                 include __DIR__ . '/../../components/button.php';
                 ?>
                 <?php 
+                // Get unread notification count for badge
+                $unreadCount = 0;
+                if (isset($_SESSION['user_id']) && isset($conn)) {
+                    require_once __DIR__ . '/notifications.php';
+                    $unreadCount = getUnreadNotificationCount($conn, $_SESSION['user_id']);
+                }
                 $type = 'link'; $href = 'notifications.php'; $label = 'Notifications'; $variant = 'primary'; $width = 'w-full';
-                include __DIR__ . '/../../components/button.php';
                 ?>
+                <div style="position:relative;">
+                    <?php include __DIR__ . '/../../components/button.php'; ?>
+                    <?php if ($unreadCount > 0): ?>
+                    <span style="position:absolute;top:8px;right:18px;min-width:22px;height:22px;background:#e11d48;color:#fff;font-size:13px;font-weight:bold;line-height:22px;text-align:center;border-radius:50%;padding:0 5px;z-index:10;box-shadow:0 1px 4px rgba(0,0,0,0.12);">
+                        <?= ($unreadCount > 99 ? '+99' : $unreadCount) ?>
+                    </span>
+                    <?php endif; ?>
+                </div>
                 <?php 
                 $type = 'link'; $href = 'privacy.php'; $label = 'Privacy Policy'; $variant = 'primary'; $width = 'w-full';
                 include __DIR__ . '/../../components/button.php';
