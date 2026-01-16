@@ -1,5 +1,4 @@
 <?php
-session_start();
 require_once __DIR__ . '/../../config.php'; // adjust path if needed
 
 $CURRENT_USER = null;
@@ -18,9 +17,9 @@ if (!empty($_SESSION['user_id']) && isset($conn)) {
     }
 }
 
-// ============================================================
+// ==================================================================
 // NOTIFICATION HELPER FUNCTIONS (merged from send_notification.php)
-// ============================================================
+// ==================================================================
 
 /**
  * Save a notification to the database
@@ -284,7 +283,6 @@ function timeAgo($datetime) {
 </head>
 <body>
     <?php include __DIR__ . '/../../includes/navbar.php'; ?>
-    <?php include __DIR__ . '/../../components/header_component.php'; ?>
     <?php include __DIR__ . '/../../components/push_notification.php'; ?>
     
     <div class="page-wrap">

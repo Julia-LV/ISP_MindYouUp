@@ -94,7 +94,7 @@ if (isset($_SESSION['user_id']) && isset($conn)) {
             transform transition-all duration-300 z-[100]
             flex flex-col justify-between
             -translate-x-full md:translate-x-0
-            w-64 w-20">
+            w-20">
 
     <div class="w-full">
         <div id="toggleButton" class="h-16 flex items-center gap-4 px-4 py-6 border-b border-gray-300 cursor-pointer relative">  

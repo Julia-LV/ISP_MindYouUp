@@ -3,7 +3,7 @@ $servername = "localhost";
 $username = "root";
 $password = "";
 $dbname = "tictracker_v10";
-$port = 3307;
+$port = 3306;
 
 
 $conn = mysqli_connect($servername, $username, $password, $dbname, $port);
