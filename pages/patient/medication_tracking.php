@@ -75,13 +75,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                 mysqli_stmt_bind_param($stmt, 'isis', $userId, $name, $timesPerDay, $reminderDateTime);
                 mysqli_stmt_execute($stmt);
                 mysqli_stmt_close($stmt);
-                // Notification logic
-                if ($reminderDateTime) {
-                    require_once __DIR__ . '/../common/notifications.php';
-                    $title = 'Medication Reminder Set';
-                    $msg = 'A medication reminder has been set for ' . htmlspecialchars($name) . '.';
-                    saveNotificationToDatabase($conn, $userId, $title, $msg, 'reminder');
-                }
                 header("Location: " . basename(__FILE__));
                 exit;
             }
