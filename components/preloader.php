@@ -6,7 +6,7 @@
         left: 0;
         width: 100vw;
         height: 100vh;
-        background-color: #E9F0E9; 
+        background-color: #E9F0E9;
         z-index: 99999;
         display: flex;
         align-items: center;
@@ -21,7 +21,7 @@
     }
 
     #preloader img {
-        width: 220px; 
+        width: 220px;
         height: auto;
         opacity: 0.55;
     }
@@ -32,19 +32,42 @@
 </div>
 
 <script>
-    window.addEventListener('load', function() {
-        const loader = document.getElementById('preloader');
+    const loader = document.getElementById('preloader');
+
+    function hidePreloader() {
         if (loader) {
             loader.classList.add('preloader-hidden');
         }
+    }
+
+    // 1. Standard Load
+    window.addEventListener('load', hidePreloader);
+
+    // 2. Fix for Back/Forward Button (bfcache)
+    window.addEventListener('pageshow', (event) => {
+        hidePreloader();
     });
 
+    // 3. Safety Timeout (Reduced to 3s for better UX)
+    setTimeout(hidePreloader, 3000);
+
+    // 4. Refined Click Listener
     document.addEventListener('click', function(e) {
         const target = e.target.closest('a');
-        if (target && target.href && target.href.includes(window.location.origin) && !target.getAttribute('target') && !target.href.includes('#')) {
-            const loader = document.getElementById('preloader');
-            if (loader) {
-                loader.classList.remove('preloader-hidden');
+        
+        if (target && target.href &&
+            target.href.includes(window.location.origin) &&
+            !target.getAttribute('target') &&
+            !target.href.includes('#') &&
+            !target.hasAttribute('download') && 
+            target.tagName === 'A' &&
+            !e.defaultPrevented) { 
+
+            // Only show if it's a left click and not holding Ctrl/Cmd
+            if (e.button === 0 && !e.ctrlKey && !e.metaKey) {
+                if (loader) {
+                    loader.classList.remove('preloader-hidden');
+                }
             }
         }
     });
