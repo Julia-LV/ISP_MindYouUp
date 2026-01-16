@@ -1,16 +1,5 @@
 <?php
-/*
- * message_card.php
- * 
- * Reusable component for message list items.
- * SAFE VERSION – DOES NOT AFFECT NAVBAR.
- *
- * REQUIRED VARIABLES:
- * - $prof_id       => Professional User_ID
- * - $name          => Full name of the professional
- * - $preview       => Message preview text
- * - $timestamp     => Date string (optional)
- */
+
 
 if (!isset($prof_id) || !isset($name)) {
     echo "<!-- Missing required parameters for message_card.php -->";
@@ -20,10 +9,7 @@ if (!isset($prof_id) || !isset($name)) {
 $avatar = strtoupper(substr($name, 0, 1));
 ?>
 
-<!-- 
-    LOCAL WRAPPER
-    All classes isolated – NO CSS OVERRIDES.
--->
+
 <div 
     onclick="openChat(<?= htmlspecialchars($prof_id) ?>)"
     class="cursor-pointer bg-white rounded-2xl p-5 shadow-sm border border-gray-200 
@@ -31,7 +17,7 @@ $avatar = strtoupper(substr($name, 0, 1));
 >
     <div class="flex items-center gap-4">
 
-        <!-- AVATAR (Tailwind only, safe) -->
+        <!-- AVATAR -->
         <div class="w-14 h-14 flex items-center justify-center 
                     rounded-full bg-[#005949] text-white text-xl font-bold">
             <?= $avatar ?>
@@ -48,7 +34,7 @@ $avatar = strtoupper(substr($name, 0, 1));
             </div>
         </div>
 
-        <!-- TIMESTAMP (optional) -->
+        <!-- TIMESTAMP -->
         <?php if (!empty($timestamp)) : ?>
             <div class="text-xs text-gray-500 whitespace-nowrap">
                 <?= htmlspecialchars($timestamp) ?>

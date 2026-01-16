@@ -1,16 +1,5 @@
 <?php
-/*
- * components/slider_card.php
- *
- * A reusable Card containing a Range Slider.
- * * Variables you can pass:
- * $label : Text label (e.g., "Anxiety Level")
- * $id    : Unique ID for the input (e.g., "anxiety")
- * $name  : Form name attribute (default: same as ID)
- * $min   : Minimum value (default: 0)
- * $max   : Maximum value (default: 10)
- * $val   : Initial value (default: 0)
- */
+
 
 // Set Defaults
 $label = $label ?? 'Level';

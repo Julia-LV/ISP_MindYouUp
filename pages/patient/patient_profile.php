@@ -15,7 +15,7 @@ if (isset($_SESSION['role']) && $_SESSION['role'] != 'Patient') {
 $user_id = $_SESSION['user_id'];
 
 // 2. Fetch Data 
-// CHANGED: Fetch Date_Birth instead of Age
+
 $sql = "SELECT u.First_Name, u.Last_Name, u.Email, u.User_Image, u.Birthday,
                p.Treatment_Type,
                (SELECT Status FROM patient_professional_link 
@@ -30,7 +30,7 @@ $stmt->bind_param("i", $user_id);
 $stmt->execute();
 $profile = $stmt->get_result()->fetch_assoc();
 
-// --- AGE CALCULATION HELPER ---
+// --- AGE CALCULATION  ---
 function calculateAge($dob) {
     if (empty($dob)) return 'N/A';
     try {

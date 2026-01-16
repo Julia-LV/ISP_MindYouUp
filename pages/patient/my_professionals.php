@@ -54,7 +54,7 @@ include('../../components/header_component.php');
                     <?php while($doc = $result->fetch_assoc()): ?>
                         
                         <?php 
-                            // FIXED: Used $doc instead of $patient
+                            
                             $formId = "del_doc_" . $doc['Link_ID']; 
                             $docName = htmlspecialchars($doc['First_Name'] . ' ' . $doc['Last_Name']);
                         ?>
