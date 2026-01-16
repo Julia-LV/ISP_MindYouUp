@@ -216,3 +216,35 @@ document.querySelectorAll('.time-display').forEach(el => {
     const date = new Date(timestamp);
     el.textContent = date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
 });
+
+// =========================================================
+// DYNAMIC PATTERN CARD LOGIC
+// =========================================================
+
+/**
+ * Ensures icons inside dynamic components are rendered
+ * and handles any specific interactions for the Pattern Card
+ */
+function initializePatternCard() {
+    // Refresh Lucide icons in case the card was rendered after initial load
+    if (window.lucide) {
+        window.lucide.createIcons();
+    }
+
+    const patternBtn = document.querySelector('a[href*="resourcehub_patient.php"]');
+    if (patternBtn) {
+        patternBtn.addEventListener('click', (e) => {
+            // Optional: Log that the user followed a suggestion
+            console.log("User navigating to suggested resource: " + patternBtn.href);
+            
+            // If you want a smooth preloader transition (from your preloader.php)
+            const loader = document.getElementById('preloader');
+            if (loader) {
+                loader.classList.remove('preloader-hidden');
+            }
+        });
+    }
+}
+
+// Call it on load
+document.addEventListener('DOMContentLoaded', initializePatternCard);
