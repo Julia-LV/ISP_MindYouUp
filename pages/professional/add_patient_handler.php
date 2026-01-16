@@ -27,6 +27,11 @@ if ($check->get_result()->num_rows == 0) {
     $stmt->bind_param("ii", $patient_id, $doctor_id);
     
     if($stmt->execute()) {
+        // Notification logic
+        require_once __DIR__ . '/../common/notifications.php';
+        $title = 'You have been assigned a professional';
+        $msg = 'A professional has added you as a patient.';
+        saveNotificationToDatabase($conn, $patient_id, $title, $msg, 'assignment');
         header("Location: my_patients.php?msg=added");
     } else {
         header("Location: search_patients.php?error=failed");
