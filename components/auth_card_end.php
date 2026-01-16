@@ -1,13 +1,22 @@
 <?php
-
+/*
+ * auth_card_end.php
+ *
+ * This component closes the card.
+ * - Closes the form field <div>
+ * - Closes the </form>
+ * - Shows the flexible link at the bottom (e.g., "Don't have an account? Sign up")
+ * - Closes the main card <div>
+ * - Closes the </body> and </html> tags
+ */
 
 // Set default values for the variables
 $link_text = $link_text ?? 'Need help?';
 $link_url = $link_url ?? '#';
 $link_label = $link_label ?? 'Contact Support';
 ?>
-        </div> 
-    </form> 
+        </div> <!-- Closes the .space-y-4 div -->
+    </form> <!-- Closes the </form> -->
 
     <!-- Bottom Link -->
     <p class="mt-6 text-center text-sm text-gray-600">
@@ -17,7 +26,7 @@ $link_label = $link_label ?? 'Contact Support';
         </a>
     </p>
 
-</div> 
+</div> <!-- Closes the main card .bg-white -->
 
 </body>
 </html>

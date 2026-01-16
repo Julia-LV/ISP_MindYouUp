@@ -8,7 +8,7 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] != 'Professional') {
 }
 
 $doctor_id = $_SESSION['user_id'];
-$patient_id = $_POST['patient_id']; 
+$patient_id = $_POST['patient_id']; // Passed from the search page
 
 // Check if link already exists
 $check = $conn->prepare("SELECT Link_ID FROM patient_professional_link WHERE Patient_ID = ? AND Professional_ID = ?");
@@ -16,12 +16,14 @@ $check->bind_param("ii", $patient_id, $doctor_id);
 $check->execute();
 
 if ($check->get_result()->num_rows == 0) {
-    
+    // --- THE FIX IS HERE ---
+    // We set Connection_Status to 'Accepted' immediately because the DOCTOR is doing the adding.
     $sql = "INSERT INTO patient_professional_link 
             (Patient_ID, Professional_ID, Assigned_Date, Status, Connection_Status, Treatment_Type) 
             VALUES (?, ?, NOW(), 'Pending', 'Accepted', 'Medical')";
     
-    
+    // Note: Medical 'Status' stays 'Pending' (waiting for appointment), 
+    // but 'Connection_Status' is 'Accepted' (link is active).
             
     $stmt = $conn->prepare($sql);
     $stmt->bind_param("ii", $patient_id, $doctor_id);

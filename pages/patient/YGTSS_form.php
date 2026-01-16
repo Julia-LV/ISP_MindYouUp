@@ -344,7 +344,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 			$final_treatment = trim($_POST['final_treatment_age'] ?? '');
 			$final_info_complete = ($final_first_tic !== '' && $final_bother !== '' && $final_treatment !== '');
 			
-			
+			// Validate age sequence: first tic <= bother <= treatment
 			$age_sequence_valid = true;
 			if ($final_info_complete) {
 				$age1 = intval($final_first_tic);
@@ -479,19 +479,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title>YGTSS Form</title>
-	
+	<!-- Bootstrap CSS -->
 	<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-	
+	<!-- Custom CSS for YGTSS form -->
 	<link rel="stylesheet" href="../../CSS/YGTSS_form.css?v=6">
 </head>
 <body>
 <?php include_once __DIR__ . '/../../includes/navbar.php'; ?>
 <?php include_once __DIR__ . '/../../components/header_component.php'; ?>
 <div class="main-content">
-	
+	<!-- Page Header (outside the white box) -->
 	<div class="page-header">
 		<h2 class="page-title">Yale Global Tic Severity Scale (YGTSS) Form</h2>
-		
+		<!-- Developer credits -->
 		<div class="page-subtitle text-center">
 			<strong>Developed by:</strong> LECKMAN, J.F.; RIDDLE, M.A.; HARDIN, M.T.; ORT, S.I.; SWARTZ, K.L.; STEVENSON, J.; COHEN, D.J.<br>
 			DEPARTMENT OF PSYCHIATRY<br>
@@ -658,7 +658,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 		</div>
 	</div>
 </div>
-
+<!-- Bootstrap JS bundle -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

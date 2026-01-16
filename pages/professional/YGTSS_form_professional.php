@@ -1,5 +1,9 @@
 <?php
-
+/*
+ * YGTSS_form_professional.php
+ * Professional view for patient YGTSS (Yale Global Tic Severity Scale) results
+ * Single detailed view - all submissions shown with full details
+ */
 
 session_start();
 require_once __DIR__ . '/../../config.php';

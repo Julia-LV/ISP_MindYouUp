@@ -32,7 +32,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     if (empty($first_name) || empty($last_name) || empty($email) || empty($password) || empty($role)) {
         $message = "Please fill in all required fields.";
 
-        
+        // Check for DOB *only if* the selected role is "Patient"
     } elseif ($role == 'Patient' && empty($dob)) {
         $message = "Please enter your Date of Birth. This is required for patients.";
     } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
@@ -50,15 +50,18 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             if ($stmt->num_rows > 0) {
                 $message = "This email is already registered.";
             } else {
+                // Email is new, insert data
+                // CHANGED: 'Age' -> 'Birthday'
                 $sql_insert = "INSERT INTO user_profile (First_Name, Last_Name, Birthday, `Email`, `Password`, `Role`) VALUES (?, ?, ?, ?, ?, ?)";
 
                 if ($stmt_insert = $conn->prepare($sql_insert)) {
                     $hashed_password = password_hash($password, PASSWORD_DEFAULT);
 
-                    
+                    // If DOB is empty (Professional), save NULL.
                     $dob_to_save = empty($dob) ? NULL : $dob;
 
-                    
+                    // CHANGED: bind_param types from "ssisss" to "ssssss" 
+                    // (Date is a string in SQL, unlike Age which was an int)
                     $stmt_insert->bind_param("ssssss", $first_name, $last_name, $dob_to_save, $email, $hashed_password, $role);
 
                     if ($stmt_insert->execute()) {
@@ -107,7 +110,8 @@ $value = $sticky_last_name;
 $autocomplete = 'family-name';
 include '../../components/input.php';
 
-
+// --- DATE OF BIRTH FIELD (Replaces Age) ---
+// Note: We use type='date'.
 $id = 'dob';
 $name = 'dob';
 $label = 'Date of Birth';
@@ -145,7 +149,7 @@ $autocomplete = 'new-password';
 include '../../components/input.php';
 
 // --- TERMS ---
-
+// --- TERMS ---
 ?>
 <div class="flex items-center">
     <input id="agree_terms" name="agree_terms" type="checkbox" class="h-4 w-4 text-green-700 focus:ring-green-500 border-gray-300 rounded">

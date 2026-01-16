@@ -1,5 +1,10 @@
 <?php
-
+/*
+ * login.php - FINAL, FIXED VERSION
+ *
+ * This file now explicitly sets the $name variable for
+ * each input, which fixes the "password in email" bug.
+ */
 
 // --- 1. PHP Logic ---
 session_start();
@@ -50,7 +55,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 }
 // --- 2. Page Display ---
 $page_title = 'Log In - Mind You Up';
-$no_layout = true; 
+$no_layout = true; // disable topbar + wrapper for this page
+// Define Custom Body Classes for Centering & Background Color
 $body_class = "bg-[#E9F0E9] min-h-screen flex items-center justify-center p-4 ";
 
 include '../../components/header_component.php'; 
@@ -71,8 +77,8 @@ elseif (isset($_GET['reset']) && $_GET['reset'] == 'success') {
     echo '<div class="mb-4 p-3 rounded-md bg-green-100 text-green-700" role="alert"><p>Password has been reset successfully! You can now log in.</p></div>';
 }
 
-// --- Form Fields  ---
-
+// --- Form Fields (THE FIX) ---
+// We now set $name for every input.
 $id = 'email'; $name = 'email'; $label = 'Email'; $type = 'email'; $value = $sticky_email; $autocomplete = 'email';
 include '../../components/input.php';
 
@@ -87,9 +93,11 @@ include '../../components/input.php';
     </div>
 </div>
 <?php
-
+// CHANGE $button_text TO $label
+// CHANGE $button_type TO $type
 $label = 'Log In'; $type = 'submit'; 
-
+// Note: Your button.php uses $width, not $extra_classes, 
+// but it defaults to w-full anyway, so you can leave width out.
 
 include '../../components/button.php';
 
