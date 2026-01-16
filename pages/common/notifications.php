@@ -323,13 +323,7 @@ function timeAgo($datetime) {
                 <button class="tab-btn active" onclick="filterNotifications('all')">All</button>
                 <button class="tab-btn" onclick="filterNotifications('unread')">Unread</button>
                 <button class="tab-btn" onclick="filterNotifications('message')">Messages</button>
-                <?php if (strtolower($CURRENT_USER['Role'] ?? '') === 'patient'): ?>
                 <button class="tab-btn" onclick="filterNotifications('reminder')">Reminders</button>
-                <button class="tab-btn" onclick="filterNotifications('resource')">Resources</button>
-                <?php endif; ?>
-                <?php if (strtolower($CURRENT_USER['Role'] ?? '') === 'professional'): ?>
-                <button class="tab-btn" onclick="filterNotifications('connection')">Connection Request</button>
-                <?php endif; ?>
             </div>
 
             <!-- Notifications List -->
@@ -448,12 +442,6 @@ function timeAgo($datetime) {
                         break;
                     case 'reminder':
                         show = type === 'medication' || type === 'reminder' || type === 'diary' || type === 'ticlog';
-                        break;
-                    case 'resource':
-                        show = type === 'resource';
-                        break;
-                    case 'connection':
-                        show = type === 'connection';
                         break;
                 }
                 card.style.display = show ? 'block' : 'none';
