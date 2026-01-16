@@ -6,7 +6,7 @@
         left: 0;
         width: 100vw;
         height: 100vh;
-        background-color: #E9F0E9; 
+        background-color: #E9F0E9;
         z-index: 99999;
         display: flex;
         align-items: center;
@@ -21,7 +21,7 @@
     }
 
     #preloader img {
-        width: 220px; 
+        width: 220px;
         height: auto;
         opacity: 0.55;
     }
@@ -32,20 +32,14 @@
 </div>
 
 <script>
-<<<<<<< HEAD
     const loader = document.getElementById('preloader');
 
     function hidePreloader() {
-=======
-    window.addEventListener('load', function() {
-        const loader = document.getElementById('preloader');
->>>>>>> parent of 53e2d28 (Merge branch 'main' of https://github.com/Julia-LV/ISP_MindYouUp)
         if (loader) {
             loader.classList.add('preloader-hidden');
         }
-    });
+    }
 
-<<<<<<< HEAD
     // 1. Standard Load
     window.addEventListener('load', hidePreloader);
 
@@ -74,14 +68,6 @@
                 if (loader) {
                     loader.classList.remove('preloader-hidden');
                 }
-=======
-    document.addEventListener('click', function(e) {
-        const target = e.target.closest('a');
-        if (target && target.href && target.href.includes(window.location.origin) && !target.getAttribute('target') && !target.href.includes('#')) {
-            const loader = document.getElementById('preloader');
-            if (loader) {
-                loader.classList.remove('preloader-hidden');
->>>>>>> parent of 53e2d28 (Merge branch 'main' of https://github.com/Julia-LV/ISP_MindYouUp)
             }
         }
     });

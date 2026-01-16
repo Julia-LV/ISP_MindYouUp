@@ -18,7 +18,7 @@ if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true ||
 $currentUser = $_SESSION['user_id']; // Patient's User_ID
 
 // --- FETCH ASSIGNED PROFESSIONALS AND LAST MESSAGE --- //
-// ADICIONADO: u.User_Image ao SELECT
+
 $sql = "
 SELECT 
     ppl.Professional_ID AS Prof_User_ID,
@@ -78,13 +78,13 @@ $result = $stmt->get_result();
                         $prof_id = $row['Prof_User_ID'];
                         $name    = $row['Name'];
                         
-                        // Lógica da Imagem (Similar à do perfil)
+                        
                         $db_image_path = $row['User_Image'];
                         $default_image = 'https://via.placeholder.com/150';
                         $profile_image = $default_image;
 
                         if (!empty($db_image_path)) {
-                            // Ajustar caminho relativo (../../)
+                            
                             if (substr($db_image_path, 0, 1) === '/') {
                                 $profile_image = '../..' . $db_image_path;
                             } else {
@@ -92,10 +92,10 @@ $result = $stmt->get_result();
                             }
                         }
                         
-                        // Cache buster para garantir que a imagem atualiza
+                        
                         $final_image_src = htmlspecialchars($profile_image) . "?" . time();
 
-                        // Preparar texto e data
+                        
                         $preview = $row['Last_Message'] 
                                     ? substr($row['Last_Message'], 0, 60) . (strlen($row['Last_Message']) > 60 ? "..." : "")
                                     : "Start a conversation...";
@@ -104,7 +104,7 @@ $result = $stmt->get_result();
                                     ? date("M d, H:i", strtotime($row['Last_Message_Time']))
                                     : "";
                         
-                        // Estilo para mensagem não lida vs lida (Opcional - aqui está tudo normal)
+                        
                         $textColor = $row['Last_Message'] ? "text-gray-600" : "text-gray-400 italic";
                     ?>
 

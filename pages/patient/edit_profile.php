@@ -12,10 +12,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $fname = $_POST['first_name'];
     $lname = $_POST['last_name'];
     $email = $_POST['email'];
-    $dob   = $_POST['dob']; // Changed from age to dob
+    $dob   = $_POST['dob'];
 
     // 1. General Update
-    // CHANGED: 'Age' -> 'Date_Birth', bound parameter type 'i' (int) -> 's' (string)
+    
     $stmt = $conn->prepare("UPDATE user_profile SET First_Name=?, Last_Name=?, Email=?, Birthday=? WHERE User_ID=?");
     $stmt->bind_param("ssssi", $fname, $lname, $email, $dob, $user_id);
     $stmt->execute();
@@ -51,7 +51,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 }
 
 // Fetch Data
-// CHANGED: Selected Birthday instead of Age
+
 $sql = "SELECT u.First_Name, u.Last_Name, u.Email, u.Birthday, u.User_Image, p.Treatment_Type 
         FROM user_profile u LEFT JOIN patient_profile p ON u.User_ID = p.User_ID WHERE u.User_ID = ?";
 $stmt = $conn->prepare($sql);

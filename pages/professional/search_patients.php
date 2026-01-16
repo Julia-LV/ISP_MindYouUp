@@ -5,7 +5,7 @@ include('../../config.php');
 if (!isset($_SESSION['user_id']) || $_SESSION['role'] != 'Professional') { header("Location: ../auth/login.php"); exit; }
 $user_id = $_SESSION['user_id'];
 
-// --- AGE CALCULATION HELPER ---
+
 function calculateAge($dob) {
     if (empty($dob)) return 'N/A';
     try {
@@ -18,8 +18,7 @@ function calculateAge($dob) {
     }
 }
 
-// Fetch ALL Patients NOT connected to this doctor
-// CHANGED: Select Date_Birth instead of Age
+
 $sql = "SELECT u.User_ID, u.First_Name, u.Last_Name, u.User_Image, u.Email, u.Birthday
         FROM user_profile u 
         WHERE u.Role = 'Patient'
