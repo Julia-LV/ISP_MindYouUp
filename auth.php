@@ -1,81 +1,80 @@
 <?php
 // auth.php – Login & signup API (accepts JSON or normal form POST)
 session_start();
-header('Content-Type: application/json');
 
-// --- Read input: try JSON first, then fall back to $_POST ---
-$data = null;
-
-// Try JSON body
-$raw = file_get_contents('php://input');
-if (!empty($raw)) {
-    $tmp = json_decode($raw, true);
-    if (is_array($tmp)) {
-        $data = $tmp;
-    }
-}
-
-// If JSON failed or was empty, try regular POST
-if ($data === null || !is_array($data) || empty($data)) {
-    if (!empty($_POST)) {
-        $data = $_POST;
-    }
-}
-
-// If still nothing, bail out
-if (!is_array($data) || empty($data)) {
-    echo json_encode(['ok' => false, 'message' => 'Invalid request.']);
+function json_response(int $status, array $payload): void {
+    http_response_code($status);
+    header('Content-Type: application/json; charset=utf-8');
+    echo json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     exit;
 }
 
-// Extract fields
-$action   = $data['action']  ?? '';
-$email    = strtolower(trim($data['email'] ?? ''));
-$password = $data['password'] ?? '';
-$name     = trim($data['name'] ?? '');
-$role     = $data['role'] ?? 'patient';
+function read_input(): array {
+    $raw = file_get_contents('php://input');
+    if (is_string($raw) && trim($raw) !== '') {
+        $tmp = json_decode($raw, true);
+        if (is_array($tmp) && !empty($tmp)) {
+            return $tmp;
+        }
+    }
 
-// Basic validation
+    if (!empty($_POST) && is_array($_POST)) {
+        return $_POST;
+    }
+
+    return [];
+}
+
+function clean_string($v): string {
+    return trim((string)$v);
+}
+
+$data = read_input();
+if (empty($data)) {
+    json_response(400, ['ok' => false, 'message' => 'Invalid request.']);
+}
+
+$action   = $data['action'] ?? '';
+$email    = strtolower(clean_string($data['email'] ?? ''));
+$password = (string)($data['password'] ?? '');
+$name     = clean_string($data['name'] ?? '');
+$role     = (string)($data['role'] ?? 'patient');
+
 if (!in_array($action, ['login', 'signup'], true)) {
-    echo json_encode(['ok' => false, 'message' => 'Unknown action.']);
-    exit;
+    json_response(400, ['ok' => false, 'message' => 'Unknown action.']);
 }
 if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-    echo json_encode(['ok' => false, 'message' => 'Please enter a valid email address.']);
-    exit;
+    json_response(400, ['ok' => false, 'message' => 'Please enter a valid email address.']);
 }
 if (strlen($password) < 6) {
-    echo json_encode(['ok' => false, 'message' => 'Password must be at least 6 characters.']);
-    exit;
+    json_response(400, ['ok' => false, 'message' => 'Password must be at least 6 characters.']);
 }
+
+// Normalise role
+$role = ($role === 'professional') ? 'professional' : 'patient';
 
 require_once __DIR__ . '/config.php';
 if (!isset($conn) || !$conn) {
-    echo json_encode(['ok' => false, 'message' => 'Database connection error.']);
-    exit;
+    json_response(500, ['ok' => false, 'message' => 'Database connection error.']);
 }
 
-// normalise role
-$role = ($role === 'professional') ? 'professional' : 'patient';
-
 //
-// SIGN UP
+// SIGNUP
 //
 if ($action === 'signup') {
     // Check if email already exists
     $stmt = $conn->prepare('SELECT id FROM users WHERE email = ? LIMIT 1');
     if (!$stmt) {
-        echo json_encode(['ok' => false, 'message' => 'Database error.']);
-        exit;
+        json_response(500, ['ok' => false, 'message' => 'Database error.']);
     }
+
     $stmt->bind_param('s', $email);
     $stmt->execute();
     $stmt->store_result();
 
     if ($stmt->num_rows > 0) {
         $stmt->close();
-        echo json_encode(['ok' => false, 'message' => 'An account with this email already exists.']);
-        exit;
+        json_response(409, ['ok' => false, 'message' => 'An account with this email already exists.']);
     }
     $stmt->close();
 
@@ -84,18 +83,17 @@ if ($action === 'signup') {
 
     $stmt = $conn->prepare('INSERT INTO users (email, password_hash, name, role, created_at) VALUES (?, ?, ?, ?, NOW())');
     if (!$stmt) {
-        echo json_encode(['ok' => false, 'message' => 'Database error.']);
-        exit;
+        json_response(500, ['ok' => false, 'message' => 'Database error.']);
     }
+
     $stmt->bind_param('ssss', $email, $hash, $name, $role);
 
     if (!$stmt->execute()) {
         $stmt->close();
-        echo json_encode(['ok' => false, 'message' => 'Could not create account.']);
-        exit;
+        json_response(500, ['ok' => false, 'message' => 'Could not create account.']);
     }
 
-    $userId = $stmt->insert_id;
+    $userId = (int)$stmt->insert_id;
     $stmt->close();
 
     // Log in user
@@ -104,8 +102,7 @@ if ($action === 'signup') {
     $_SESSION['name']  = $name;
     $_SESSION['role']  = $role;
 
-    echo json_encode(['ok' => true]);
-    exit;
+    json_response(200, ['ok' => true]);
 }
 
 //
@@ -114,25 +111,39 @@ if ($action === 'signup') {
 if ($action === 'login') {
     $stmt = $conn->prepare('SELECT id, email, password_hash, name, role FROM users WHERE email = ? LIMIT 1');
     if (!$stmt) {
-        echo json_encode(['ok' => false, 'message' => 'Database error.']);
-        exit;
+        json_response(500, ['ok' => false, 'message' => 'Database error.']);
     }
+
     $stmt->bind_param('s', $email);
     $stmt->execute();
     $result = $stmt->get_result();
-    $user   = $result->fetch_assoc();
+    $user = $result ? $result->fetch_assoc() : null;
     $stmt->close();
 
-    if (!$user || !password_verify($password, $user['password_hash'])) {
-        echo json_encode(['ok' => false, 'message' => 'Invalid email or password.']);
-        exit;
+    if (!$user || !password_verify($password, (string)$user['password_hash'])) {
+        json_response(401, ['ok' => false, 'message' => 'Invalid email or password.']);
     }
 
-    $_SESSION['uid']   = (int)$user['id'];
-    $_SESSION['email'] = $user['email'];
-    $_SESSION['name']  = $user['name'] ?? '';
-    $_SESSION['role']  = $user['role'] ?? 'patient';
+    // Optional: upgrade password hash if PHP's default algo/cost changes over time
+    if (password_needs_rehash((string)$user['password_hash'], PASSWORD_DEFAULT)) {
+        $newHash = password_hash($password, PASSWORD_DEFAULT);
 
-    echo json_encode(['ok' => true]);
-    exit;
+        $upd = $conn->prepare('UPDATE users SET password_hash = ? WHERE id = ? LIMIT 1');
+        if ($upd) {
+            $uid = (int)$user['id'];
+            $upd->bind_param('si', $newHash, $uid);
+            $upd->execute();
+            $upd->close();
+        }
+    } // password_needs_rehash is intended for this check [web:243]
+
+    $_SESSION['uid']   = (int)$user['id'];
+    $_SESSION['email'] = (string)$user['email'];
+    $_SESSION['name']  = (string)($user['name'] ?? '');
+    $_SESSION['role']  = (string)($user['role'] ?? 'patient');
+
+    json_response(200, ['ok' => true]);
 }
+
+// Fallback (should never be hit)
+json_response(400, ['ok' => false, 'message' => 'Invalid request.']);

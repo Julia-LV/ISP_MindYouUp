@@ -93,98 +93,138 @@ $test_pid = 1;
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>MYU Portal</title>
-  <!-- use the shared stylesheet -->
-  <link rel="stylesheet" href="web_portal.css" />
+
+  <!-- Tailwind Play CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script> <!-- [web:186] -->
 </head>
-<body>
-  <header class="app-header">
-    <div class="container flex justify-between items-center">
-        <span class="app-title">Mind You Up – Admin</span>
-        <a class="btn" href="logout.php">Logout</a>
+
+<body class="bg-[#fff7ea] text-[#384341] font-sans">
+  <header class="sticky top-0 z-50 bg-[#0f684f] text-white shadow-[0_2px_8px_rgba(0,0,0,0.16)]">
+    <div class="max-w-[1120px] mx-auto px-4 py-3 flex justify-between items-center gap-4">
+      <span class="text-[1.1rem] font-bold tracking-wide">Mind You Up – Admin</span>
+      <a href="logout.php"
+         class="inline-flex items-center px-4 py-2 rounded-full border border-white/85 bg-white/15
+                text-white font-semibold text-[0.9rem] no-underline hover:bg-white/25">
+        Logout
+      </a>
     </div>
   </header>
 
-  <main class="container" role="main">
-    <h1>Tic log management</h1>
+  <main class="max-w-[1120px] mx-auto px-4 py-8" role="main">
+    <h1 class="text-[1.8rem] font-extrabold text-[#0a4936] mb-6">Tic log management</h1>
 
-    <!-- Log Creation Section -->
-    <section class="card" aria-labelledby="create-heading">
-      <h2 id="create-heading">Create new tic log (admin/caregiver)</h2>
+    <!-- Create -->
+    <section class="bg-white border border-[#f0d9d2] rounded-2xl p-6 shadow-[0_6px_18px_rgba(0,0,0,0.05)]"
+             aria-labelledby="create-heading">
+      <h2 id="create-heading" class="text-[1.25rem] font-bold text-[#0f684f] mb-3">
+        Create new tic log (admin/caregiver)
+      </h2>
+
       <?php if ($create_msg): ?>
-        <div class="notice notice-info"><?= htmlspecialchars($create_msg) ?></div>
+        <div class="mb-4 rounded-xl border border-[#ffd7b3] bg-[#fff0e0] px-4 py-3 text-[#384341]">
+          <?= htmlspecialchars($create_msg) ?>
+        </div>
       <?php endif; ?>
 
-      <form method="POST" action="web_portal.php">
+      <form method="POST" action="web_portal.php" class="mt-2">
         <input type="hidden" name="action" value="create" />
-        <div class="form-grid">
-          <label>
-            Patient ID (test: 1)
-            <input type="number" name="patient_id" value="<?= $test_pid ?>" required />
+
+        <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3 items-end">
+          <label class="block">
+            <span class="block text-[0.9rem] font-semibold text-[#0a4936]">Patient ID (test: 1)</span>
+            <input type="number" name="patient_id" value="<?= $test_pid ?>" required
+                   class="mt-1 w-full rounded-xl border border-[#f0d9d2] bg-white px-3 py-2
+                          focus:outline-none focus:ring-2 focus:ring-[#0f684f]/40" />
           </label>
-          <label>
-            Type
-            <input type="text" name="type_desc" placeholder="motor or vocal" required />
+
+          <label class="block">
+            <span class="block text-[0.9rem] font-semibold text-[#0a4936]">Type</span>
+            <input type="text" name="type_desc" placeholder="motor or vocal" required
+                   class="mt-1 w-full rounded-xl border border-[#f0d9d2] bg-white px-3 py-2
+                          focus:outline-none focus:ring-2 focus:ring-[#0f684f]/40" />
           </label>
-          <label>
-            Duration (seconds)
-            <input type="number" name="duration" value="1" min="0" required />
+
+          <label class="block">
+            <span class="block text-[0.9rem] font-semibold text-[#0a4936]">Duration (seconds)</span>
+            <input type="number" name="duration" value="1" min="0" required
+                   class="mt-1 w-full rounded-xl border border-[#f0d9d2] bg-white px-3 py-2
+                          focus:outline-none focus:ring-2 focus:ring-[#0f684f]/40" />
           </label>
-          <label>
-            Intensity (1–10)
-            <input type="number" name="intensity" value="5" min="1" max="10" required />
+
+          <label class="block">
+            <span class="block text-[0.9rem] font-semibold text-[#0a4936]">Intensity (1–10)</span>
+            <input type="number" name="intensity" value="5" min="1" max="10" required
+                   class="mt-1 w-full rounded-xl border border-[#f0d9d2] bg-white px-3 py-2
+                          focus:outline-none focus:ring-2 focus:ring-[#0f684f]/40" />
           </label>
-          <label class="checkbox">
-            <input type="checkbox" name="self_reported" />
-            Self-reported?
+
+          <label class="inline-flex items-center gap-2 mt-1 md:col-span-1">
+            <input type="checkbox" name="self_reported"
+                   class="h-4 w-4 rounded border border-[#f0d9d2] text-[#0f684f] focus:ring-[#0f684f]/40" />
+            <span class="text-[0.95rem] font-semibold text-[#0a4936]">Self-reported?</span>
           </label>
-          <div class="actions">
-            <button type="submit" class="btn btn-primary">Submit log</button>
+
+          <div class="lg:col-span-1 md:col-span-2">
+            <button type="submit"
+                    class="w-full md:w-auto inline-flex items-center justify-center px-5 py-2.5 rounded-full
+                           bg-[#0f684f] text-white font-semibold shadow-[0_6px_16px_rgba(0,0,0,0.12)]
+                           hover:bg-[#0a4936]">
+              Submit log
+            </button>
           </div>
         </div>
       </form>
     </section>
 
-    <hr style="margin: 30px 0; border: 0; border-top: 1px solid #f0d9d2;">
+    <hr class="my-8 border-0 border-t border-[#f0d9d2]" />
 
-    <!-- Log Listing Section -->
-    <section class="card" aria-labelledby="recent-heading">
-      <h2 id="recent-heading">Recent tic logs</h2>
+    <!-- List -->
+    <section class="bg-white border border-[#f0d9d2] rounded-2xl p-6 shadow-[0_6px_18px_rgba(0,0,0,0.05)]"
+             aria-labelledby="recent-heading">
+      <h2 id="recent-heading" class="text-[1.25rem] font-bold text-[#0f684f] mb-3">
+        Recent tic logs
+      </h2>
+
       <?php if ($delete_msg): ?>
-        <div class="notice notice-info"><?= htmlspecialchars($delete_msg) ?></div>
+        <div class="mb-4 rounded-xl border border-[#ffd7b3] bg-[#fff0e0] px-4 py-3 text-[#384341]">
+          <?= htmlspecialchars($delete_msg) ?>
+        </div>
       <?php endif; ?>
 
       <?php if (empty($list)): ?>
-        <p>No logs found.</p>
+        <p class="text-[#5b6664]">No logs found.</p>
       <?php else: ?>
-        <div class="table-wrap">
-          <table>
-            <thead>
+        <div class="overflow-x-auto rounded-xl border border-[#f0d9d2]">
+          <table class="min-w-full border-collapse bg-white text-[0.95rem]">
+            <thead class="bg-[#fff0e0] text-[#0a4936]">
               <tr>
-                <th scope="col">ID</th>
-                <th scope="col">Patient</th>
-                <th scope="col">Type</th>
-                <th scope="col">Duration (s)</th>
-                <th scope="col">Intensity</th>
-                <th scope="col">Source</th>
-                <th scope="col">Logged at</th>
-                <th scope="col">Actions</th>
+                <th scope="col" class="text-left px-3 py-2 font-bold">ID</th>
+                <th scope="col" class="text-left px-3 py-2 font-bold">Patient</th>
+                <th scope="col" class="text-left px-3 py-2 font-bold">Type</th>
+                <th scope="col" class="text-left px-3 py-2 font-bold">Duration (s)</th>
+                <th scope="col" class="text-left px-3 py-2 font-bold">Intensity</th>
+                <th scope="col" class="text-left px-3 py-2 font-bold">Source</th>
+                <th scope="col" class="text-left px-3 py-2 font-bold">Logged at</th>
+                <th scope="col" class="text-left px-3 py-2 font-bold">Actions</th>
               </tr>
             </thead>
-            <tbody>
+
+            <tbody class="divide-y divide-[#f0d9d2]">
               <?php foreach ($list as $row): ?>
-                <tr>
-                  <td><?= (int)$row['Tic_ID'] ?></td>
-                  <td><?= (int)$row['Patient_ID'] ?></td>
-                  <td><?= htmlspecialchars($row['Type_Description']) ?></td>
-                  <td><?= (int)$row['Duration'] ?></td>
-                  <td><?= (int)$row['Intensity'] ?></td>
-                  <td><?= ((int)$row['Self-reported']) ? 'Self-reported' : 'Caregiver/admin' ?></td>
-                  <td><?= date('Y-m-d H:i', strtotime($row['created_at'] ?? 'now')) ?></td>
-                  <td>
+                <tr class="hover:bg-[#fffdf7]">
+                  <td class="px-3 py-2"><?= (int)$row['Tic_ID'] ?></td>
+                  <td class="px-3 py-2"><?= (int)$row['Patient_ID'] ?></td>
+                  <td class="px-3 py-2"><?= htmlspecialchars($row['Type_Description']) ?></td>
+                  <td class="px-3 py-2"><?= (int)$row['Duration'] ?></td>
+                  <td class="px-3 py-2"><?= (int)$row['Intensity'] ?></td>
+                  <td class="px-3 py-2"><?= ((int)$row['Self-reported']) ? 'Self-reported' : 'Caregiver/admin' ?></td>
+                  <td class="px-3 py-2"><?= date('Y-m-d H:i', strtotime($row['created_at'] ?? 'now')) ?></td>
+                  <td class="px-3 py-2">
                     <a href="?delete=<?= (int)$row['Tic_ID'] ?>"
-                       class="btn btn-danger"
+                       class="inline-flex items-center px-4 py-2 rounded-full bg-red-600 text-white font-semibold
+                              hover:bg-red-700"
                        onclick="return confirm('Are you sure you want to permanently delete this tic log entry?');">
-                       Delete
+                      Delete
                     </a>
                   </td>
                 </tr>
@@ -196,21 +236,20 @@ $test_pid = 1;
     </section>
   </main>
 
-  <footer class="app-footer">
-    <div class="container small-text app-footer-inner">
-      <span>TicTracker – Mind You Up Portal</span>
-      <span>For clinical use and ongoing support in tic disorders.</span>
-      <span class="footer-links">
-        <a href="/ISP_MindYouUp/Privacy-Policy.pdf"
-           target="_blank"
-           rel="noopener">
-           Privacy Policy
+  <footer class="mt-6 bg-[#0d5b43] text-white border-t-2 border-[#0a4936]">
+    <div class="max-w-[1120px] mx-auto px-4 py-4 flex flex-wrap items-center justify-between gap-3 text-[0.95rem]">
+      <span class="leading-snug">TicTracker – Mind You Up Portal</span>
+      <span class="leading-snug">For clinical use and ongoing support in tic disorders.</span>
+
+      <span class="flex flex-wrap items-center gap-2">
+        <a href="/ISP_MindYouUp/Privacy-Policy.pdf" target="_blank" rel="noopener noreferrer"
+           class="text-white underline hover:no-underline">
+          Privacy Policy
         </a>
         <span aria-hidden="true">·</span>
-        <a href="/ISP_MindYouUp/Terms-Conditions.pdf"
-           target="_blank"
-           rel="noopener">
-           Terms &amp; Conditions
+        <a href="/ISP_MindYouUp/Terms-Conditions.pdf" target="_blank" rel="noopener noreferrer"
+           class="text-white underline hover:no-underline">
+          Terms &amp; Conditions
         </a>
       </span>
     </div>
