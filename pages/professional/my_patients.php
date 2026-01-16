@@ -10,7 +10,7 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] != 'Professional') {
 
 $user_id = $_SESSION['user_id'];
 
-// --- AGE CALCULATION HELPER ---
+// --- AGE CALCULATION  ---
 function calculateAge($dob) {
     if (empty($dob)) return 'N/A';
     try {
@@ -23,7 +23,7 @@ function calculateAge($dob) {
     }
 }
 
-// 2. Fetch Pending REQUESTS (For the Modal)
+// 2. Fetch Pending REQUESTS 
 $req_sql = "SELECT link.Link_ID, u.First_Name, u.Last_Name, u.User_Image, link.Assigned_Date
             FROM patient_professional_link link
             JOIN user_profile u ON link.Patient_ID = u.User_ID
@@ -32,10 +32,10 @@ $req_stmt = $conn->prepare($req_sql);
 $req_stmt->bind_param("i", $user_id);
 $req_stmt->execute();
 $requests = $req_stmt->get_result();
-$requestCount = $requests->num_rows; // Count them for the badge
+$requestCount = $requests->num_rows; 
 
-// 3. Fetch Active Patients (Main Grid)
-// CHANGED: Select Date_Birth instead of Age
+// 3. Fetch Active Patients 
+
 $sql = "SELECT link.Link_ID, u.User_ID, u.First_Name, u.Last_Name, u.User_Image, u.Email, u.Birthday, link.Status as Medical_Status, link.Assigned_Date
         FROM patient_professional_link link
         JOIN user_profile u ON link.Patient_ID = u.User_ID
@@ -202,7 +202,7 @@ function getStatusBadge($status) {
         document.getElementById(modalId).classList.add('hidden');
     }
 
-    // Optional: Close modal if clicking on the dark background
+    
     window.onclick = function(event) {
         const modal = document.getElementById('requestsModal');
         if (event.target == modal) {

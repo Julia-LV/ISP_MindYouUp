@@ -1,7 +1,5 @@
 <?php
-/*
- * header_component.php
- */
+
 
 $page_title = $page_title ?? 'Mind You Up';
 $no_layout = $no_layout ?? false;
@@ -41,9 +39,9 @@ include 'preloader.php';
                 </button>
 
                 <?php 
-                    $home_url = '../../index.php'; // Default fallback
+                    $home_url = '../../index.php'; 
                     
-                    // Check 'role' instead of 'user_type'
+                    
                     if (isset($_SESSION['role'])) {
                         if ($_SESSION['role'] === 'Patient') {
                             $home_url = '../../pages/patient/home_patient.php';
