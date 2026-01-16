@@ -88,7 +88,7 @@ if (isset($_GET['ajax_fetch']) && isset($_GET['patient_id'])) {
                 $severity = [];
                 for ($i = 6; $i >= 0; $i--) {
                     $d = date('Y-m-d', strtotime("-" . ($offset + $i) . " days"));
-                    $stmt = $conn->prepare("SELECT MAX(Intensity) as i FROM tic_log WHERE Patient_ID = ? AND DATE(Created_At) = ? AND Type_Description != 'No Tics Today'");
+                    $stmt = $conn->prepare("SELECT MAX(Intensity) as i FROM tic_log WHERE Patient_ID = ? AND DATE(Created_At) = ?");
                     $stmt->bind_param("is", $patient_id, $d);
                     $stmt->execute();
                     $severity[] = $stmt->get_result()->fetch_assoc()['i'] ?? 0;
@@ -108,7 +108,7 @@ if (isset($_GET['ajax_fetch']) && isset($_GET['patient_id'])) {
                     $stmt->bind_param("is", $patient_id, $d);
                     $stmt->execute();
                     $sleep[] = round($stmt->get_result()->fetch_assoc()['s'] ?? 0, 1);
-                    $stmt = $conn->prepare("SELECT COUNT(*) as c FROM tic_log WHERE Patient_ID = ? AND DATE(Created_At) = ? AND Type_Description != 'No Tics Today'");
+                    $stmt = $conn->prepare("SELECT COUNT(*) as c FROM tic_log WHERE Patient_ID = ? AND DATE(Created_At) = ?");
                     $stmt->bind_param("is", $patient_id, $d);
                     $stmt->execute();
                     $frequency[] = $stmt->get_result()->fetch_assoc()['c'] ?? 0;
@@ -129,7 +129,7 @@ if (isset($_GET['ajax_fetch']) && isset($_GET['patient_id'])) {
                     $stress[] = round($resE['s'] ?? 0, 1);
                     $anxiety[] = round($resE['a'] ?? 0, 1);
                     $sleep[] = round($resE['sl'] ?? 0, 1);
-                    $stmt = $conn->prepare("SELECT COUNT(*) as c, MAX(Intensity) as i FROM tic_log WHERE Patient_ID = ? AND DATE(Created_At) = ? AND Type_Description != 'No Tics Today'");
+                    $stmt = $conn->prepare("SELECT COUNT(*) as c, MAX(Intensity) as i FROM tic_log WHERE Patient_ID = ? AND DATE(Created_At) = ?");
                     $stmt->bind_param("is", $patient_id, $d);
                     $stmt->execute();
                     $resT = $stmt->get_result()->fetch_assoc();
@@ -139,7 +139,7 @@ if (isset($_GET['ajax_fetch']) && isset($_GET['patient_id'])) {
                 $response['data'] = ['stress' => $stress, 'anxiety' => $anxiety, 'sleep' => $sleep, 'intensity' => $intensity, 'frequency' => $frequency];
             } elseif ($graph_type === 'hourly') {
                 $hourly = array_fill(0, 24, 0);
-                $stmt = $conn->prepare("SELECT HOUR(Created_At) as h, COUNT(*) as c FROM tic_log WHERE Patient_ID = ? AND DATE(Created_At) BETWEEN ? AND ? AND Type_Description != 'No Tics Today' GROUP BY h");
+                $stmt = $conn->prepare("SELECT HOUR(Created_At) as h, COUNT(*) as c FROM tic_log WHERE Patient_ID = ? AND DATE(Created_At) BETWEEN ? AND ? GROUP BY h");
                 $stmt->bind_param("iss", $patient_id, $start_date_db, $end_date_db);
                 $stmt->execute();
                 $res = $stmt->get_result();
@@ -221,13 +221,13 @@ $avg_stress_30d = 0;
 $adherence_percentage = 0;
 
 if ($conn && $selected_patient_id) {
-    $stmt = $conn->prepare("SELECT COUNT(*) as c FROM tic_log WHERE Patient_ID = ? AND Created_At >= DATE_SUB(NOW(), INTERVAL 30 DAY) AND Type_Description != 'No Tics Today'");
+    $stmt = $conn->prepare("SELECT COUNT(*) as c FROM tic_log WHERE Patient_ID = ? AND Created_At >= DATE_SUB(NOW(), INTERVAL 30 DAY)");
     $stmt->bind_param("i", $selected_patient_id);
     $stmt->execute();
     $total_tics_30d = $stmt->get_result()->fetch_assoc()['c'];
     $stmt->close();
 
-    $stmt = $conn->prepare("SELECT COUNT(*) as c FROM tic_log WHERE Patient_ID = ? AND Created_At >= DATE_SUB(NOW(), INTERVAL 60 DAY) AND Created_At < DATE_SUB(NOW(), INTERVAL 30 DAY) AND Type_Description != 'No Tics Today'");
+    $stmt = $conn->prepare("SELECT COUNT(*) as c FROM tic_log WHERE Patient_ID = ? AND Created_At >= DATE_SUB(NOW(), INTERVAL 60 DAY) AND Created_At < DATE_SUB(NOW(), INTERVAL 30 DAY)");
     $stmt->bind_param("i", $selected_patient_id);
     $stmt->execute();
     $total_tics_prev_30d = $stmt->get_result()->fetch_assoc()['c'];
@@ -280,7 +280,7 @@ if ($conn && $selected_patient_id) {
         $day_date = ($db_date === $today_str) ? "Today" : date('d M', $timestamp);
         $dates[] = [$day_name, $day_date];
 
-        $stmt = $conn->prepare("SELECT MAX(Intensity) as i FROM tic_log WHERE Patient_ID = ? AND DATE(Created_At) = ? AND Type_Description != 'No Tics Today'");
+        $stmt = $conn->prepare("SELECT MAX(Intensity) as i FROM tic_log WHERE Patient_ID = ? AND DATE(Created_At) = ?");
         $stmt->bind_param("is", $selected_patient_id, $db_date);
         $stmt->execute();
         $tic_severity[] = $stmt->get_result()->fetch_assoc()['i'] ?? 0;
@@ -298,7 +298,7 @@ if ($conn && $selected_patient_id) {
 $motor_count = 0;
 $vocal_count = 0;
 if ($conn && $selected_patient_id) {
-    $stmt = $conn->prepare("SELECT Type, COUNT(*) as c FROM tic_log WHERE Patient_ID = ? AND Type_Description != 'No Tics Today' GROUP BY Type");
+    $stmt = $conn->prepare("SELECT Type, COUNT(*) as c FROM tic_log WHERE Patient_ID = ? GROUP BY Type");
     $stmt->bind_param("i", $selected_patient_id);
     $stmt->execute();
     $res = $stmt->get_result();
@@ -373,24 +373,24 @@ include '../../includes/navbar.php';
 
     .pdf-export-container .grid {
         display: block !important;
-        
+        /* Force single column to prevent horizontal cutting */
         width: 100% !important;
     }
 
     .pdf-export-container .bg-white {
         margin-bottom: 15px !important;
-        
+        /* Reduce gap between cards */
         padding: 15px !important;
         border: 1px solid #ddd !important;
         height: auto !important;
         overflow: visible !important;
-        
+        /* Critical: shows the full table */
         display: block !important;
         page-break-inside: avoid !important;
-       
+        /* Prevents splitting a chart in half */
     }
 
-    
+    /* Fix for the huge doughnut chart */
     .pdf-export-container .doughnut-wrapper {
         max-width: 250px !important;
         margin: 0 auto !important;
@@ -743,15 +743,434 @@ include '../../includes/navbar.php';
 </div>
 
 <script>
-    // Pass data to external JS file
-    window.homeProfessionalData = {
-        selectedPatientId: <?php echo $selected_patient_id; ?>,
-        patientName: '<?php echo htmlspecialchars($selected_patient_name); ?>',
-        labels: <?php echo json_encode($dates); ?>,
-        severity: <?php echo json_encode($tic_severity); ?>,
-        stress: <?php echo json_encode($stress_levels); ?>,
-        motorCount: <?php echo $motor_count; ?>,
-        vocalCount: <?php echo $vocal_count; ?>
+    lucide.createIcons();
+    const selectedPatientId = <?php echo $selected_patient_id; ?>;
+
+    // --- MODAL LOGIC ---
+    async function openModal(id) {
+        document.getElementById(id).classList.remove('hidden');
+        if (id === 'modal-tics') await fetchAllData('fetch_all_tics', 'table-body-tics', ['Formatted_Date', 'Type', 'Type_Description', 'Intensity', 'Describe_Text']);
+        else if (id === 'modal-emotions') await fetchAllData('fetch_all_emotions', 'table-body-emotions', ['Formatted_Date', 'Emotion', 'Stress', 'Anxiety', 'Sleep', 'Notes']);
+    }
+
+    function closeModal(id) {
+        document.getElementById(id).classList.add('hidden');
+    }
+    async function fetchAllData(action, tbodyId, fields) {
+        const tbody = document.getElementById(tbodyId);
+        try {
+            const res = await fetch(`?ajax_fetch=1&action=${action}&patient_id=${selectedPatientId}`);
+            const json = await res.json();
+            tbody.innerHTML = '';
+            if (json.data.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="${fields.length}" class="p-4 text-center text-gray-400">No records found.</td></tr>`;
+                return;
+            }
+            json.data.forEach(row => {
+                let tr = `<tr class="hover:bg-gray-50">`;
+                fields.forEach(f => {
+                    tr += `<td class="p-3 border-b border-gray-50">${row[f] || '-'}</td>`;
+                });
+                tr += `</tr>`;
+                tbody.innerHTML += tr;
+            });
+        } catch (e) {
+            tbody.innerHTML = `<tr><td colspan="${fields.length}" class="p-4 text-center text-red-500">Error loading data.</td></tr>`;
+        }
+    }
+
+    // --- CHART INITIALIZATION ---
+    const initialLabels = <?php echo json_encode($dates); ?>;
+    const initialSeverity = <?php echo json_encode($tic_severity); ?>;
+    const initialStress = <?php echo json_encode($stress_levels); ?>;
+    const motorCount = <?php echo $motor_count; ?>;
+    const vocalCount = <?php echo $vocal_count; ?>;
+
+    const ctxCombo = document.getElementById('doctorComboChart').getContext('2d');
+    const comboChart = new Chart(ctxCombo, {
+        type: 'bar',
+        data: {
+            labels: initialLabels,
+            datasets: [{
+                type: 'line',
+                label: 'Avg Stress',
+                data: initialStress,
+                borderColor: '#fb923c',
+                borderWidth: 2,
+                borderDash: [5, 5],
+                pointRadius: 4,
+                tension: 0.3,
+                yAxisID: 'y'
+            }, {
+                type: 'bar',
+                label: 'Max Intensity',
+                data: initialSeverity,
+                backgroundColor: '#005949',
+                borderRadius: 4,
+                barThickness: 24,
+                yAxisID: 'y'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: {
+                mode: 'index',
+                intersect: false
+            },
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                x: {
+                    grid: {
+                        display: false
+                    }
+                },
+                y: {
+                    min: 0,
+                    max: 10,
+                    grid: {
+                        borderDash: [4, 4]
+                    }
+                }
+            }
+        }
+    });
+
+    const ctxDoughnut = document.getElementById('typeDoughnutChart').getContext('2d');
+    new Chart(ctxDoughnut, {
+        type: 'doughnut',
+        data: {
+            labels: ['Motor', 'Vocal'],
+            datasets: [{
+                data: [motorCount, vocalCount],
+                backgroundColor: ['#005949', '#F8BED3'],
+                borderWidth: 0,
+                hoverOffset: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            cutout: '75%'
+        }
+    });
+
+    const chartSleep = new Chart(document.getElementById('chart-sleep'), {
+        type: 'line',
+        data: {
+            labels: [],
+            datasets: []
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    suggestedMax: 10
+                }
+            }
+        }
+    });
+    const chartMulti = new Chart(document.getElementById('chart-multi'), {
+        type: 'bar',
+        data: {
+            labels: [],
+            datasets: []
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: {
+                mode: 'index',
+                intersect: false
+            },
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            },
+            plugins: {
+                legend: {
+                    position: 'top',
+                    labels: {
+                        boxWidth: 10,
+                        font: {
+                            size: 10
+                        }
+                    }
+                }
+            }
+        }
+    });
+    const chartHourly = new Chart(document.getElementById('chart-hourly'), {
+        type: 'line',
+        data: {
+            labels: [...Array(24).keys()].map(h => h + ":00"),
+            datasets: []
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                x: {
+                    grid: {
+                        display: false
+                    }
+                },
+                y: {
+                    beginAtZero: true
+                }
+            },
+            plugins: {
+                legend: {
+                    display: false
+                }
+            }
+        }
+    });
+    const chartMoods = new Chart(document.getElementById('chart-moods'), {
+        type: 'pie',
+        data: {
+            labels: [],
+            datasets: []
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'right',
+                    labels: {
+                        boxWidth: 10,
+                        font: {
+                            size: 11
+                        }
+                    }
+                }
+            }
+        }
+    });
+    const chartMuscles = new Chart(document.getElementById('chart-muscles'), {
+        type: 'polarArea',
+        data: {
+            labels: [],
+            datasets: []
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                r: {
+                    ticks: {
+                        display: false
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    position: 'right',
+                    labels: {
+                        boxWidth: 10
+                    }
+                }
+            }
+        }
+    });
+
+    // --- DYNAMIC GRAPH LOADING ---
+    const offsets = {
+        main: 0,
+        sleep: 0,
+        multi: 0,
+        hourly: 0,
+        moods: 0,
+        muscles: 0
     };
+    async function loadGraph(type) {
+        const offset = offsets[type];
+        const rangeEl = document.getElementById(`range-${type}`);
+        if (rangeEl) rangeEl.textContent = "...";
+        try {
+            const res = await fetch(`?ajax_fetch=1&graph=${type}&offset=${offset}&patient_id=${selectedPatientId}`);
+            const data = await res.json();
+            if (rangeEl && data.range) rangeEl.textContent = data.range;
+            if (type === 'main') {
+                comboChart.data.labels = data.labels;
+                comboChart.data.datasets[0].data = data.stress;
+                comboChart.data.datasets[1].data = data.severity;
+                comboChart.update();
+            } else if (type === 'sleep') {
+                chartSleep.data.labels = data.labels;
+                chartSleep.data.datasets = [{
+                    label: 'Sleep Quality',
+                    data: data.data.sleep,
+                    borderColor: '#F282A9',
+                    backgroundColor: '#F282A9',
+                    tension: 0.4
+                }, {
+                    label: 'Tic Count',
+                    data: data.data.frequency,
+                    borderColor: '#005949',
+                    borderDash: [5, 5],
+                    tension: 0.4
+                }];
+                chartSleep.update();
+            } else if (type === 'multi') {
+                chartMulti.data.labels = data.labels;
+                chartMulti.data.datasets = [{
+                    label: 'Stress',
+                    data: data.data.stress,
+                    backgroundColor: '#fb923c'
+                }, {
+                    label: 'Anxiety',
+                    data: data.data.anxiety,
+                    backgroundColor: '#60a5fa'
+                }, {
+                    label: 'Sleep',
+                    data: data.data.sleep,
+                    backgroundColor: '#F282A9'
+                }, {
+                    label: 'Intensity',
+                    data: data.data.intensity,
+                    backgroundColor: '#FFEBB3'
+                }, {
+                    label: 'Tic Count',
+                    data: data.data.frequency,
+                    backgroundColor: '#005949'
+                }];
+                chartMulti.update();
+            } else if (type === 'hourly') {
+                chartHourly.data.datasets = [{
+                    label: 'Tics',
+                    data: data.data,
+                    fill: true,
+                    backgroundColor: 'rgba(59, 130, 246, 0.2)',
+                    borderColor: '#3B82F6',
+                    tension: 0.4
+                }];
+                chartHourly.update();
+            } else if (type === 'moods') {
+                chartMoods.data.labels = data.data.labels;
+                chartMoods.data.datasets = [{
+                    data: data.data.values,
+                    backgroundColor: ['#F282A9', '#FFEBB3', '#005949', '#fb923c', '#C4B5FD'],
+                    borderWidth: 1
+                }];
+                chartMoods.update();
+            } else if (type === 'muscles') {
+                chartMuscles.data.labels = data.data.labels;
+                chartMuscles.data.datasets = [{
+                    data: data.data.values,
+                    backgroundColor: ['#005949', '#26A69A', '#4DB6AC', '#80CBC4', '#B2DFDB', '#E0F2F1']
+                }];
+                chartMuscles.update();
+            }
+        } catch (e) {
+            console.error(`Error loading ${type}:`, e);
+        }
+    }
+
+    function changeOffset(type, delta) {
+        offsets[type] += delta;
+        if (offsets[type] < 0) offsets[type] = 0;
+        loadGraph(type);
+    }
+
+    // Initial Load
+    ['sleep', 'multi', 'hourly', 'moods', 'muscles'].forEach(t => loadGraph(t));
+
+    // --- PDF EXPORT LOGIC ---
+    function exportPDF() {
+    const original = document.getElementById('report-container');
+    const pdfHeader = document.getElementById('pdf-header');
+    
+    // 1. Create a hidden wrapper
+    const wrapper = document.createElement('div');
+    wrapper.style.position = 'absolute';
+    wrapper.style.left = '-9999px';
+    wrapper.style.top = '0';
+    wrapper.style.width = '800px'; 
+    document.body.appendChild(wrapper);
+
+    // 2. Clone the dashboard
+    const clone = original.cloneNode(true);
+    clone.classList.add('pdf-export-container');
+    
+    // Ensure the header is visible
+    const header = clone.querySelector('#pdf-header');
+    if(header) header.classList.remove('hidden');
+
+    wrapper.appendChild(clone);
+
+    // 3. Fix Charts & Layout
+    const originalCanvases = original.querySelectorAll('canvas');
+    const clonedCanvases = clone.querySelectorAll('canvas');
+    
+    originalCanvases.forEach((canvas, index) => {
+        const img = document.createElement('img');
+        img.src = canvas.toDataURL('image/png', 1.0);
+        
+        const target = clonedCanvases[index];
+        if (target) {
+            // Check if this is the doughnut chart (based on its ID or container)
+            if (target.id === 'typeDoughnutChart' || target.closest('.h-48')) {
+                img.style.width = '200px'; // Keep doughnut small
+                img.style.margin = '0 auto';
+                target.parentNode.classList.add('doughnut-wrapper');
+            } else {
+                img.style.width = '100%'; // Full width for line/bar charts
+            }
+            
+            img.style.height = 'auto';
+            img.style.display = 'block';
+            
+            // Remove the fixed-height container constraints from the PDF clone
+            const parent = target.parentNode;
+            parent.style.height = 'auto';
+            parent.style.minHeight = '0';
+            parent.replaceChild(img, target);
+        }
+    });
+
+    // 4. Force Tables to stay visible
+    clone.querySelectorAll('.overflow-x-auto, .overflow-y-auto').forEach(el => {
+        el.style.overflow = 'visible';
+        el.style.height = 'auto';
+        el.style.maxHeight = 'none';
+        el.style.display = 'block';
+    });
+
+    // Remove buttons and interactive elements
+    clone.querySelectorAll('button, .print\\:hidden, .print-hide').forEach(el => el.remove());
+
+    // 5. PDF Options
+    const opt = {
+        margin: [0.3, 0.3],
+        filename: `Report_<?php echo htmlspecialchars($selected_patient_name); ?>.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { 
+            scale: 2, 
+            useCORS: true, 
+            logging: false,
+            width: 800
+        },
+        jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' },
+        pagebreak: { mode: ['css', 'legacy'], avoid: '.bg-white' }
+    };
+
+    // 6. Save and Remove Clone
+    html2pdf().set(opt).from(clone).save().then(() => {
+        document.body.removeChild(wrapper);
+    });
+}
 </script>
-<script src="../../js/professional/home_professional.js"></script>

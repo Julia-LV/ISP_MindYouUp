@@ -17,7 +17,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $stmt->bind_param("si", $new_status, $link_id);
     
     if ($stmt->execute()) {
-        
+        // Success: Go back to the list
         header("Location: my_patients.php");
     } else {
         echo "Error updating status: " . $conn->error;

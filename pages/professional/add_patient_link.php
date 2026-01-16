@@ -2,7 +2,7 @@
 session_start();
 include('../../config.php');
 
-
+// Security Check: Only allow POST requests from logged-in Professionals
 if ($_SERVER["REQUEST_METHOD"] !== "POST" || 
     !isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true ||
     $_SESSION['role'] !== 'Professional') {
@@ -25,7 +25,7 @@ if (!$patient_id || !$professional_id) {
     $message = "Error: Invalid Professional ID or Patient ID provided.";
     $message_type = "error";
 } else {
-    // 1. Check if Patient ID exists 
+    // 1. Check if Patient ID exists (Good practice)
     $sql_check_patient = "SELECT User_ID FROM user_profile WHERE User_ID = ? AND Role = 'Patient'";
     $stmt_check = $conn->prepare($sql_check_patient);
     $stmt_check->bind_param("i", $patient_id);
@@ -42,13 +42,13 @@ if (!$patient_id || !$professional_id) {
         
         $stmt_insert = $conn->prepare($sql_insert);
         
-        
+        // 'ii' stands for two integers (Patient_ID, Professional_ID)
         $stmt_insert->bind_param("ii", $patient_id, $professional_id);
 
         if ($stmt_insert->execute()) {
             $message = "Success: Patient ID {$patient_id} linked successfully to your profile!";
             $message_type = "success";
-        } elseif ($conn->errno == 1062) { 
+        } elseif ($conn->errno == 1062) { // 1062 is the error code for Duplicate Entry (if you have a unique key)
             $message = "Warning: This patient is already linked to your profile.";
             $message_type = "warning";
         } else {

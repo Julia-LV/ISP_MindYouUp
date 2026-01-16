@@ -1,5 +1,5 @@
 <?php
-
+// FILE: components/chat_handler.php
 header('Content-Type: application/json');
 ini_set('display_errors', 0); 
 error_reporting(E_ALL);
@@ -10,7 +10,7 @@ if (file_exists($configPath)) { require_once $configPath; }
 
 // 2. DB CONNECTION (XAMPP COMPATIBLE)
 if (!isset($pdo)) {
-    
+    // Use variables from config.php directly
     $db_host = isset($servername) && $servername != 'localhost' ? $servername : '127.0.0.1';
     $db_name = isset($dbname) ? $dbname : 'tictracker_v9';
     $db_user = isset($username) ? $username : 'root';
@@ -40,7 +40,7 @@ if ($method === 'GET' && $action === 'fetch') {
 }
 
 if ($method === 'POST' && $action === 'send') {
-    
+    // We use $_POST because we are sending FormData now
     $link_id     = $_POST['link_id'] ?? 0;
     $sender_type = $_POST['sender_type'] ?? '';
     $message     = $_POST['message'] ?? '';

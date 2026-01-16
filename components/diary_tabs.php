@@ -1,11 +1,19 @@
 <?php
+/*
+ * components/diary_tabs.php
+ *
+ * A Reusable Tab Bar.
+ * * Variables to pass:
+ * $tabs       : Array ['Label' => 'Action/Link']
+ * $active_tab : The Label of the currently active tab
+ * $is_js      : true/false (If true, treats the link as an ID or JS call)
+ */
 
-
-$tabs = $tabs ?? []; 
+$tabs = $tabs ?? []; // Default to empty if not passed
 $active_tab = $active_tab ?? '';
 $is_js = $is_js ?? false;
 
-
+// Styles
 $active_classes = 'font-semibold text-[#005949] border-b-2 border-[#005949]';
 $inactive_classes = 'font-medium text-gray-500 hover:text-gray-700 border-b-2 border-transparent';
 ?>

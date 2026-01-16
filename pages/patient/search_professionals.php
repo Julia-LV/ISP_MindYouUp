@@ -41,7 +41,7 @@ include('../../components/header_component.php');
                     <?php 
                         $formId = "req_doc_" . $doc['User_ID']; 
                         $name = "Dr. " . htmlspecialchars($doc['First_Name'] . ' ' . $doc['Last_Name']);
-                        $connStatus = $doc['Connection_Status']; 
+                        $connStatus = $doc['Connection_Status']; // Pending, Accepted, or NULL
                     ?>
 
                     <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between hover:shadow-md transition">

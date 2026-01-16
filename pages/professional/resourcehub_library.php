@@ -24,7 +24,7 @@ $skills = [
 if (isset($_POST['action']) && $_POST['action'] === 'delete_resource') {
     $resourceId = (int)$_POST['resource_id'];
     
-    
+    // First, find the file to delete it from storage
     $find = $conn->prepare("SELECT media_url FROM resource_hub WHERE id = ? AND professional_id = ?");
     $find->bind_param('ii', $resourceId, $currentProfessionalId);
     $find->execute();
@@ -44,10 +44,10 @@ if (isset($_POST['action']) && $_POST['action'] === 'delete_resource') {
     }
 }
 
-// --- HANDLE SYNC SHARING  ---
+// --- HANDLE SYNC SHARING (Add/Remove) ---
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'share_resource') {
     $resourceId = (int)$_POST['resource_id'];
-    $selectedPatients = $_POST['patient_ids'] ?? [];
+    $selectedPatients = $_POST['patient_ids'] ?? []; // Patients who SHOULD have access
 
     // 1. Remove access for anyone not in the selected list
     $placeholders = count($selectedPatients) > 0 ? implode(',', array_fill(0, count($selectedPatients), '?')) : '0';
@@ -59,7 +59,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     $stmtRem->bind_param($types, ...$params);
     $stmtRem->execute();
 
-    // 2. Add access for the selected ones 
+    // 2. Add access for the selected ones (INSERT IGNORE prevents duplicates)
     if (!empty($selectedPatients)) {
         $ins = $conn->prepare("INSERT IGNORE INTO patient_resource_assignments (patient_id, resource_id, assigned_at) VALUES (?, ?, NOW())");
         foreach ($selectedPatients as $pid) {
@@ -84,7 +84,7 @@ $stmt->execute();
 $res = $stmt->get_result();
 while ($row = $res->fetch_assoc()) $linkedPatients[] = $row;
 
-
+// Fetch ONLY resources uploaded by THIS professional
 $resources = [];
 $sql = "SELECT rh.*, GROUP_CONCAT(pra.patient_id) as assigned_patient_ids 
         FROM resource_hub rh 
