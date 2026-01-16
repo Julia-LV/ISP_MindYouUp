@@ -68,15 +68,6 @@ if ($method === 'POST' && $action === 'send') {
     if ($link_id && ($message || $file_path)) {
         $stmt = $pdo->prepare("INSERT INTO chat_log (Link_ID, Sender_Type, Chat_Text, Chat_Time, Sender, Receiver, File_Path, File_Type) VALUES (?, ?, ?, NOW(), ?, ?, ?, ?)");
         $stmt->execute([$link_id, $sender_type, $message, $sender_id, $receiver_id, $file_path, $file_type]);
-
-        // Notification logic
-        require_once __DIR__ . '/../pages/common/notifications.php';
-        if ($receiver_id && $message) {
-            $title = 'New message';
-            $msg = 'You have received a new message.';
-            saveNotificationToDatabase($conn, $receiver_id, $title, $msg, 'message');
-        }
-
         echo json_encode(['success' => true]);
     }
     exit;

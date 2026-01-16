@@ -24,18 +24,16 @@ $stmt->close();
 $skills_grouped = []; $articles = []; $db_banners = [];
 
 if ($prof_id > 0) {
-    $sql = "SELECT rh.*, pr.assigned_at FROM patient_resource_assignments pr 
+    $sql = "SELECT rh.* FROM patient_resource_assignments pr 
             JOIN resource_hub rh ON pr.resource_id = rh.id 
             WHERE pr.patient_id = ? 
-            ORDER BY pr.assigned_at DESC, rh.id DESC";
-
+            ORDER BY rh.id DESC";
+            
     $stmt = $conn->prepare($sql);
     $stmt->bind_param("i", $patient_id);
     $stmt->execute();
     $result = $stmt->get_result();
-
-    require_once __DIR__ . '/../common/notifications.php';
-
+    
     while ($row = $result->fetch_assoc()) {
         if ($row['item_type'] === 'category') {
             $skills_grouped[$row['category_type']][] = $row;
@@ -49,13 +47,6 @@ if ($prof_id > 0) {
                 'url'   => $row['media_url'],
                 'img'   => !empty($row['image_url']) ? $row['image_url'] : 'https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=800'
             ];
-        }
-
-        // Notification logic: if resource was just assigned
-        if (!empty($row['assigned_at']) && strtotime($row['assigned_at']) > strtotime('-1 minute')) {
-            $title = 'New Resource Assigned';
-            $msg = 'A new resource has been assigned to you.';
-            saveNotificationToDatabase($conn, $patient_id, $title, $msg, 'resource');
         }
     }
     $stmt->close();
