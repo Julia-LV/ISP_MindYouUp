@@ -145,7 +145,7 @@ session_start();
           and share those insights with your healthcare team.
         </p>
 
-        <h3 class="mt-4 font-bold">What it’s designed for</h3>
+        <h3 class="mt-4 font-bold">What it's designed for</h3>
         <ul class="list-disc pl-5 mt-2 space-y-1">
           <li>Daily or weekly tracking without long forms</li>
           <li>Clear summaries you can review before each appointment</li>
@@ -158,7 +158,7 @@ session_start();
     <section id="tics" class="mt-12">
       <div class="mt-12 mb-2 text-[1.2rem] font-bold text-[#0f684f] uppercase tracking-[0.08em]">What are tics?</div>
 
-      <article class="info-card is-open bg-white border border-[#f0d9d2] rounded-2xl overflow-hidden
+      <article class="info-card bg-white border border-[#f0d9d2] rounded-2xl overflow-hidden
                       shadow-[0_14px_36px_rgba(0,0,0,0.12)]">
         <button class="info-card-header w-full flex items-center justify-between gap-2 px-5 py-4 text-left bg-transparent border-0 cursor-pointer">
           <h2 class="m-0 text-[1.3rem] font-bold text-[#0f684f]">What are tics?</h2>
@@ -189,13 +189,12 @@ session_start();
       <div class="mt-12 mb-2 text-[1.2rem] font-bold text-[#0f684f] uppercase tracking-[0.08em]">Applications in this portal</div>
 
       <div class="grid gap-4 mt-4 lg:grid-cols-3">
-        <article class="app-card rounded-2xl border border-[#f0d9d2] bg-[#fffdf7] shadow-[0_4px_12px_rgba(0,0,0,0.05)] overflow-hidden">
-          <button class="app-card-header w-full flex items-center justify-between gap-2 px-5 py-4 text-left bg-transparent border-0 cursor-pointer">
+        <article class="rounded-2xl border border-[#f0d9d2] bg-[#fffdf7] shadow-[0_4px_12px_rgba(0,0,0,0.05)] overflow-hidden">
+          <div class="w-full flex items-center justify-between gap-2 px-5 py-4 text-left">
             <h3 class="m-0 text-[1.05rem] font-bold text-[#0f684f]">TicTracker web app</h3>
-            <span class="app-card-arrow text-[1.1rem]" aria-hidden="true">▾</span>
-          </button>
-          <div class="app-card-body hidden px-5">
-            <div class="app-card-body-inner pb-4">
+          </div>
+          <div class="px-5 pb-4">
+            <div class="pb-4">
               <p class="text-[0.85rem] text-[#5b6664]">
                 Secure web interface for logging tic episodes and reviewing recent entries.
               </p>
@@ -208,13 +207,12 @@ session_start();
           </div>
         </article>
 
-        <article class="app-card rounded-2xl border border-[#f0d9d2] bg-[#fffdf7] shadow-[0_4px_12px_rgba(0,0,0,0.05)] overflow-hidden">
-          <button class="app-card-header w-full flex items-center justify-between gap-2 px-5 py-4 text-left bg-transparent border-0 cursor-pointer">
+        <article class="rounded-2xl border border-[#f0d9d2] bg-[#fffdf7] shadow-[0_4px_12px_rgba(0,0,0,0.05)] overflow-hidden">
+          <div class="w-full flex items-center justify-between gap-2 px-5 py-4 text-left">
             <h3 class="m-0 text-[1.05rem] font-bold text-[#0f684f]">For patients/caregivers</h3>
-            <span class="app-card-arrow text-[1.1rem]" aria-hidden="true">▾</span>
-          </button>
-          <div class="app-card-body hidden px-5">
-            <div class="app-card-body-inner pb-4">
+          </div>
+          <div class="px-5 pb-4">
+            <div class="pb-4">
               <p class="text-[0.85rem] text-[#5b6664]">
                 Log what you notice between appointments and bring simple summaries to your next visit.
               </p>
@@ -225,13 +223,12 @@ session_start();
           </div>
         </article>
 
-        <article class="app-card rounded-2xl border border-[#f0d9d2] bg-[#fffdf7] shadow-[0_4px_12px_rgba(0,0,0,0.05)] overflow-hidden">
-          <button class="app-card-header w-full flex items-center justify-between gap-2 px-5 py-4 text-left bg-transparent border-0 cursor-pointer">
+        <article class="rounded-2xl border border-[#f0d9d2] bg-[#fffdf7] shadow-[0_4px_12px_rgba(0,0,0,0.05)] overflow-hidden">
+          <div class="w-full flex items-center justify-between gap-2 px-5 py-4 text-left">
             <h3 class="m-0 text-[1.05rem] font-bold text-[#0f684f]">For professionals</h3>
-            <span class="app-card-arrow text-[1.1rem]" aria-hidden="true">▾</span>
-          </button>
-          <div class="app-card-body hidden px-5">
-            <div class="app-card-body-inner pb-4">
+          </div>
+          <div class="px-5 pb-4">
+            <div class="pb-4">
               <p class="text-[0.85rem] text-[#5b6664]">
                 Use TicTracker as a companion in your clinical work to explore patterns over time and support treatment choices.
               </p>
@@ -253,7 +250,7 @@ session_start();
           <div>
             <strong class="block text-[#0f684f]">Sarah, Parent of 11-year-old</strong>
             <div class="text-[#f5b400] text-[0.9rem] mb-1" aria-hidden="true">★★★★★</div>
-            “We finally see when tics spike and what might be setting them off. It’s been a game changer.”
+            "We finally see when tics spike and what might be setting them off. It's been a game changer."
           </div>
         </div>
 
@@ -261,7 +258,7 @@ session_start();
           <div>
             <strong class="block text-[#0f684f]">Dr. Emily Chen, Clinician</strong>
             <div class="text-[#f5b400] text-[0.9rem] mb-1" aria-hidden="true">★★★★☆</div>
-            “I can focus sessions on what really changed instead of trying to remember the last few weeks.”
+            "I can focus sessions on what really changed instead of trying to remember the last few weeks."
           </div>
         </div>
 
@@ -269,7 +266,7 @@ session_start();
           <div>
             <strong class="block text-[#0f684f]">Alex, Young person with tics</strong>
             <div class="text-[#f5b400] text-[0.9rem] mb-1" aria-hidden="true">★★★★★</div>
-            “It’s nice to just tap and be done, rather than explaining everything every time.”
+            "It's nice to just tap and be done, rather than explaining everything every time."
           </div>
         </div>
       </div>
@@ -419,7 +416,7 @@ session_start();
     <!-- Support banner -->
     <div class="mt-8 mb-3 rounded-xl bg-[#fff0e0] px-4 py-4 text-[0.95rem] text-[#5b6664]
                 shadow-[0_4px_14px_rgba(0,0,0,0.06)]">
-      <strong class="text-[#0f684f]">You’re not alone.</strong>
+      <strong class="text-[#0f684f]">You're not alone.</strong>
       TicTracker is here to help you and your healthcare team make sense of day-to-day tic symptoms.
     </div>
   </main>
@@ -466,16 +463,7 @@ session_start();
     </div>
   </footer>
 
-  <!-- JS: app cards -->
-  <script>
-    (function () {
-      const appCards = document.querySelectorAll('.app-card');
-      appCards.forEach(card => {
-        const headerBtn = card.querySelector('.app-card-header');
-        headerBtn.addEventListener('click', () => card.classList.toggle('is-open'));
-      });
-    })();
-  </script>
+  <!-- JS: app cards (removed since not needed anymore for this section) -->
 
   <!-- JS: collapsible "What are tics?" -->
   <script>
