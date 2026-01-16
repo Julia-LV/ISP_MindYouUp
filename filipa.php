@@ -7,252 +7,118 @@ session_start();
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Filipa Pancada Fonseca – TicTracker by Mind You Up</title>
-  <link rel="stylesheet" href="web_portal.css" />
+
+  <!-- Tailwind Play CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script> <!-- [web:186] -->
+
   <style>
-    body {
-      background: #fff7ea;
-    }
-
-    .profile-hero {
-      padding: 48px 0 56px;
-      background: #fff7ea;  /* same as body */
-    }
-
-    .profile-shell {
-      max-width: 1120px;
-      margin: 0 auto;
-      padding: 0 16px;
-    }
-
-    .profile-card {
-      background: #fffdf8;
-      border-radius: 26px;
-      border: 1px solid #f0d9d2;
-      box-shadow: 0 18px 50px rgba(0,0,0,0.15);
-      display: grid;
-      gap: 28px;
-      padding: 26px 30px 26px;
-      align-items: flex-start;
-    }
-
-    @media (min-width: 960px) {
-      .profile-card {
-        grid-template-columns: minmax(0, 1.1fr) minmax(0, 1.9fr);
-      }
-    }
-
-    .profile-photo-wrap {
-      display: flex;
-      justify-content: center;
-    }
-
-    .profile-photo-inner {
-      width: 280px;
-      max-width: 100%;
-      aspect-ratio: 3/4;
-      border-radius: 30px;
-      overflow: hidden;
-      box-shadow: 0 20px 45px rgba(0,0,0,0.28);
-      background: #000;
-    }
-
-    .profile-photo-inner img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      display: block;
-    }
-
-    .profile-content {
-      color: #384341;
-    }
-
-    .profile-name {
-      font-size: 2.1rem;
-      line-height: 1.1;
-      margin: 0 0 6px;
-      color: #0a4936;
-    }
-
-    .profile-tagline {
-      font-size: 0.98rem;
-      color: #5b6664;
-      margin: 0 0 18px;
-      max-width: 640px;
-    }
-
-    .profile-chip-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      margin-top: 10px;
-      margin-bottom: 6px;
-    }
-
-    .profile-chip {
-      padding: 4px 10px;
-      border-radius: 999px;
-      background: #e9f0ff;
-      color: #2643a4;
-      font-size: 0.78rem;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-    }
-
-    .profile-section-title {
-      margin-top: 18px;
-      margin-bottom: 6px;
-      font-size: 1.1rem;
-      font-weight: 700;
-      color: #0f684f;
-    }
-
-    .profile-paragraph {
-      font-size: 0.95rem;
-      line-height: 1.7;
-      margin: 0 0 10px;
-    }
-
-    .profile-footer-note {
-      margin-top: 18px;
-      font-size: 0.82rem;
-      color: #7b8684;
-    }
-
-    /* Footer styles aligned like other pages */
-    .app-footer {
-      background: #0d5b43;
-      color: #ffffff;
-      border-top: 2px solid #0a4936;
-    }
-
-    .app-footer-inner {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 18px 32px;
-      gap: 16px;
-      text-align: left;
-    }
-
-    .footer-left {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .footer-logo {
-      height: 60px;
-    }
-
-    .footer-main-text {
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-    }
-
-    .footer-main-text span {
-      line-height: 1.4;
-    }
-
-    .footer-links {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-      justify-content: flex-end;
-      font-size: 0.95rem;
-    }
-
-    .footer-links a {
-      color: #ffffff;
-      text-decoration: underline;
-    }
-
-    .footer-links a:hover {
-      text-decoration: none;
-    }
-
-    @media (max-width: 640px) {
-      .app-footer-inner {
-        flex-direction: column;
-        align-items: flex-start;
-      }
-      .footer-links {
-        justify-content: flex-start;
-      }
-    }
+    /* Keep your existing mobile nav toggle behavior */
+    .top-nav.is-open { display: flex !important; }
   </style>
 </head>
-<body>
-  <header class="app-header">
-    <div class="container app-header-inner">
-      <div class="brand">
-        <a href="index.php" class="brand-main">TicTracker</a>
-        <span class="brand-sub">by Mind You Up</span>
+
+<body class="bg-[#fff7ea] text-[#384341] font-sans">
+  <header class="sticky top-0 z-50 bg-[#0f684f] text-white shadow-[0_2px_8px_rgba(0,0,0,0.16)]">
+    <div class="max-w-[1120px] mx-auto px-4 py-2 flex items-center justify-between gap-6 relative">
+      <div class="flex flex-col gap-0.5 pl-1">
+        <a href="index.php" class="text-[1.6rem] font-bold tracking-wide no-underline text-white hover:opacity-90">
+          TicTracker
+        </a>
+        <span class="text-[0.8rem] text-white/85 ml-2">by Mind You Up</span>
       </div>
-      <button class="nav-toggle" type="button" aria-label="Toggle navigation" aria-expanded="false">
-        <span></span><span></span><span></span>
+
+      <button class="nav-toggle inline-flex flex-col justify-center md:hidden p-1 ml-auto"
+              type="button"
+              aria-label="Toggle navigation"
+              aria-expanded="false">
+        <span class="block w-[22px] h-[2px] bg-white rounded-full my-1"></span>
+        <span class="block w-[22px] h-[2px] bg-white rounded-full my-1"></span>
+        <span class="block w-[22px] h-[2px] bg-white rounded-full my-1"></span>
       </button>
-      <nav class="top-nav">
-        <a href="index.php#team">Team</a>
-        <a href="index.php#tictracker">TicTracker</a>
-        <a href="index.php#tics">What are tics?</a>
-        <a href="index.php#relax-video">Relax</a>
-        <a href="index.php#articles">Articles</a>
-        <a href="index.php#faq">FAQ</a>
-        <a href="about.php">About</a>
-        <a href="pages/auth/login.php" class="top-cta">
-          <span>•</span> Sign in / Sign up
+
+      <nav class="top-nav hidden md:flex md:flex-row md:static md:shadow-none
+                  flex-col absolute top-full left-4 right-4 mt-2
+                  bg-[#0f684f] rounded-xl shadow-[0_4px_14px_rgba(0,0,0,0.25)]
+                  px-4 py-3 gap-3 md:p-0 md:mt-0 md:rounded-none md:bg-transparent md:gap-4 md:flex-wrap md:items-center">
+        <a href="index.php#team" class="text-white no-underline font-medium text-[0.95rem] hover:underline">Team</a>
+        <a href="index.php#tictracker" class="text-white no-underline font-medium text-[0.95rem] hover:underline">TicTracker</a>
+        <a href="index.php#tics" class="text-white no-underline font-medium text-[0.95rem] hover:underline">What are tics?</a>
+        <a href="index.php#relax-video" class="text-white no-underline font-medium text-[0.95rem] hover:underline">Relax</a>
+        <a href="index.php#articles" class="text-white no-underline font-medium text-[0.95rem] hover:underline">Articles</a>
+        <a href="index.php#faq" class="text-white no-underline font-medium text-[0.95rem] hover:underline">FAQ</a>
+        <a href="about.php" class="text-white no-underline font-medium text-[0.95rem] hover:underline">About</a>
+
+        <a href="pages/auth/login.php"
+           class="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full border border-white/85
+                  bg-white/15 text-white no-underline font-semibold text-[0.9rem]
+                  shadow-[0_2px_8px_rgba(0,0,0,0.18)] hover:bg-white/25">
+          <span class="text-[1rem] leading-none">•</span> Sign in / Sign up
         </a>
       </nav>
     </div>
   </header>
 
-  <main class="profile-hero">
-    <div class="profile-shell">
-      <article class="profile-card">
-        <div class="profile-photo-wrap">
-          <div class="profile-photo-inner">
-            <img src="images/filipa.jpg" alt="Portrait of Filipa Pancada Fonseca">
+  <main class="py-12">
+    <div class="max-w-[1120px] mx-auto px-4">
+      <article class="bg-[#fffdf8] rounded-[26px] border border-[#f0d9d2]
+                      shadow-[0_18px_50px_rgba(0,0,0,0.15)]
+                      grid gap-7 p-6 items-start
+                      lg:[grid-template-columns:minmax(0,1.1fr)_minmax(0,1.9fr)]">
+        <div class="flex justify-center">
+          <div class="w-[280px] max-w-full aspect-[3/4] rounded-[30px] overflow-hidden bg-black
+                      shadow-[0_20px_45px_rgba(0,0,0,0.28)]">
+            <img src="images/filipa.jpg" alt="Portrait of Filipa Pancada Fonseca"
+                 class="w-full h-full object-cover block" />
           </div>
         </div>
 
-        <div class="profile-content">
-          <h1 class="profile-name">Filipa Pancada Fonseca</h1>
-          <p class="profile-tagline">
+        <div class="text-[#384341]">
+          <h1 class="text-[2.1rem] leading-tight font-extrabold text-[#0a4936] m-0 mb-2">
+            Filipa Pancada Fonseca
+          </h1>
+
+          <p class="text-[0.98rem] text-[#5b6664] m-0 mb-5 max-w-[640px]">
             Clinical and health psychologist, CBT psychotherapist, professor, and researcher focused on how technology shapes well‑being.
           </p>
 
-          <div class="profile-chip-row">
-            <span class="profile-chip">CBT Psychotherapist</span>
-            <span class="profile-chip">Health psychology</span>
-            <span class="profile-chip">Digital well‑being</span>
+          <div class="flex flex-wrap gap-2 mt-2 mb-2">
+            <span class="px-2.5 py-1 rounded-full bg-[#e9f0ff] text-[#2643a4]
+                         text-[0.78rem] font-semibold uppercase tracking-[0.06em]">
+              CBT Psychotherapist
+            </span>
+            <span class="px-2.5 py-1 rounded-full bg-[#e9f0ff] text-[#2643a4]
+                         text-[0.78rem] font-semibold uppercase tracking-[0.06em]">
+              Health psychology
+            </span>
+            <span class="px-2.5 py-1 rounded-full bg-[#e9f0ff] text-[#2643a4]
+                         text-[0.78rem] font-semibold uppercase tracking-[0.06em]">
+              Digital well‑being
+            </span>
           </div>
 
-          <section>
-            <h2 class="profile-section-title">Professional background</h2>
-            <p class="profile-paragraph">
+          <section class="mt-5">
+            <h2 class="mt-4 mb-2 text-[1.1rem] font-bold text-[#0f684f]">Professional background</h2>
+            <p class="text-[0.95rem] leading-relaxed mb-3">
               Filipa is a CBT psychotherapist, professor, and researcher passionate about health psychology and the impact of technology on well‑being. For 20 years she worked in a hospital setting, gaining extensive experience in clinical intervention and a deep understanding of health and mental health challenges.
             </p>
-            <p class="profile-paragraph">
+            <p class="text-[0.95rem] leading-relaxed mb-0">
               Her curiosity led her to pursue a PhD while co‑founding the Belong Institute, an innovative project dedicated to psychology and mental health across the lifespan.
             </p>
           </section>
 
-          <section>
-            <h2 class="profile-section-title">Research &amp; interests</h2>
-            <p class="profile-paragraph">
+          <section class="mt-5">
+            <h2 class="mt-4 mb-2 text-[1.1rem] font-bold text-[#0f684f]">Research &amp; interests</h2>
+            <p class="text-[0.95rem] leading-relaxed mb-3">
               Through practice, teaching, and research, she explores how the digital era shapes our perception of health and influences emotional responses, including the study of cyberchondria as a psychological construct.
             </p>
-            <p class="profile-paragraph">
+            <p class="text-[0.95rem] leading-relaxed mb-0">
               Filipa enjoys transforming clinical experience, PhD data, and scientific evidence into practical strategies – in therapy, the classroom, and interdisciplinary collaborations with medicine and technology.
             </p>
           </section>
 
-          <section>
-            <h2 class="profile-section-title">Looking ahead</h2>
-            <p class="profile-paragraph">
+          <section class="mt-5">
+            <h2 class="mt-4 mb-2 text-[1.1rem] font-bold text-[#0f684f]">Looking ahead</h2>
+            <p class="text-[0.95rem] leading-relaxed mb-0">
               She believes psychology must evolve with the modern world and that understanding our relationship with technology is essential for building a healthier future, online and offline.
             </p>
           </section>
@@ -261,33 +127,44 @@ session_start();
     </div>
   </main>
 
-  <!-- Nice shared footer with logo (not centered) -->
-  <footer class="app-footer">
-    <div class="container small-text app-footer-inner">
-      <div class="footer-left">
-        <img src="images/nexus-logo.png" alt="Nexus Tech logo" class="footer-logo">
-
-        <div class="footer-main-text">
-          <span>TicTracker – Mind You Up Portal</span>
-          <span>For clinical use and ongoing support in tic disorders.</span>
+  <footer class="mt-6 bg-[#0d5b43] text-white border-t-2 border-[#0a4936]">
+    <div class="max-w-[1120px] mx-auto px-4 py-4 flex flex-wrap items-center justify-between gap-4 text-left text-[0.95rem]">
+      <div class="flex items-center gap-3">
+        <img src="images/nexus-logo.png" alt="Nexus Tech logo" class="h-[60px]" />
+        <div class="flex flex-col gap-0.5">
+          <span class="leading-snug">TicTracker – Mind You Up Portal</span>
+          <span class="leading-snug">For clinical use and ongoing support in tic disorders.</span>
         </div>
       </div>
 
-      <span class="footer-links">
-        <a href="about_blank.php">About us</a>
+      <div class="flex flex-wrap items-center justify-end gap-2">
+        <a href="about_blank.php" class="text-white underline hover:no-underline">About us</a>
         <span aria-hidden="true">·</span>
-        <a href="/ISP_MindYouUp/Privacy-Policy.pdf"
-           target="_blank"
-           rel="noopener">
+
+        <a href="/ISP_MindYouUp/Privacy-Policy.pdf" target="_blank" rel="noopener noreferrer"
+           class="text-white underline hover:no-underline">
           Privacy Policy
         </a>
+
         <span aria-hidden="true">·</span>
-        <a href="/ISP_MindYouUp/Terms-Conditions.pdf"
-           target="_blank"
-           rel="noopener">
+
+        <a href="/ISP_MindYouUp/Terms-Conditions.pdf" target="_blank" rel="noopener noreferrer"
+           class="text-white underline hover:no-underline">
           Terms &amp; Conditions
         </a>
-      </span>
+
+        <!-- Instagram icon -->
+        <a href="https://www.instagram.com/mind_you_up/"
+           target="_blank"
+           rel="noopener noreferrer"
+           aria-label="Mind You Up on Instagram"
+           class="inline-flex items-center ml-2 text-white hover:opacity-90">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor"
+               viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+            <path d="M8 0C5.829 0 5.556.01 4.703.048 3.85.088 3.269.222 2.76.42a3.9 3.9 0 0 0-1.417.923A3.9 3.9 0 0 0 .42 2.76C.222 3.268.087 3.85.048 4.7.01 5.555 0 5.827 0 8.001c0 2.172.01 2.444.048 3.297.04.852.174 1.433.372 1.942.205.526.478.972.923 1.417.444.445.89.719 1.416.923.51.198 1.09.333 1.942.372C5.555 15.99 5.827 16 8 16s2.444-.01 3.298-.048c.851-.04 1.434-.174 1.943-.372a3.9 3.9 0 0 0 1.416-.923c.445-.445.718-.891.923-1.417.197-.509.332-1.09.372-1.942C15.99 10.445 16 10.173 16 8s-.01-2.445-.048-3.299c-.04-.851-.175-1.433-.372-1.941a3.9 3.9 0 0 0-.923-1.417A3.9 3.9 0 0 0 13.24.42c-.51-.198-1.092-.333-1.943-.372C10.443.01 10.172 0 7.998 0zm-.717 1.442h.718c2.136 0 2.389.007 3.232.046.78.035 1.204.166 1.486.275.373.145.64.319.92.599s.453.546.598.92c.11.281.24.705.275 1.485.039.843.047 1.096.047 3.231s-.008 2.389-.047 3.232c-.035.78-.166 1.203-.275 1.485a2.5 2.5 0 0 1-.599.919c-.28.28-.546.453-.920.598-.28.11-.704.24-1.485.276-.843.038-1.096.047-3.232.047s-2.39-.009-3.233-.047c-.78-.036-1.203-.166-1.485-.276a2.5 2.5 0 0 1-.92-.598 2.5 2.5 0 0 1-.6-.92c-.109-.281-.24-.705-.275-1.485-.038-.843-.046-1.096-.046-3.233s.008-2.388.046-3.231c.036-.78.166-1.204.276-1.486.145-.373.319-.64.599-.92s.546-.453.92-.598c.282-.11.705-.24 1.485-.276.738-.034 1.024-.044 2.515-.045zm4.988 1.328a.96.96 0 1 0 0 1.92.96.96 0 0 0 0-1.92m-4.27 1.122a4.109 4.109 0 1 0 0 8.217 4.109 4.109 0 0 0 0-8.217m0 1.441a2.667 2.667 0 1 1 0 5.334 2.667 2.667 0 0 1 0-5.334"/>
+          </svg>
+        </a>
+      </div>
     </div>
   </footer>
 
@@ -296,6 +173,7 @@ session_start();
       const toggle = document.querySelector('.nav-toggle');
       const nav = document.querySelector('.top-nav');
       if (!toggle || !nav) return;
+
       toggle.addEventListener('click', () => {
         const isOpen = nav.classList.toggle('is-open');
         toggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
