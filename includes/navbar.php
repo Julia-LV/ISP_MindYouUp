@@ -80,15 +80,6 @@ iframe.skiptranslate {
 
 <div id="sidebar-overlay" class="fixed inset-0 bg-black/50 z-[90] hidden transition-opacity duration-300"></div>
 
-
-<?php
-// Get unread notification count for badge
-$unreadCount = 0;
-if (isset($_SESSION['user_id']) && isset($conn)) {
-    require_once __DIR__ . '/../pages/common/notifications.php';
-    $unreadCount = getUnreadNotificationCount($conn, $_SESSION['user_id']);
-}
-?>
 <nav id="sidebar"
      class="fixed top-0 left-0 h-full bg-[#FCFBF7] shadow-inner
             transform transition-all duration-300 z-[100]
@@ -97,16 +88,11 @@ if (isset($_SESSION['user_id']) && isset($conn)) {
             w-20">
 
     <div class="w-full">
-        <div id="toggleButton" class="h-16 flex items-center gap-4 px-4 py-6 border-b border-gray-300 cursor-pointer relative">  
+        <div id="toggleButton" class="h-16 flex items-center gap-4 px-4 py-6 border-b border-gray-300 cursor-pointer">  
             <svg id="hamburgerIcon" class="w-8 h-8 text-gray-700" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" fill="#005949">
-                <path d="M0 96C0 78.3 14.3 64 32 64l384 0c17.7 0 32 14.3 32 32s-14.3 32-32 32L32 128C14.3 128 0 113.7 0 96zM0 256c0-17.7 14.3-32 32-32l384 0c17.7 0 32 14.3 32 32s-14.3 32-32 32L32 288c-17.7 0-32-14.3-32-32zM448 416c0 17.7-14.3 32-32 32L32 448c-17.7 0-32-14.3-32-32s14.3-32 32-32l384 0c17.7 0 32-14.3 32 32z"/>
+                <path d="M0 96C0 78.3 14.3 64 32 64l384 0c17.7 0 32 14.3 32 32s-14.3 32-32 32L32 128C14.3 128 0 113.7 0 96zM0 256c0-17.7 14.3-32 32-32l384 0c17.7 0 32 14.3 32 32s-14.3 32-32 32L32 288c-17.7 0-32-14.3-32-32zM448 416c0 17.7-14.3 32-32 32L32 448c-17.7 0-32-14.3-32-32s14.3-32 32-32l384 0c17.7 0 32 14.3 32 32z"/>
             </svg>
             <span id="menuText" class="text-xl text-green-800 font-bold hidden">Menu</span>
-            <?php if ($unreadCount > 0): ?>
-            <span style="position:absolute;top:10px;right:10px;min-width:22px;height:22px;background:#e11d48;color:#fff;font-size:13px;font-weight:bold;line-height:22px;text-align:center;border-radius:50%;padding:0 5px;z-index:10;box-shadow:0 1px 4px rgba(0,0,0,0.12);">
-                <?= ($unreadCount > 99 ? '+99' : $unreadCount) ?>
-            </span>
-            <?php endif; ?>
         </div>
 
         <div class="w-full overflow-y-auto">
