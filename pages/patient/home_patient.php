@@ -121,10 +121,10 @@ $has_more = false;
 if ($conn) {
     // Select meds for this user that haven't been marked as taken today
     // Order by Reminder_DateTime so the earliest/overdue one shows up first
-    $sql_med = "SELECT Name, Reminder_DateTime 
-                FROM medications 
-                WHERE User_ID = ? AND Taken_Today = 0 
-                ORDER BY Reminder_DateTime ASC";
+    $sql_med = "SELECT Medication_Name, Medication_Time 
+                FROM track_medication 
+                WHERE Patient_ID = ? AND Medication_Status = 0 
+                ORDER BY Medication_Time ASC";
     
     if ($stmt_m = $conn->prepare($sql_med)) {
         $stmt_m->bind_param("i", $patient_id);

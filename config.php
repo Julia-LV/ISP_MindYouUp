@@ -2,7 +2,7 @@
 $servername = "localhost";
 $username = "root";
 $password = "";
-$dbname = "tictracker_v9";
+$dbname = "tictracker_v10";
 $port = 3307;
 
 

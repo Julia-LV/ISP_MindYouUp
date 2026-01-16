@@ -25,7 +25,7 @@ $body_class = $body_class ?? 'h-full bg-gray-100'
 <body class="<?php echo $body_class; ?>">
 
 <?php 
-include 'preloader.php'; 
+// include 'preloader.php'; 
 ?>
 
 <?php if (!$no_layout): ?>
