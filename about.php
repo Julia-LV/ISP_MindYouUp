@@ -193,7 +193,7 @@ session_start();
       <span class="footer-links">
         <a href="about_blank.php">About us</a>
         <span aria-hidden="true">·</span>
-        <a href="/ISP_MindYouUp/Privacy_Policy.pdf"
+        <a href="/ISP_MindYouUp/Privacy-Policy.pdf"
            target="_blank"
            rel="noopener">
           Privacy Policy

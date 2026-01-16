@@ -1,5 +1,10 @@
 <?php
-
+/*
+ * reset_password.php
+ *
+ * Page for a user to enter a NEW password.
+ * It validates the token from the URL.
+ */
 
 // --- 1. PHP Logic ---
 session_start();
@@ -7,7 +12,7 @@ $message = "";
 $message_type = "error";
 $token = $_GET['Token'] ?? '';
 $token_is_valid = false;
-$user_email = "";
+$user_email = ""; // We'll get this from the token
 
 require_once '../../config.php';
 
@@ -17,7 +22,7 @@ $token = $_POST['token'] ?? $_GET['token'] ?? '';
 if (empty($token)) {
     $message = "Invalid or missing reset token.";
 } else {
-    
+    // Token exists, let's validate it
     $sql_check = "SELECT Email, Expires FROM password_resets WHERE Token = ? AND Expires > ?";
     $current_time = time();
     
@@ -38,7 +43,7 @@ if (empty($token)) {
     }
 }
 
-// Check if the form was submitted 
+// Check if the form was submitted (for the *new* password)
 if ($_SERVER["REQUEST_METHOD"] == "POST" && $token_is_valid) {
     $password = $_POST['password'] ?? '';
     $password_confirm = $_POST['password_confirm'] ?? '';
@@ -56,7 +61,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && $token_is_valid) {
             $stmt_update->bind_param("ss", $hashed_password, $user_email);
             $stmt_update->execute();
             
-            // Password updated! 
+            // Password updated! Now delete the token so it can't be reused.
             $sql_delete = "DELETE FROM password_resets WHERE Token = ?";
             if ($stmt_delete = $conn->prepare($sql_delete)) {
                 $stmt_delete->bind_param("s", $token);
@@ -78,7 +83,8 @@ $conn->close();
 
 // --- 2. Page Display ---
 $page_title = 'Reset Password - Mind You Up';
-$no_layout = true; 
+$no_layout = true; // disable topbar + wrapper for this page
+// Define Custom Body Classes for Centering & Background Color
 $body_class = "bg-[#E9F0E9] min-h-screen flex items-center justify-center p-4 ";
 include '../../components/header_component.php'; 
 
@@ -101,7 +107,7 @@ if (!empty($message)) {
 // We only show the form if the token was valid
 if ($token_is_valid) {
 
-    
+    // We add a hidden input to "tape" the token to the form.
     echo '<input type="hidden" name="token" value="' . htmlspecialchars($token) . '">';
     
     // Include Password input
@@ -117,7 +123,9 @@ if ($token_is_valid) {
     include '../../components/button.php';
 
 } else {
-    
+    // Token was invalid, so we don't show the form.
+    // The error message is already being displayed above.
+    // We can add a link to request a new one.
     echo '<div class="text-center">';
     echo '  <a href="forgot_password.php" class="font-medium text-green-700 hover:text-[#004539]">Request a new reset link</a>';
     echo '</div>';

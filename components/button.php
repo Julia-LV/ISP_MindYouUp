@@ -1,5 +1,15 @@
 <?php
-
+/*
+ * components/button.php
+ * * A Universal Button Component.
+ * Variables you can pass:
+ * $label    : Text on the button (default: 'Submit')
+ * $type     : 'submit', 'button', or 'link'
+ * $href     : URL (only used if type is 'link')
+ * $variant  : 'primary' (Green) or 'secondary' (Gray/Cancel)
+ * $onclick  : JS function (optional)
+ * $width    : 'w-full' or 'w-auto' (default: w-full)
+ */
 
 // Defaults
 $label   = $label ?? 'Submit';
@@ -9,7 +19,7 @@ $variant = $variant ?? 'primary';
 $width   = $width ?? 'w-full';
 $onclick = $onclick ?? '';
 
-
+// Define Styles based on Variant
 $base_classes = "flex justify-center py-3 px-6 border rounded-md shadow-sm text-sm font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 transition-colors duration-200";
 
 if ($variant === 'primary') {

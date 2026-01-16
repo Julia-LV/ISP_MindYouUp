@@ -1,5 +1,15 @@
 <?php
+/*
+ * components/diary_journal_card.php
+ *
+ * A reusable Journal Card.
+ * * Variables you can pass:
+ * $journal_title       : The label text (Default: "Journal Entry")
+ * $journal_placeholder : The placeholder text (Default: "Write any thought...")
+ * $journal_rows        : Height of the box (Default: 8)
+ */
 
+// Set Defaults (So it still works for Emotional Diary without changes)
 $journal_title = $journal_title ?? 'Journal Entry';
 $journal_placeholder = $journal_placeholder ?? 'Write any thought or detail about your mood...';
 $journal_rows = $journal_rows ?? 8;

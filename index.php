@@ -18,7 +18,7 @@ session_start();
     .app-footer-inner {
       display: flex;
       align-items: center;
-      justify-content: space-between;  
+      justify-content: space-between;   /* left + right layout */
       padding: 18px 32px;
       gap: 16px;
       text-align: left;
@@ -105,7 +105,7 @@ session_start();
     </div>
   </header>
 
-  <!-- HERO  -->
+  <!-- HERO (full-width background, text on left) -->
   <section class="portal-hero">
     <div class="hero-grid hero-left">
       <div class="hero-text-block">
@@ -452,13 +452,13 @@ session_start();
       <span class="footer-links">
         <a href="about_blank.php">About us</a>
         <span aria-hidden="true">·</span>
-        <a href="/ISP_PROJECT/ISP_MINDYOUUP/Privacy_Policy.pdf"
+        <a href="/ISP_MindYouUp/Privacy-Policy.pdf"
            target="_blank"
            rel="noopener">
           Privacy Policy
         </a>
         <span aria-hidden="true">·</span>
-        <a href="/ISP_PROJECT/ISP_MINDYOUUP/Terms-Conditions.pdf"
+        <a href="/ISP_MindYouUp/Terms-Conditions.pdf"
            target="_blank"
            rel="noopener">
           Terms &amp; Conditions
