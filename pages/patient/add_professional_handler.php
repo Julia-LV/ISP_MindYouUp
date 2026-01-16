@@ -7,14 +7,13 @@ if (!isset($_SESSION['user_id'])) { header("Location: ../auth/login.php"); exit;
 $patient_id = $_SESSION['user_id'];
 $doctor_id = $_POST['doctor_id'];
 
-// 1. Check if link exists (regardless of status)
+// 1. Check if link exists 
 $check = $conn->prepare("SELECT Link_ID FROM patient_professional_link WHERE Patient_ID = ? AND Professional_ID = ?");
 $check->bind_param("ii", $patient_id, $doctor_id);
 $check->execute();
 
 if ($check->get_result()->num_rows == 0) {
     // 2. Insert with Connection_Status = 'Pending'
-    // We keep the medical 'Status' as 'Pending' (or 'New') too, until the doctor changes it.
     $sql = "INSERT INTO patient_professional_link 
             (Patient_ID, Professional_ID, Assigned_Date, Status, Connection_Status, Treatment_Type) 
             VALUES (?, ?, NOW(), 'Pending', 'Pending', 'Medical')";
@@ -23,6 +22,11 @@ if ($check->get_result()->num_rows == 0) {
     $stmt->bind_param("ii", $patient_id, $doctor_id);
     
     if($stmt->execute()) {
+        // Notification logic
+        require_once __DIR__ . '/../common/notifications.php';
+        $title = 'New Connection Request';
+        $msg = 'You have received a new connection request from a patient.';
+        saveNotificationToDatabase($conn, $doctor_id, $title, $msg, 'connection');
         header("Location: search_professionals.php?status=success&msg=requested");
     } else {
         header("Location: search_professionals.php?error=failed");

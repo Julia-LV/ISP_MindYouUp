@@ -65,7 +65,7 @@ require_once __DIR__ . '/../../includes/navbar.php';
 <main class="min-h-screen bg-[#E9F0E9] pt-8 pb-12 px-4">
     <div class="max-w-6xl mx-auto">
         <div class="flex justify-between items-center mb-8">
-            <h1 class="text-3xl font-bold text-[#005949]">Uploaded Items</h1>
+            <h1 class="text-3xl font-bold text-[#005949]">History of Uploaded Items</h1>
             <a href="resourcehub_professional.php" class="bg-white text-[#005949] px-6 py-2 rounded-full font-bold shadow-sm border border-[#c7e4d7] hover:bg-gray-50 transition-all">
                 ← Back to Admin
             </a>

@@ -24,16 +24,18 @@ $stmt->close();
 $skills_grouped = []; $articles = []; $db_banners = [];
 
 if ($prof_id > 0) {
-    $sql = "SELECT rh.* FROM patient_resource_assignments pr 
+    $sql = "SELECT rh.*, pr.assigned_at FROM patient_resource_assignments pr 
             JOIN resource_hub rh ON pr.resource_id = rh.id 
             WHERE pr.patient_id = ? 
-            ORDER BY rh.id DESC";
-            
+            ORDER BY pr.assigned_at DESC, rh.id DESC";
+
     $stmt = $conn->prepare($sql);
     $stmt->bind_param("i", $patient_id);
     $stmt->execute();
     $result = $stmt->get_result();
-    
+
+    require_once __DIR__ . '/../common/notifications.php';
+
     while ($row = $result->fetch_assoc()) {
         if ($row['item_type'] === 'category') {
             $skills_grouped[$row['category_type']][] = $row;
@@ -47,6 +49,13 @@ if ($prof_id > 0) {
                 'url'   => $row['media_url'],
                 'img'   => !empty($row['image_url']) ? $row['image_url'] : 'https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=800'
             ];
+        }
+
+        // Notification logic: if resource was just assigned
+        if (!empty($row['assigned_at']) && strtotime($row['assigned_at']) > strtotime('-1 minute')) {
+            $title = 'New Resource Assigned';
+            $msg = 'A new resource has been assigned to you.';
+            saveNotificationToDatabase($conn, $patient_id, $title, $msg, 'resource');
         }
     }
     $stmt->close();
@@ -239,87 +248,4 @@ include '../../includes/navbar.php';
     </div>
 </div>
 
-<script>
-    const modal = document.getElementById('videoModal');
-    const iframe = document.getElementById('modalIframe');
-    const carousel = document.getElementById('banner-carousel');
-    const dots = document.querySelectorAll('.dot');
-
-    let slideInterval = setInterval(() => scrollBanner('right'), 5000);
-
-    function updateDots(activeIndex) {
-        dots.forEach((dot, index) => {
-            if (index === activeIndex) {
-                dot.classList.add('bg-white');
-                dot.classList.remove('bg-white/50');
-            } else {
-                dot.classList.add('bg-white/50');
-                dot.classList.remove('bg-white');
-            }
-        });
-    }
-
-    dots.forEach((dot, index) => {
-        dot.addEventListener('click', () => {
-            const slideIndex = parseInt(dot.dataset.slide);
-            carousel.scrollTo({ left: slideIndex * carousel.offsetWidth, behavior: 'smooth' });
-            updateDots(slideIndex);
-            clearInterval(slideInterval);
-            slideInterval = setInterval(() => scrollBanner('right'), 5000);
-        });
-    });
-
-    carousel.addEventListener('scroll', () => {
-        const index = Math.round(carousel.scrollLeft / carousel.offsetWidth);
-        updateDots(index);
-    });
-
-    updateDots(0);
-
-    function scrollBanner(direction) {
-        const scrollAmount = carousel.offsetWidth;
-        if (direction === 'right') {
-            if (carousel.scrollLeft + scrollAmount >= carousel.scrollWidth) {
-                carousel.scrollTo({ left: 0, behavior: 'smooth' });
-            } else {
-                carousel.scrollBy({ left: scrollAmount, behavior: 'smooth' });
-            }
-        } else {
-            if (carousel.scrollLeft <= 0) {
-                carousel.scrollTo({ left: carousel.scrollWidth, behavior: 'smooth' });
-            } else {
-                carousel.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
-            }
-        }
-        clearInterval(slideInterval);
-        slideInterval = setInterval(() => scrollBanner('right'), 5000);
-    }
-
-    function openItem(item) {
-        if (item.type === 'video') {
-            let url = item.url;
-            if(url.includes('watch?v=')) url = url.replace('watch?v=', 'embed/');
-            iframe.src = url + "?autoplay=1";
-            modal.classList.add('active');
-        } else {
-            window.open(item.url, '_blank');
-        }
-    }
-
-    function handleResourceClick(url, isVideo) {
-        if (isVideo) {
-            let embedUrl = url;
-            if(url.includes('watch?v=')) embedUrl = url.replace('watch?v=', 'embed/');
-            else if(url.includes('youtu.be/')) embedUrl = url.replace('youtu.be/', 'youtube.com/embed/');
-            iframe.src = embedUrl + "?autoplay=1";
-            modal.classList.add('active');
-        } else {
-            window.open(url, '_blank');
-        }
-    }
-
-    function closeVideo() {
-        modal.classList.remove('active');
-        iframe.src = "";
-    }
-</script>
+<script src="../../js/patient/resourcehub_patient.js"></script>
