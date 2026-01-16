@@ -32,20 +32,26 @@
 </div>
 
 <script>
+    const loader = document.getElementById('preloader');
+
     function hidePreloader() {
-        const loader = document.getElementById('preloader');
         if (loader) {
             loader.classList.add('preloader-hidden');
         }
     }
 
-    // 1. Hide when the page is fully loaded 
+    // 1. Standard Load
     window.addEventListener('load', hidePreloader);
 
-    // 2. SAFETY TIMEOUT: If it takes more than 5 seconds, hide it anyway
-    setTimeout(hidePreloader, 5000);
+    // 2. Fix for Back/Forward Button (bfcache)
+    window.addEventListener('pageshow', (event) => {
+        hidePreloader();
+    });
 
-    // 3. Show loader on link clicks
+    // 3. Safety Timeout (Reduced to 3s for better UX)
+    setTimeout(hidePreloader, 3000);
+
+    // 4. Refined Click Listener
     document.addEventListener('click', function(e) {
         const target = e.target.closest('a');
         
@@ -53,11 +59,15 @@
             target.href.includes(window.location.origin) &&
             !target.getAttribute('target') &&
             !target.href.includes('#') &&
+            !target.hasAttribute('download') && 
+            target.tagName === 'A' &&
             !e.defaultPrevented) { 
 
-            const loader = document.getElementById('preloader');
-            if (loader) {
-                loader.classList.remove('preloader-hidden');
+            // Only show if it's a left click and not holding Ctrl/Cmd
+            if (e.button === 0 && !e.ctrlKey && !e.metaKey) {
+                if (loader) {
+                    loader.classList.remove('preloader-hidden');
+                }
             }
         }
     });
