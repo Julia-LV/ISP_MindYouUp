@@ -527,7 +527,7 @@ include '../../includes/navbar.php';
                 <p class="text-emerald-100 text-sm leading-relaxed mb-6 line-clamp-3">
                     <?php echo $pattern_msg; ?>
                 </p>
-                <button class="mt-6 w-full py-3 bg-white text-[#005949] rounded-lg font-bold text-sm hover:bg-emerald-50 transition">View Exercises</button>
+                <a href="<?php echo $suggested_resource_url; ?>" class="mt-6 w-full py-3 bg-white text-[#005949] rounded-lg font-bold text-sm hover:bg-emerald-50 transition text-center block"><?php echo $button_text; ?></a>
             </div>
         </div>
     </div>
