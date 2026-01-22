@@ -9,7 +9,7 @@ $form_subtitle = $form_subtitle ?? 'Please enter your details';
 
     
     <div class="text-center mb-6">
-        <img src="../../assets/img/MYU logos/logo.png" alt="Mind You Up Logo" class="w-32 h-auto mx-auto mb-4"
+        <img src="../../assets/img/MYU logos/logo.png" alt="Mind You Up Logo" class="w-40 h-auto mx-auto mb-4"
              onerror="this.style.display='none'"> 
         <h1 class="text-3xl font-bold text-[#F26647]"><?php echo htmlspecialchars($form_title); ?></h1>
         <p class="text-gray-500 mt-2"><?php echo htmlspecialchars($form_subtitle); ?></p>
