@@ -79,15 +79,7 @@ $page_title = 'Notes';
     <div class="notes-wrapper">
         <div class="notes-header">
             <h1>Notes</h1>
-            <?php if (!empty($CURRENT_USER)): ?>
-                <div class="user-card" style="margin-top:8px; display:flex; gap:10px; align-items:center;">
-                    <div class="user-avatar" style="width:36px;height:36px;border-radius:8px;background:#f0f0f0;display:flex;align-items:center;justify-content:center;font-weight:600;color:#444"><?= htmlspecialchars(substr($CURRENT_USER['First_Name'] ?? '',0,1)) ?></div>
-                    <div class="user-info" style="font-size:0.92rem;">
-                        <div style="font-weight:600"><?= htmlspecialchars(($CURRENT_USER['First_Name'] ?? '') . ' ' . ($CURRENT_USER['Last_Name'] ?? '')) ?></div>
-                        <div style="font-size:0.82rem;color:#666"><?= htmlspecialchars($CURRENT_USER['Role'] ?? '') ?> &nbsp;|&nbsp; <?= htmlspecialchars($CURRENT_USER['Email'] ?? '') ?></div>
-                    </div>
-                </div>
-            <?php endif; ?>
+            <!-- Professional details removed as requested -->
         </div>
         
         <div class="notes-container">
@@ -110,18 +102,16 @@ $page_title = 'Notes';
             <?php endif; ?>
         </div>
         
-        <!-- Floating Buttons -->
-        <div class="fab-buttons">
-            <button class="fab-delete" id="fabDelete" onclick="deleteSelectedNotes()">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512">
-                    <path d="M135.2 17.7L128 32H32C14.3 32 0 46.3 0 64S14.3 96 32 96H416c17.7 0 32-14.3 32-32s-14.3-32-32-32H320l-7.2-14.3C307.4 6.8 296.3 0 284.2 0H163.8c-12.1 0-23.2 6.8-28.6 17.7zM416 128H32L53.2 467c1.6 25.3 22.6 45 47.9 45H346.9c25.3 0 46.3-19.7 47.9-45L416 128z"/>
-                </svg>
-            </button>
-            <a href="note_edit.php" class="fab-add">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                    <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
-                </svg>
-            </a>
+        <!-- Add Note Button (Green, inside main box) -->
+        <div style="display: flex; justify-content: flex-end; margin-top: 1.5rem;">
+            <?php 
+                $label = 'Add New Note';
+                $type = 'link';
+                $href = 'note_edit.php';
+                $variant = 'primary';
+                $width = 'w-auto';
+                include __DIR__ . '/../../components/button.php'; 
+            ?>
         </div>
     </div>
 </div>

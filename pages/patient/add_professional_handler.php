@@ -1,6 +1,7 @@
 <?php
 session_start();
 include('../../config.php');
+require_once __DIR__ . '/../common/notifications.php';
 
 if (!isset($_SESSION['user_id'])) { header("Location: ../auth/login.php"); exit; }
 
@@ -22,6 +23,24 @@ if ($check->get_result()->num_rows == 0) {
     $stmt->bind_param("ii", $patient_id, $doctor_id);
     
     if($stmt->execute()) {
+        // Fetch patient name for notification
+        $patientName = '';
+        $pstmt = $conn->prepare("SELECT First_Name, Last_Name FROM user_profile WHERE User_ID = ? LIMIT 1");
+        if ($pstmt) {
+            $pstmt->bind_param("i", $patient_id);
+            $pstmt->execute();
+            $pstmt->bind_result($fname, $lname);
+            if ($pstmt->fetch()) {
+                $patientName = trim($fname . ' ' . $lname);
+            }
+            $pstmt->close();
+        }
+
+        // Send notification to professional
+        $title = 'Connection Request';
+        $message = $patientName ? ($patientName . ' wants to connect with you.') : 'You have a new connection request.';
+        saveNotificationToDatabase($conn, $doctor_id, $title, $message, 'connection');
+
         header("Location: search_professionals.php?status=success&msg=requested");
     } else {
         header("Location: search_professionals.php?error=failed");

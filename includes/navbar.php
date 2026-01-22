@@ -178,7 +178,23 @@ iframe.skiptranslate {
             <span class="link-text text-black-800 font-bold hidden group-hover:text-white">Logout</span>
         </a>
     </div>
+<!-- ...existing code... -->
 </nav>
+<script>
+// Medication reminder check every 1 minute
+setInterval(function() {
+    fetch('/scripts/check_medication_reminders.php')
+        .then(response => response.text())
+        .then(data => {
+            // Optionally log or handle response
+            // console.log('Medication reminder check:', data);
+        })
+        .catch(err => {
+            // Optionally handle errors
+            // console.error('Reminder check error:', err);
+        });
+}, 60000); // 60000 ms = 1 minute
+</script>
 
 <script src="../../JS/navbar.js"></script>
 

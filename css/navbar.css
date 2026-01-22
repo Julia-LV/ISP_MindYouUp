@@ -18,6 +18,19 @@
     background-color: #005949 !important;
 }
 
+/* Ensure all sidebar SVG icons are square and consistent */
+.sidebar-link svg {
+    width: 1.5rem !important; /* 24px, matches w-6 */
+    height: 1.5rem !important;
+    min-width: 1.5rem !important;
+    min-height: 1.5rem !important;
+    max-width: 1.5rem !important;
+    max-height: 1.5rem !important;
+    aspect-ratio: 1 / 1 !important;
+    display: inline-block;
+    vertical-align: middle;
+}
+
 .sidebar-link:hover:not(.active) svg,
 .sidebar-link:hover:not(.active) .link-text,
 .sidebar-link:focus:not(.active) svg,

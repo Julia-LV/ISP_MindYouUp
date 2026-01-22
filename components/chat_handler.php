@@ -40,13 +40,11 @@ if ($method === 'GET' && $action === 'fetch') {
 }
 
 if ($method === 'POST' && $action === 'send') {
-    
     $link_id     = $_POST['link_id'] ?? 0;
     $sender_type = $_POST['sender_type'] ?? '';
     $message     = $_POST['message'] ?? '';
     $sender_id   = $_POST['sender_id'] ?? null;
     $receiver_id = $_POST['receiver_id'] ?? null;
-    
     $file_path = null;
     $file_type = null;
 
@@ -54,11 +52,9 @@ if ($method === 'POST' && $action === 'send') {
     if (isset($_FILES['chat_file']) && $_FILES['chat_file']['error'] === 0) {
         $upload_dir = '../uploads_chat/';
         if (!is_dir($upload_dir)) mkdir($upload_dir, 0777, true);
-        
         $file_ext = pathinfo($_FILES['chat_file']['name'], PATHINFO_EXTENSION);
         $file_name = time() . '_' . uniqid() . '.' . $file_ext;
         $target_file = $upload_dir . $file_name;
-
         if (move_uploaded_file($_FILES['chat_file']['tmp_name'], $target_file)) {
             $file_path = $file_name;
             $file_type = $_FILES['chat_file']['type'];
@@ -68,6 +64,32 @@ if ($method === 'POST' && $action === 'send') {
     if ($link_id && ($message || $file_path)) {
         $stmt = $pdo->prepare("INSERT INTO chat_log (Link_ID, Sender_Type, Chat_Text, Chat_Time, Sender, Receiver, File_Path, File_Type) VALUES (?, ?, ?, NOW(), ?, ?, ?, ?)");
         $stmt->execute([$link_id, $sender_type, $message, $sender_id, $receiver_id, $file_path, $file_type]);
+
+        // --- Notification Logic ---
+        // Use mysqli for notifications (reuse config.php)
+        $mysqli_config = __DIR__ . '/../config.php';
+        if (file_exists($mysqli_config)) {
+            require_once $mysqli_config;
+            require_once __DIR__ . '/../pages/common/notifications.php';
+            // Get sender name
+            $senderName = '';
+            $pstmt = $conn->prepare("SELECT First_Name, Last_Name FROM user_profile WHERE User_ID = ? LIMIT 1");
+            if ($pstmt) {
+                $pstmt->bind_param("i", $sender_id);
+                $pstmt->execute();
+                $pstmt->bind_result($fname, $lname);
+                if ($pstmt->fetch()) {
+                    $senderName = trim($fname . ' ' . $lname);
+                }
+                $pstmt->close();
+            }
+            // Notification title and message
+            $title = 'New Message';
+            $notifMsg = $senderName ? ("You have a new message from $senderName.") : 'You have a new message.';
+            saveNotificationToDatabase($conn, $receiver_id, $title, $notifMsg, 'message');
+        }
+        // --- End Notification Logic ---
+
         echo json_encode(['success' => true]);
     }
     exit;
