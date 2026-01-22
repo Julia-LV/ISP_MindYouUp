@@ -1,5 +1,12 @@
 <?php
+// Always start session at the very top
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 require_once __DIR__ . '/../../config.php'; // adjust path if needed
+
+// Debug: Output session contents
+echo "<!-- SESSION: ", htmlspecialchars(json_encode($_SESSION)), " -->\n";
 
 $CURRENT_USER = null;
 $uid = null;
@@ -281,48 +288,86 @@ function timeAgo($datetime) {
     <!-- Page styles -->
     <link rel="stylesheet" href="../../CSS/notifications.css?v=2">
 </head>
-<body>
-    <?php include __DIR__ . '/../../includes/navbar.php'; ?>
-    <?php include __DIR__ . '/../../components/push_notification.php'; ?>
-    
-    <div class="page-wrap">
-        <div class="notifications-panel" style="max-width: 800px; margin: 0 auto; padding: 20px;">
-            <a class="back" href="settings.php">&larr; Back to Settings</a>
-            
-            <div class="section-header">
-                <h1 style="display: flex; align-items: center;">
-                    Notifications
-                    <?php if ($unreadCount > 0): ?>
-                        <span class="badge-count"><?= $unreadCount ?></span>
-                    <?php endif; ?>
-                </h1>
-                <?php if (!empty($notifications)): ?>
-                    <form method="POST" style="display: inline;">
-                        <button type="submit" name="mark_all_read" class="btn btn-sm btn-outline-primary">
-                            Mark all as read
-                        </button>
-                    </form>
+
+<?php
+$page_title = 'Notifications';
+include __DIR__ . '/../../components/header_component.php';
+include __DIR__ . '/../../includes/navbar.php';
+include __DIR__ . '/../../components/push_notification.php';
+?>
+
+<main class="flex-1 w-full p-6 md:p-2 overflow-y-auto bg-[#E9F0E9]">
+    <div class="p-6 md:p-8 space-y-6 max-w-3xl mx-auto">
+        <a class="back" href="settings.php">&larr; Back to Settings</a>
+        <div class="section-header">
+            <h1 style="display: flex; align-items: center;">
+                Notifications
+                <?php if ($unreadCount > 0): ?>
+                    <span class="badge-count"><?= $unreadCount ?></span>
                 <?php endif; ?>
-            </div>
+            </h1>
+            <?php if (!empty($notifications)): ?>
+                <form method="POST" style="display: inline;">
+                    <button type="submit" name="mark_all_read" class="btn btn-sm btn-outline-primary">
+                        Mark all as read
+                    </button>
+                </form>
+            <?php endif; ?>
+        </div>
 
-            <!-- Push Notification Permission Banner -->
-            <div id="push-permission-banner" class="push-notification-banner" style="display: none;">
-                <div>
-                    <strong>🔔 Enable Push Notifications</strong>
-                    <p style="margin: 4px 0 0 0; opacity: 0.9; font-size: 14px;">
-                        Get notified about messages, reminders, and updates even when you're not on the site.
-                    </p>
-                </div>
-                <button onclick="enablePushNotifications()">Enable</button>
+        <!-- Push Notification Permission Banner -->
+        <div id="push-permission-banner" class="push-notification-banner" style="display: none;">
+            <div>
+                <strong>🔔 Enable Push Notifications</strong>
+                <p style="margin: 4px 0 0 0; opacity: 0.9; font-size: 14px;">
+                    Get notified about messages, reminders, and updates even when you're not on the site.
+                </p>
             </div>
+            <button onclick="enablePushNotifications()">Enable</button>
+            <div id="reminder-debug-output" style="margin-top:10px; font-size:12px; color:#444; background:#f9f9f9; border:1px solid #eee; padding:8px; display:none;"></div>
+            <script>
+            // Fetch and display medication reminder debug output
+            function fetchReminderDebug() {
+                fetch('/scripts/check_medication_reminders.php')
+                  .then(r => r.text())
+                  .then(txt => {
+                    document.getElementById('reminder-debug-output').style.display = 'block';
+                    document.getElementById('reminder-debug-output').textContent = txt;
+                  });
+            }
+            // Uncomment to always show debug, or call from console
+            // fetchReminderDebug();
+            </script>
+        </div>
 
-            <!-- Tabs for filtering -->
-            <div class="tabs">
-                <button class="tab-btn active" onclick="filterNotifications('all')">All</button>
-                <button class="tab-btn" onclick="filterNotifications('unread')">Unread</button>
-                <button class="tab-btn" onclick="filterNotifications('message')">Messages</button>
-                <button class="tab-btn" onclick="filterNotifications('reminder')">Reminders</button>
-            </div>
+        <!-- Tabs for filtering (dynamic by user role) -->
+        <?php
+            // Use DB role if available, otherwise fallback to session role
+            $role = null;
+            if (isset($CURRENT_USER['Role']) && $CURRENT_USER['Role']) {
+                $role = strtolower(trim($CURRENT_USER['Role']));
+            } elseif (isset($_SESSION['role']) && $_SESSION['role']) {
+                $role = strtolower(trim($_SESSION['role']));
+            } else {
+                $role = 'patient';
+            }
+            $tabs = [
+                ['id' => 'all', 'label' => 'All'],
+                ['id' => 'unread', 'label' => 'Unread'],
+                ['id' => 'message', 'label' => 'Messages'],
+            ];
+            if ($role === 'patient') {
+                $tabs[] = ['id' => 'reminder', 'label' => 'Reminders'];
+                $tabs[] = ['id' => 'resource', 'label' => 'New Resource'];
+            } elseif ($role === 'professional') {
+                $tabs[] = ['id' => 'connection', 'label' => 'Connection Request'];
+            }
+        ?>
+        <div class="tabs">
+            <?php foreach ($tabs as $i => $tab): ?>
+                <button class="tab-btn<?= $i === 0 ? ' active' : '' ?>" onclick="filterNotifications('<?= $tab['id'] ?>', event)"><?= htmlspecialchars($tab['label']) ?></button>
+            <?php endforeach; ?>
+        </div>
 
             <!-- Notifications List -->
             <div id="notifications-container">
@@ -416,10 +461,10 @@ function timeAgo($datetime) {
         }
 
         // Filter notifications by type
-        function filterNotifications(filter) {
+        function filterNotifications(filter, event) {
             // Update active tab
             document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-            event.target.classList.add('active');
+            if (event) event.target.classList.add('active');
 
             // Filter cards
             const cards = document.querySelectorAll('.notification-card');
@@ -440,6 +485,12 @@ function timeAgo($datetime) {
                         break;
                     case 'reminder':
                         show = type === 'medication' || type === 'reminder' || type === 'diary' || type === 'ticlog';
+                        break;
+                    case 'resource':
+                        show = type === 'resource';
+                        break;
+                    case 'connection':
+                        show = type === 'connection';
                         break;
                 }
                 card.style.display = show ? 'block' : 'none';
