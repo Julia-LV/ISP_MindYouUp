@@ -23,7 +23,7 @@ dots.forEach((dot, index) => {
         carousel.scrollTo({ left: slideIndex * carousel.offsetWidth, behavior: 'smooth' });
         updateDots(slideIndex);
         clearInterval(slideInterval);
-        slideInterval = setInterval(() => scrollBanner('right'), 5000);
+        slideInterval = setInterval(() => scrollBanner('right'), 3000);
     });
 });
 

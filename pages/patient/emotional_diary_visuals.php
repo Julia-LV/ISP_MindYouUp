@@ -6,7 +6,11 @@
 
 session_start();
 $config_path = '../../config.php';
-if (file_exists($config_path)) { require_once $config_path; } else { $conn = null; }
+if (file_exists($config_path)) {
+    require_once $config_path;
+} else {
+    $conn = null;
+}
 
 // Set timezone to Europe/Lisbon to match local time
 date_default_timezone_set('Europe/Lisbon');
@@ -22,30 +26,32 @@ $patient_id = $_SESSION["user_id"] ?? 1;
 // =================================================================================
 if (isset($_GET['ajax_fetch']) && isset($_GET['type']) && isset($_GET['offset'])) {
     header('Content-Type: application/json');
-    
-    $type = $_GET['type']; 
+
+    $type = $_GET['type'];
     $offset = intval($_GET['offset']);
     $today_str = date('Y-m-d');
-    
+
     $response = [];
-    
+
     if ($conn) {
         // --- TREND & SLEEP (Numeric Charts - Keep Math here) ---
         if ($type === 'trend' || $type === 'sleep') {
-            $labels = []; $data1 = []; $data2 = [];
-            for ($i = 4; $i >= 0; $i--) {
+            $labels = [];
+            $data1 = [];
+            $data2 = [];
+            for ($i = 6; $i >= 0; $i--) {
                 $days_ago = $offset + $i;
                 $timestamp = strtotime("-$days_ago days");
                 $date_db = date('Y-m-d', $timestamp);
-                
+
                 $labels[] = [date('D', $timestamp), ($date_db === $today_str) ? "Today" : date('d M', $timestamp)];
-                
+
                 $sql = "SELECT AVG(Stress) as s, AVG(Anxiety) as a, AVG(Sleep) as sl FROM emotional_diary WHERE Patient_ID = ? AND DATE(Occurrence) = ?";
                 $stmt = $conn->prepare($sql);
                 $stmt->bind_param("is", $patient_id, $date_db);
                 $stmt->execute();
                 $res = $stmt->get_result()->fetch_assoc();
-                
+
                 if ($type === 'trend') {
                     $data1[] = $res['s'] ? round($res['s'], 1) : 0;
                     $data2[] = $res['a'] ? round($res['a'], 1) : 0;
@@ -56,7 +62,7 @@ if (isset($_GET['ajax_fetch']) && isset($_GET['type']) && isset($_GET['offset'])
             }
             $response['labels'] = $labels;
             $response['data1'] = $data1;
-            if(!empty($data2)) $response['data2'] = $data2;
+            if (!empty($data2)) $response['data2'] = $data2;
         }
 
         // --- MOOD (Now purely text-based counting) ---
@@ -65,10 +71,10 @@ if (isset($_GET['ajax_fetch']) && isset($_GET['type']) && isset($_GET['offset'])
             $start_days_ago = $offset + 6;
             $date_start = date('Y-m-d', strtotime("-$start_days_ago days"));
             $date_end = date('Y-m-d', strtotime("-$end_days_ago days"));
-            
+
             $mood_labels = [];
             $mood_data = [];
-            
+
             // Just select the text directly
             $sql = "SELECT Emotion, COUNT(*) as count 
                     FROM emotional_diary 
@@ -78,14 +84,14 @@ if (isset($_GET['ajax_fetch']) && isset($_GET['type']) && isset($_GET['offset'])
             $stmt->bind_param("iss", $patient_id, $date_start, $date_end);
             $stmt->execute();
             $res = $stmt->get_result();
-            
-            while($row = $res->fetch_assoc()){
+
+            while ($row = $res->fetch_assoc()) {
                 // No translation needed. Just ucfirst to be safe.
                 $mood_labels[] = ucfirst($row['Emotion']);
                 $mood_data[] = $row['count'];
             }
             $stmt->close();
-            
+
             $response['labels'] = $mood_labels;
             $response['data'] = $mood_data;
             $response['date_range'] = date('d M', strtotime($date_start)) . " - " . date('d M', strtotime($date_end));
@@ -104,10 +110,14 @@ include '../../components/header_component.php';
 include '../../includes/navbar.php';
 
 // Initial Trend/Sleep Data
-function getInitialData($conn, $patient_id) {
+function getInitialData($conn, $patient_id)
+{
     $today_str = date('Y-m-d');
-    $d = []; $s = []; $a = []; $sl = [];
-    for ($i = 4; $i >= 0; $i--) {
+    $d = [];
+    $s = [];
+    $a = [];
+    $sl = [];
+    for ($i = 6; $i >= 0; $i--) {
         $ts = strtotime("-$i days");
         $date_db = date('Y-m-d', $ts);
         $d[] = [date('D', $ts), ($date_db === $today_str ? "Today" : date('d M', $ts))];
@@ -120,21 +130,26 @@ function getInitialData($conn, $patient_id) {
             $s[] = $res['s'] ? round($res['s'], 1) : 0;
             $a[] = $res['a'] ? round($res['a'], 1) : 0;
             $sl[] = $res['sl'] ? round($res['sl'], 1) : 0;
-        } else { $s[]=0; $a[]=0; $sl[]=0; }
+        } else {
+            $s[] = 0;
+            $a[] = 0;
+            $sl[] = 0;
+        }
     }
-    return ['dates'=>$d, 'stress'=>$s, 'anxiety'=>$a, 'sleep'=>$sl];
+    return ['dates' => $d, 'stress' => $s, 'anxiety' => $a, 'sleep' => $sl];
 }
 $initData = getInitialData($conn, $patient_id);
 
 // Initial Mood Fetch (Direct Text)
-$initMoodLabels = []; $initMoodData = [];
+$initMoodLabels = [];
+$initMoodData = [];
 if ($conn) {
     $sql = "SELECT Emotion, COUNT(*) as count FROM emotional_diary WHERE Patient_ID = ? AND Occurrence >= DATE_SUB(NOW(), INTERVAL 7 DAY) GROUP BY Emotion ORDER BY count DESC";
     $stmt = $conn->prepare($sql);
     $stmt->bind_param("i", $patient_id);
     $stmt->execute();
     $res = $stmt->get_result();
-    while($row = $res->fetch_assoc()) {
+    while ($row = $res->fetch_assoc()) {
         $initMoodLabels[] = ucfirst($row['Emotion']);
         $initMoodData[] = $row['count'];
     }
@@ -157,7 +172,7 @@ if ($conn) {
 
 <div class="w-full p-6 md:p-2 overflow-y-auto bg-[#E9F0E9]">
     <div class="p-6 md:p-8 space-y-6 max-w-7xl mx-auto">
-        
+
         <div class="text-left">
             <h2 class="text-3xl font-bold text-[#005949] mb-2"><?php echo htmlspecialchars($page_title); ?></h2>
         </div>
@@ -168,32 +183,50 @@ if ($conn) {
             'Visuals' => 'emotional_diary_visuals.php'
         ];
         $active_tab = 'Visuals';
-        $is_js = false; 
+        $is_js = false;
         include '../../components/diary_tabs.php';
         ?>
 
-        <?php 
-            $k_s = array_sum($initData['stress']) / count(array_filter($initData['stress'], function($x){ return $x > 0; }) ?: [1]);
-            $k_a = array_sum($initData['anxiety']) / count(array_filter($initData['anxiety'], function($x){ return $x > 0; }) ?: [1]);
-            $k_sl = array_sum($initData['sleep']) / count(array_filter($initData['sleep'], function($x){ return $x > 0; }) ?: [1]);
+        <?php
+        // function to calculate average of non-zero values
+        function calcAvg($arr)
+        {
+            $filtered = array_filter($arr, function ($x) {
+                return $x > 0;
+            });
+            return count($filtered) > 0 ? array_sum($filtered) / count($filtered) : 0;
+        }
+
+        $k_s  = calcAvg($initData['stress']);
+        $k_a  = calcAvg($initData['anxiety']);
+        $k_sl = calcAvg($initData['sleep']);
         ?>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div class="bg-white p-6 rounded-xl shadow-sm border border-orange-100 flex justify-between items-center">
-                <div><p class="text-xs font-bold text-gray-400 uppercase">Avg Stress (Last 7 days)</p><h3 class="text-2xl font-bold text-gray-800"><?php echo round($k_s,1); ?>/10</h3></div>
+                <div>
+                    <p class="text-xs font-bold text-gray-400 uppercase">Avg Stress (Last 7 days)</p>
+                    <h3 class="text-2xl font-bold text-gray-800"><?php echo round($k_s, 1); ?>/10</h3>
+                </div>
                 <div class="p-2 bg-orange-50 text-orange-500 rounded-lg"><i data-lucide="zap" class="w-5 h-5"></i></div>
             </div>
             <div class="bg-white p-6 rounded-xl shadow-sm border border-purple-100 flex justify-between items-center">
-                <div><p class="text-xs font-bold text-gray-400 uppercase">Avg Anxiety (Last 7 days)</p><h3 class="text-2xl font-bold text-gray-800"><?php echo round($k_a,1); ?>/10</h3></div>
+                <div>
+                    <p class="text-xs font-bold text-gray-400 uppercase">Avg Anxiety (Last 7 days)</p>
+                    <h3 class="text-2xl font-bold text-gray-800"><?php echo round($k_a, 1); ?>/10</h3>
+                </div>
                 <div class="p-2 bg-purple-50 text-purple-500 rounded-lg"><i data-lucide="wind" class="w-5 h-5"></i></div>
             </div>
             <div class="bg-white p-6 rounded-xl shadow-sm border border-blue-100 flex justify-between items-center">
-                <div><p class="text-xs font-bold text-gray-400 uppercase">Avg Sleep (Last 7 days)</p><h3 class="text-2xl font-bold text-gray-800"><?php echo round($k_sl,1); ?>/10</h3></div>
+                <div>
+                    <p class="text-xs font-bold text-gray-400 uppercase">Avg Sleep (Last 7 days)</p>
+                    <h3 class="text-2xl font-bold text-gray-800"><?php echo round($k_sl, 1); ?>/10</h3>
+                </div>
                 <div class="p-2 bg-blue-50 text-blue-500 rounded-lg"><i data-lucide="moon" class="w-5 h-5"></i></div>
             </div>
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            
+
             <div class="lg:col-span-2 bg-white p-6 rounded-xl shadow-sm border border-gray-100">
                 <div class="flex justify-between items-center mb-4">
                     <h3 class="text-sm font-bold text-gray-500 uppercase tracking-wider">Stress & Anxiety Trends</h3>
@@ -222,7 +255,7 @@ if ($conn) {
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            
+
             <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
                 <div class="flex justify-between items-center mb-4">
                     <h3 class="text-sm font-bold text-gray-500 uppercase tracking-wider">Sleep Quality</h3>
@@ -258,12 +291,12 @@ if ($conn) {
                                             <div class="text-xs text-gray-400 time-display" data-timestamp="<?php echo strtotime($entry['Occurrence']); ?>"></div>
                                         </td>
                                         <td class="p-4">
-                                            <?php 
-                                                $displayEmotion = ucfirst($entry['Emotion']);
-                                                // Optional: Truncate very long mood strings for the table
-                                                if (strlen($displayEmotion) > 25) {
-                                                    $displayEmotion = substr($displayEmotion, 0, 25) . '...';
-                                                }
+                                            <?php
+                                            $displayEmotion = ucfirst($entry['Emotion']);
+                                            // Optional: Truncate very long mood strings for the table
+                                            if (strlen($displayEmotion) > 25) {
+                                                $displayEmotion = substr($displayEmotion, 0, 25) . '...';
+                                            }
                                             ?>
                                             <span class="px-3 py-1 rounded-full text-xs font-bold bg-gray-100 text-gray-700" title="<?php echo htmlspecialchars($entry['Emotion']); ?>">
                                                 <?php echo htmlspecialchars($displayEmotion); ?>
@@ -276,12 +309,14 @@ if ($conn) {
                                             </div>
                                         </td>
                                         <td class="p-4 truncate max-w-xs text-gray-500 italic">
-                                            <?php echo !empty($entry['Notes']) ? htmlspecialchars(substr($entry['Notes'], 0, 30).(strlen($entry['Notes'])>30?'...':'')) : '<span class="text-gray-300">-</span>'; ?>
+                                            <?php echo !empty($entry['Notes']) ? htmlspecialchars(substr($entry['Notes'], 0, 30) . (strlen($entry['Notes']) > 30 ? '...' : '')) : '<span class="text-gray-300">-</span>'; ?>
                                         </td>
                                     </tr>
                                 <?php endforeach; ?>
                             <?php else: ?>
-                                <tr><td colspan="4" class="p-6 text-center text-gray-400">No entries found.</td></tr>
+                                <tr>
+                                    <td colspan="4" class="p-6 text-center text-gray-400">No entries found.</td>
+                                </tr>
                             <?php endif; ?>
                         </tbody>
                     </table>
