@@ -22,33 +22,7 @@ if (!empty($_SESSION['user_id']) && isset($conn)) {
 
 $message = '';
 
-// Ensure medications table exists with updated structure
-$createSql = "
-CREATE TABLE IF NOT EXISTS medications (
-  Medication_ID INT AUTO_INCREMENT PRIMARY KEY,
-  User_ID INT NOT NULL,
-  Name VARCHAR(255) NOT NULL,
-  Times_Per_Day INT DEFAULT 1,
-  Reminder_DateTime DATETIME NULL,
-  Taken_Today TINYINT(1) DEFAULT 0,
-  Created DATETIME DEFAULT CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-";
-mysqli_query($conn, $createSql);
-
-// Check if columns exist, add if missing
-$checkCol = mysqli_query($conn, "SHOW COLUMNS FROM medications LIKE 'Taken_Today'");
-if (mysqli_num_rows($checkCol) == 0) {
-    mysqli_query($conn, "ALTER TABLE medications ADD COLUMN Taken_Today TINYINT(1) DEFAULT 0");
-}
-$checkCol2 = mysqli_query($conn, "SHOW COLUMNS FROM medications LIKE 'Times_Per_Day'");
-if (mysqli_num_rows($checkCol2) == 0) {
-    mysqli_query($conn, "ALTER TABLE medications ADD COLUMN Times_Per_Day INT DEFAULT 1");
-}
-$checkCol3 = mysqli_query($conn, "SHOW COLUMNS FROM medications LIKE 'Reminder_DateTime'");
-if (mysqli_num_rows($checkCol3) == 0) {
-    mysqli_query($conn, "ALTER TABLE medications ADD COLUMN Reminder_DateTime DATETIME NULL");
-}
+// No need to create or alter table, handled in DB schema
 
 // Handle add medication
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
@@ -57,22 +31,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     } else {
         if ($_POST['action'] === 'add') {
             $name = trim($_POST['name'] ?? '');
-            $timesPerDay = (int)($_POST['times_per_day'] ?? 1);
-            if ($timesPerDay < 1) $timesPerDay = 1;
-            if ($timesPerDay > 6) $timesPerDay = 6;
-            
             $reminderDate = $_POST['reminder_date'] ?? '';
             $reminderTime = $_POST['reminder_time'] ?? '';
-            $reminderDateTime = null;
+            $medicationTime = null;
             if ($reminderDate && $reminderTime) {
-                $reminderDateTime = $reminderDate . ' ' . $reminderTime . ':00';
+                $medicationTime = $reminderDate . ' ' . $reminderTime . ':00';
             }
 
             if ($name === '') {
                 $message = 'Medication name is required.';
             } else {
-                $stmt = mysqli_prepare($conn, "INSERT INTO medications (User_ID, Name, Times_Per_Day, Reminder_DateTime) VALUES (?, ?, ?, ?)");
-                mysqli_stmt_bind_param($stmt, 'isis', $userId, $name, $timesPerDay, $reminderDateTime);
+                $stmt = mysqli_prepare($conn, "INSERT INTO track_medication (Patient_ID, Medication_Name, Medication_Time, Medication_Status) VALUES (?, ?, ?, 0)");
+                mysqli_stmt_bind_param($stmt, 'iss', $userId, $name, $medicationTime);
                 mysqli_stmt_execute($stmt);
                 mysqli_stmt_close($stmt);
                 header("Location: " . basename(__FILE__));
@@ -81,7 +51,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         } elseif ($_POST['action'] === 'toggle_taken') {
             $medId = (int)$_POST['med_id'];
             $taken = (int)$_POST['taken'];
-            $stmt = mysqli_prepare($conn, "UPDATE medications SET Taken_Today = ? WHERE Medication_ID = ? AND User_ID = ?");
+            $stmt = mysqli_prepare($conn, "UPDATE track_medication SET Medication_Status = ? WHERE Track_Medication_ID = ? AND Patient_ID = ?");
             mysqli_stmt_bind_param($stmt, 'iii', $taken, $medId, $userId);
             mysqli_stmt_execute($stmt);
             mysqli_stmt_close($stmt);
@@ -93,7 +63,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
 // Handle delete
 if (isset($_GET['delete']) && $isLoggedIn) {
     $toDelete = (int)$_GET['delete'];
-    $stmt = mysqli_prepare($conn, "DELETE FROM medications WHERE Medication_ID = ? AND User_ID = ?");
+    $stmt = mysqli_prepare($conn, "DELETE FROM track_medication WHERE Track_Medication_ID = ? AND Patient_ID = ?");
     mysqli_stmt_bind_param($stmt, 'ii', $toDelete, $userId);
     mysqli_stmt_execute($stmt);
     mysqli_stmt_close($stmt);
@@ -105,12 +75,12 @@ if (isset($_GET['delete']) && $isLoggedIn) {
 $medsNotTaken = [];
 $medsTaken = [];
 if ($isLoggedIn) {
-    $stmt = mysqli_prepare($conn, "SELECT Medication_ID, Name, Times_Per_Day, Reminder_DateTime, Taken_Today FROM medications WHERE User_ID = ? ORDER BY Name ASC");
+    $stmt = mysqli_prepare($conn, "SELECT Track_Medication_ID, Medication_Name, Medication_Time, Medication_Status FROM track_medication WHERE Patient_ID = ? ORDER BY Medication_Name ASC");
     mysqli_stmt_bind_param($stmt, 'i', $userId);
     mysqli_stmt_execute($stmt);
     $res = mysqli_stmt_get_result($stmt);
     while ($row = mysqli_fetch_assoc($res)) {
-        if ($row['Taken_Today']) {
+        if ($row['Medication_Status']) {
             $medsTaken[] = $row;
         } else {
             $medsNotTaken[] = $row;
@@ -152,12 +122,12 @@ if ($isLoggedIn) {
             <?php else: ?>
                 <!-- Not taken medications -->
                 <?php foreach ($medsNotTaken as $med): ?>
-                    <div class="med-card" data-id="<?= (int)$med['Medication_ID'] ?>" onclick="toggleSelectMed(this, <?= (int)$med['Medication_ID'] ?>)">
+                    <div class="med-card" data-id="<?= (int)$med['Track_Medication_ID'] ?>" onclick="toggleSelectMed(this, <?= (int)$med['Track_Medication_ID'] ?>)">
                         <div class="med-select-checkbox">
                             <span class="select-checkmark"></span>
                         </div>
                         <div class="med-info">
-                            <span class="med-name"><?= htmlspecialchars($med['Name']) ?></span>
+                            <span class="med-name"><?= htmlspecialchars($med['Medication_Name']) ?></span>
                         </div>
                     </div>
                 <?php endforeach; ?>
@@ -173,12 +143,12 @@ if ($isLoggedIn) {
                         </button>
                         <div class="taken-list" id="takenList">
                             <?php foreach ($medsTaken as $med): ?>
-                                <div class="med-card taken" data-id="<?= (int)$med['Medication_ID'] ?>" onclick="toggleSelectMed(this, <?= (int)$med['Medication_ID'] ?>)">
+                                <div class="med-card taken" data-id="<?= (int)$med['Track_Medication_ID'] ?>" onclick="toggleSelectMed(this, <?= (int)$med['Track_Medication_ID'] ?>)">
                                     <div class="med-select-checkbox">
                                         <span class="select-checkmark"></span>
                                     </div>
                                     <div class="med-info">
-                                        <span class="med-name"><?= htmlspecialchars($med['Name']) ?></span>
+                                        <span class="med-name"><?= htmlspecialchars($med['Medication_Name']) ?></span>
                                     </div>
                                 </div>
                             <?php endforeach; ?>
