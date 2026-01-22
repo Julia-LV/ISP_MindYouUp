@@ -315,30 +315,22 @@ include __DIR__ . '/../../components/push_notification.php';
             <?php endif; ?>
         </div>
 
-        <!-- Push Notification Permission Banner -->
-        <div id="push-permission-banner" class="push-notification-banner" style="display: none;">
-            <div>
-                <strong>🔔 Enable Push Notifications</strong>
-                <p style="margin: 4px 0 0 0; opacity: 0.9; font-size: 14px;">
-                    Get notified about messages, reminders, and updates even when you're not on the site.
-                </p>
-            </div>
-            <button onclick="enablePushNotifications()">Enable</button>
-            <div id="reminder-debug-output" style="margin-top:10px; font-size:12px; color:#444; background:#f9f9f9; border:1px solid #eee; padding:8px; display:none;"></div>
-            <script>
-            // Fetch and display medication reminder debug output
-            function fetchReminderDebug() {
-                fetch('/scripts/check_medication_reminders.php')
-                  .then(r => r.text())
-                  .then(txt => {
+
+        <!-- Medication Reminder Debug Output (for troubleshooting) -->
+        <div id="reminder-debug-output" style="margin-top:10px; font-size:12px; color:#444; background:#f9f9f9; border:1px solid #eee; padding:8px; display:none;"></div>
+        <script>
+        // Fetch and display medication reminder debug output
+        function fetchReminderDebug() {
+            fetch('/scripts/check_medication_reminders.php')
+                .then(r => r.text())
+                .then(txt => {
                     document.getElementById('reminder-debug-output').style.display = 'block';
                     document.getElementById('reminder-debug-output').textContent = txt;
-                  });
-            }
-            // Uncomment to always show debug, or call from console
-            // fetchReminderDebug();
-            </script>
-        </div>
+                });
+        }
+        // Uncomment to always show debug, or call from console
+        // fetchReminderDebug();
+        </script>
 
         <!-- Tabs for filtering (dynamic by user role) -->
         <?php
