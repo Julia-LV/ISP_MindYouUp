@@ -3,7 +3,7 @@ session_start();
 include('../../config.php');
 
 // 1. Security Check
-if (!isset($_SESSION['user_id'])) { 
+if (!isset($_SESSION['user_id'])) {
     header("Location: ../auth/login.php");
     exit;
 }
@@ -15,7 +15,7 @@ if (isset($_SESSION['role']) && $_SESSION['role'] != 'Patient') {
 $user_id = $_SESSION['user_id'];
 
 // 2. Fetch Data 
-
+// We select Birthday specifically from user_profile
 $sql = "SELECT u.First_Name, u.Last_Name, u.Email, u.User_Image, u.Birthday,
                p.Treatment_Type,
                (SELECT Status FROM patient_professional_link 
@@ -24,18 +24,32 @@ $sql = "SELECT u.First_Name, u.Last_Name, u.Email, u.User_Image, u.Birthday,
         FROM user_profile u 
         LEFT JOIN patient_profile p ON u.User_ID = p.User_ID 
         WHERE u.User_ID = ?";
-    
+
 $stmt = $conn->prepare($sql);
 $stmt->bind_param("i", $user_id);
 $stmt->execute();
 $profile = $stmt->get_result()->fetch_assoc();
 
-// --- AGE CALCULATION  ---
-function calculateAge($dob) {
-    if (empty($dob)) return 'N/A';
+// --- ROBUST AGE CALCULATION ---
+/**
+ * Calculates age from a date string.
+ * Handles empty values, invalid '0000-00-00' values, and future dates.
+ */
+function calculateAge($dob)
+{
+    if (empty($dob) || $dob == '0000-00-00' || strlen($dob) < 10) {
+        return 'N/A';
+    }
+
     try {
         $birthDate = new DateTime($dob);
         $now = new DateTime();
+
+        // If the date is today or in the future, return 0 instead of a weird number
+        if ($birthDate >= $now) {
+            return 0;
+        }
+
         $interval = $now->diff($birthDate);
         return $interval->y;
     } catch (Exception $e) {
@@ -43,21 +57,12 @@ function calculateAge($dob) {
     }
 }
 
-function displayVal($val) {
+function displayVal($val)
+{
     return !empty($val) ? htmlspecialchars($val) : '<span class="text-gray-400 italic">Not Set</span>';
 }
 
-function getStatusColor($status) {
-    switch($status) {
-        case 'Pending': return 'text-yellow-600 bg-yellow-50 border-yellow-200';
-        case 'Currently Followed': return 'text-green-600 bg-green-50 border-green-200';
-        case 'Discharged': return 'text-orange-600 bg-orange-50 border-orange-200';
-        case 'Drop Out': return 'text-gray-600 bg-gray-50 border-gray-200';
-        default: return 'text-gray-500 italic';
-    }
-}
-
-include('../../components/header_component.php'); 
+include('../../components/header_component.php');
 ?>
 
 <div class="flex h-screen bg-[#E9F0E9] font-sans">
@@ -66,17 +71,18 @@ include('../../components/header_component.php');
     <main class="flex-1 overflow-y-auto p-8">
         <div class="max-w-5xl mx-auto">
             <h1 class="text-2xl font-bold text-gray-800 mb-8">My Profile</h1>
+            
 
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                
+
                 <div class="lg:col-span-1">
                     <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 text-center">
                         <div class="relative inline-block mb-4">
                             <?php $img = !empty($profile['User_Image']) ? $profile['User_Image'] : '../../assets/default_user.png'; ?>
-                            <img src="<?= htmlspecialchars($img) ?>" 
-                                 class="w-32 h-32 rounded-full object-cover border-4 border-green-50 shadow-sm">
+                            <img src="<?= htmlspecialchars($img) ?>"
+                                class="w-32 h-32 rounded-full object-cover border-4 border-green-50 shadow-sm">
                         </div>
-                        
+
                         <h2 class="text-xl font-bold text-gray-800 leading-tight">
                             <?= htmlspecialchars($profile['First_Name'] . ' ' . $profile['Last_Name']) ?>
                         </h2>
@@ -86,17 +92,17 @@ include('../../components/header_component.php');
                         </p>
 
                         <p class="text-gray-500 text-sm mb-6"><?= htmlspecialchars($profile['Email']) ?></p>
-                        
-                        <a href="edit_profile.php" class="block w-full py-2.5 px-4 bg-[#F0856C] border border-gray-300 text-gray-700 font-medium rounded-xl hover:bg-[#F26647] transition shadow-sm">
+
+                        <a href="edit_profile.php" class="block w-full py-2.5 px-4 bg-[#F0856C] border border-gray-300 text-white font-medium rounded-xl hover:bg-[#F26647] transition shadow-sm">
                             Edit Profile
                         </a>
                     </div>
                 </div>
 
                 <div class="lg:col-span-2 space-y-6">
-                    
+
                     <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                        <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center">
+                        <div class="px-6 py-4 border-b border-gray-100">
                             <h3 class="font-bold text-gray-800 text-lg">Account Details</h3>
                         </div>
 
@@ -115,8 +121,7 @@ include('../../components/header_component.php');
                                 </div>
                             </div>
 
-
-                            <div class="grid grid-cols-3 px-6 py-4 bg-gray-50">
+                            <div class="grid grid-cols-3 px-6 py-4 bg-white">
                                 <div class="font-medium text-gray-500 col-span-1">Treatment Type</div>
                                 <div class="font-semibold text-gray-800 col-span-2">
                                     <?= displayVal($profile['Treatment_Type']) ?>
@@ -127,7 +132,7 @@ include('../../components/header_component.php');
 
                     <a href="my_professionals.php" class="flex items-center justify-between p-5 rounded-2xl bg-white border border-green-200 shadow-sm hover:shadow-md hover:border-green-300 transition group cursor-pointer">
                         <div class="flex items-center gap-4">
-                            <div class=" text-green-600 flex items-center justify-center text-xl">
+                            <div class="text-green-600 flex items-center justify-center text-xl">
                                 <i class="fas fa-user-md"></i>
                             </div>
                             <div>
@@ -146,4 +151,5 @@ include('../../components/header_component.php');
     </main>
 </div>
 </body>
+
 </html>

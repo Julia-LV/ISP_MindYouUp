@@ -2,10 +2,22 @@
 session_start();
 include('../../config.php');
 
-if (!isset($_SESSION['user_id'])) { header("Location: ../auth/login.php"); exit; }
+// 1. SECURITY CHECK
+if (!isset($_SESSION['user_id'])) { 
+    header("Location: ../auth/login.php"); 
+    exit; 
+}
 
 $user_id = $_SESSION['user_id'];
 $role = $_SESSION['role'] ?? 'Patient';
+
+// Fetch existing data first to use as a fallback if needed
+$sql_init = "SELECT Birthday FROM user_profile WHERE User_ID = ?";
+$stmt_init = $conn->prepare($sql_init);
+$stmt_init->bind_param("i", $user_id);
+$stmt_init->execute();
+$existing_data = $stmt_init->get_result()->fetch_assoc();
+$old_birthday = $existing_data['Birthday'] ?? '';
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     
@@ -14,13 +26,19 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $email = $_POST['email'];
     $dob   = $_POST['dob'];
 
+    // --- SAFETY CHECK FOR DATE ---
+    // If the date is empty or incomplete (less than 10 chars like '2026'), 
+    // we revert to the old birthday stored in the database instead of overwriting it.
+    if (empty($dob) || strlen($dob) < 10) {
+        $dob = $old_birthday;
+    }
+
     // 1. General Update
-    
     $stmt = $conn->prepare("UPDATE user_profile SET First_Name=?, Last_Name=?, Email=?, Birthday=? WHERE User_ID=?");
     $stmt->bind_param("ssssi", $fname, $lname, $email, $dob, $user_id);
     $stmt->execute();
 
-    // 2. Treatment Type (Only if selected)
+    // 2. Treatment Type (Only for Patients)
     if ($role == 'Patient' && !empty($_POST['treatment'])) {
         $treatment = $_POST['treatment'];
         $sql_p = "INSERT INTO patient_profile (User_ID, Treatment_Type) VALUES (?, ?) 
@@ -36,6 +54,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $stmt->bind_param("i", $user_id);
         $stmt->execute();
     }
+    
     if (isset($_FILES['profile_pic']) && $_FILES['profile_pic']['error'] == 0) {
         $file_name = time() . "_" . basename($_FILES["profile_pic"]["name"]);
         $target = "../../uploads/" . $file_name;
@@ -50,8 +69,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     exit;
 }
 
-// Fetch Data
-
+// 4. FETCH DATA FOR FORM DISPLAY
 $sql = "SELECT u.First_Name, u.Last_Name, u.Email, u.Birthday, u.User_Image, p.Treatment_Type 
         FROM user_profile u LEFT JOIN patient_profile p ON u.User_ID = p.User_ID WHERE u.User_ID = ?";
 $stmt = $conn->prepare($sql);
@@ -100,7 +118,9 @@ include('../../components/header_component.php');
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Date of Birth</label>
-                            <input type="date" name="dob" value="<?= htmlspecialchars($profile['Date_Birth'] ?? '') ?>" class="w-full rounded-lg border-gray-300 border p-2.5">
+                            <input type="date" name="dob" 
+                                   value="<?= !empty($profile['Birthday']) ? date('Y-m-d', strtotime($profile['Birthday'])) : '' ?>" 
+                                   class="w-full rounded-lg border-gray-300 border p-2.5">
                         </div>
                     </div>
 
@@ -120,7 +140,7 @@ include('../../components/header_component.php');
                          <a href="../auth/reset_password.php" class="text-[#F26647] hover:underline text-sm font-medium">Change Password</a>
                         <div class="flex gap-3">
                             <a href="patient_profile.php" class="px-5 py-2.5 rounded-lg text-gray-700 hover:bg-gray-100">Cancel</a>
-                            <button type="submit" class="px-5 py-2.5 rounded-lg bg-[#F26647] text-white font-medium hover:[#F26647]">Save Changes</button>
+                            <button type="submit" class="px-5 py-2.5 rounded-lg bg-[#F26647] text-white font-medium">Save Changes</button>
                         </div>
                     </div>
                 </form>
